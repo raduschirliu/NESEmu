@@ -5,9 +5,7 @@
 class CPU
 {
 public:
-	CPU();
-
-	enum Flags
+	enum class Flag : uint8_t
 	{
 		Carry = 1 << 0,
 		Zero = 1 << 1,
@@ -19,10 +17,26 @@ public:
 		Negative = 1 << 7
 	};
 
+	struct Instruction
+	{
+
+	};
+
+	CPU();
+	void step();
+	void setFlag(Flag flag);
+	bool hasFlag(Flag flag) const;
 
 private:
+	// Registers
 	uint8_t a, x, y;
 	uint8_t p, sp;
 	uint16_t pc;
+
+	// Current opcode
 	uint8_t opcode;
+
+	// Cycle related things
+	uint8_t cycles;
+	uint32_t totalCycles;
 };

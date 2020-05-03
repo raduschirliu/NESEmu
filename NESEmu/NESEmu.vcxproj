@@ -149,9 +149,11 @@
   <ItemGroup>
     <ClCompile Include="CPU.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ROM.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU.h" />
+    <ClInclude Include="ROM.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

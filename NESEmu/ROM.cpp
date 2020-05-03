@@ -26,6 +26,9 @@ void ROM::read()
 		// Set mapper ID
 		mapperID = header.mapperFlags2 & 0xF;
 		mapperID |= (header.mapperFlags1 & 0xF) >> 4;
+
+		// Set mirroring
+		mirroring = (Mirroring)(header.mapperFlags1 & 0x1);
 	}
 }
 
