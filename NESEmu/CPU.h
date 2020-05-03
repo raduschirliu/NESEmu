@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
+#include <vector>
 
 class CPU
 {
@@ -19,7 +21,10 @@ public:
 
 	struct Instruction
 	{
-
+		std::string instruction;
+		bool (CPU::*run)(void);
+		bool (CPU::*addressingMode)(void);
+		uint8_t cycles;
 	};
 
 	CPU();
@@ -39,4 +44,13 @@ private:
 	// Cycle related things
 	uint8_t cycles;
 	uint32_t totalCycles;
+
+	// Instruction table
+	std::vector<Instruction> instructions;
+
+	// Addressing modes
+	bool IMP(), ACC(), IMM(), ZPP(), ZPX(), ZPY(), REL(),
+		ABS(), ABX(), ABY(), IND(), IDX(), IDY();
+
+	// Instructions
 };
