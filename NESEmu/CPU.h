@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 
+#include "ROM.h"
+#include "Memory.h"
+
 class CPU
 {
 public:
@@ -22,8 +25,8 @@ public:
 	struct Instruction
 	{
 		std::string instruction;
-		bool (CPU::*run)(void);
-		bool (CPU::*addressingMode)(void);
+		int (CPU::*run)(void);
+		int (CPU::*addressingMode)(void);
 		uint8_t cycles;
 	};
 
@@ -45,12 +48,23 @@ private:
 	uint8_t cycles;
 	uint32_t totalCycles;
 
+	// Other components
+	ROM *rom;
+	Memory *memory;
+
 	// Instruction table
 	std::vector<Instruction> instructions;
 
-	// Addressing modes
-	bool IMP(), ACC(), IMM(), ZPP(), ZPX(), ZPY(), REL(),
+	// Addressing modes (return true if possible to need an extra cycle)
+	int IMP(), ACC(), IMM(), ZPG(), ZPX(), ZPY(), REL(),
 		ABS(), ABX(), ABY(), IND(), IDX(), IDY();
 
-	// Instructions
+	// Unknown or illegal instruction
+	int XXX();
+
+	// Instructions (return true if possible to need an extra cycle)
+	int ADC(), AND(), ASL(), BCC(), BCS(), BEQ(), BIT(), BMI(), BNE(), BPL(), BRK(), BVC(), BVS(), CLC(),
+		CLD(), CLI(), CLV(), CMP(), CPX(), CPY(), DEC(), DEX(), DEY(), EOR(), INC(), INX(), INY(), JMP(),
+		JSR(), LDA(), LDX(), LDY(), LSR(), NOP(), ORA(), PHA(), PHP(), PLA(), PLP(), ROL(), ROR(), RTI(),
+		RTS(), SBC(), SEC(), SED(), SEI(), STA(), STX(), STY(), TAX(), TAY(), TSX(), TXA(), TXS(), TYA();
 };

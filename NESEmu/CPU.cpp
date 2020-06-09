@@ -1,5 +1,11 @@
+#include <stdio.h>
 #include "CPU.h"
 
+// Convenience macros for defining CPU instructions
+#define _I(NAME, RUN, MODE, CYCLES) { NAME, &CPU::RUN, &CPU::MODE, CYCLES }
+#define _XXX() { "XXX", &CPU::XXX, &CPU::IMP, 2 }
+
+// Initialize CPU
 CPU::CPU()
 {
 	a = 0x00;
@@ -15,13 +21,36 @@ CPU::CPU()
 	// Initialize instruction table
 	instructions =
 	{
-
+		_I("BRK", BRK, IMP, 7), _I("ORA", ORA, IDX, 6), _XXX(), _XXX(), _XXX(),					_I("ORA", ORA, ZPG, 3), _I("ASL", ASL, ZPG, 5), _XXX(), _I("PHP", PHP, IMP, 3), _I("ORA", ORA, IMM, 2),	_I("ASL", ASL, ACC, 2), _XXX(), _XXX(),					_I("ORA", ORA, ABS, 4), _I("ASL", ASL, ABS, 6), _XXX(),
+		_I("BPL", BPL, REL, 2), _I("ORA", ORA, IDY, 5), _XXX(), _XXX(), _XXX(),					_I("ORA", ORA, ZPX, 4), _I("ASL", ASL, ZPX, 6), _XXX(), _I("CLC", CLC, IMP, 2), _I("ORA", ORA, ABY, 4),	_XXX(),					_XXX(), _XXX(),					_I("ORA", ORA, ABX, 4), _I("ASL", ASL, ABX, 7), _XXX(),
+		_I("JSR", JSR, ABS, 6), _I("AND", AND, IDX, 6), _XXX(), _XXX(), _I("BIT", BIT, ZPG, 3), _I("AND", AND, ZPG, 3), _I("ROL", ROL, ZPG, 5), _XXX(), _I("PLP", PLP, IMP, 4), _I("AND", AND, IMM, 2), _I("ROL", ROL, ACC, 2), _XXX(), _I("BIT", BIT, ABS, 4), _I("AND", AND, ABS, 4), _I("ROL", ROL, ABS, 6), _XXX(),
+		_I("BMI", BMI, REL, 2), _I("AND", AND, IDY, 5), _XXX(), _XXX(), _XXX(),					_I("AND", AND, ZPX, 4), _I("ROL", ROL, ZPX, 6), _XXX(), _I("SEC", SEC, IMP, 2), _I("AND", AND, ABY, 4), _XXX(),					_XXX(), _XXX(),					_I("AND", AND, ABX, 4), _I("ROL", ROL, ABX, 7), _XXX(),
+		_I("RTI", RTI, IMP, 6), _I("EOR", EOR, IDX, 6), _XXX(), _XXX(), _XXX(),					_I("EOR", EOR, ZPG, 3), _I("LSR", LSR, ZPG, 5), _XXX(), _I("PHA", PHA, IMP, 3), _I("EOR", EOR, IMM, 2), _I("LSR", LSR, ACC, 2), _XXX(), _I("JMP", JMP, ABS, 3), _I("EOR", ABS, ABS, 4), _I("LSR", LSR, ABS, 6), _XXX(),
 	};
 }
 
 // Step CPU by one cycle
 void CPU::step()
 {
+	if (cycles > 0)
+	{
+		cycles--;
+	}
+	else
+	{
+		// Process opcode
+		Instruction ins = instructions[opcode];
+		int modeExtra = (this->*ins.addressingMode)();
+		int runExtra = (this->*ins.run)();
+
+		cycles += ins.cycles;
+
+		if (modeExtra > 0 && runExtra > 0)
+		{
+			cycles += runExtra;
+		}
+	}
+
 	totalCycles++;
 }
 
@@ -35,4 +64,94 @@ void CPU::setFlag(Flag flag)
 bool CPU::hasFlag(Flag flag) const
 {
 	return (p & (uint8_t)flag) > 0;
+}
+
+
+/* Addressing Modes */
+
+// Implicit or implied
+int IMP()
+{
+	
+}
+
+// Accumulator
+int ACC()
+{
+	
+}
+
+// Immediate
+int IMM()
+{
+
+}
+
+// Zero-page
+int ZPG()
+{
+
+}
+
+// Zero-page, X
+int ZPX()
+{
+
+}
+
+// Zero-page, Y
+int ZPY()
+{
+
+}
+
+// Relative
+int REL()
+{
+
+}
+
+// Absolute
+int ABS()
+{
+
+}
+
+// Absolute, X
+int ABX()
+{
+
+}
+
+// Absolute, Y
+int ABY()
+{
+
+}
+
+// Indirect
+int IND()
+{
+
+}
+
+// Indirect, X
+int IDX()
+{
+
+}
+
+// Indirect, Y
+int IDY()
+{
+
+}
+
+
+/* Instructions */
+
+// Unknown or illegal instruction, do nothing
+int XXX()
+{
+	return 0;
 }
