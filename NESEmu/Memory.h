@@ -12,7 +12,7 @@ public:
 private:
 	// CPU Memory from $0000 - $07FFF
 	// Mirrored 3 times from $0800 - $1FFF
-	uint8_t cpuRam[2048];
+	uint8_t cpuMem[2048];
 
 	// PPU Memory from $2000 - $2007
 	// Mirrored every 8 bytes from $2008 - $3FFF

@@ -20,6 +20,7 @@ void ROM::read()
 		// Check if trainer (512 bytes) is present
 		if (header.mapperFlags1 & 0b100)
 		{
+			// Skip header if present
 			stream.seekg(512, std::ios_base::cur);
 		}
 

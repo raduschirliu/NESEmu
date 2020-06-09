@@ -1,7 +1,9 @@
 #include <iostream>
+#include <stdio.h>
+#include "CPU.h"
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    CPU cpu;
     return 0;
 }

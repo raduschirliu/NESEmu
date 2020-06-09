@@ -2,7 +2,7 @@
 
 Memory::Memory()
 {
-
+	
 }
 
 void Memory::cpuWrite(uint8_t address, uint8_t data)
@@ -11,7 +11,7 @@ void Memory::cpuWrite(uint8_t address, uint8_t data)
 	{
 		// Wrap around when accessing memory > $07FF
 		address %= 0x0800;
-		cpuRam[address] = data;
+		cpuMem[address] = data;
 	}
 	else
 	{
@@ -25,7 +25,7 @@ uint8_t Memory::cpuRead(uint8_t address) const
 	{
 		// Wrap around when accessing memory > $07FF
 		address %= 0x0800;
-		return cpuRam[address];
+		return cpuMem[address];
 	}
 	else
 	{
