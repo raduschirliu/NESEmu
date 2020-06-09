@@ -24,12 +24,24 @@
     <ClCompile Include="ROM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Mapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ROM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
