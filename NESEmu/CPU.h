@@ -48,7 +48,7 @@ private:
 	uint8_t cycles;
 	uint32_t totalCycles;
 
-	// Other components
+	// Other NES components
 	ROM *rom;
 	Memory *memory;
 
@@ -59,7 +59,7 @@ private:
 	int IMP(), ACC(), IMM(), ZPG(), ZPX(), ZPY(), REL(),
 		ABS(), ABX(), ABY(), IND(), IDX(), IDY();
 
-	// Unknown or illegal instruction
+	// Unknown or illegal instruction (same functionality as NOP)
 	int XXX();
 
 	// Instructions (return true if possible to need an extra cycle)
