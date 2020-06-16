@@ -6,7 +6,7 @@
 #define _XXX() { "XXX", &CPU::XXX, &CPU::IMP, 2 }
 
 // Initialize CPU
-CPU::CPU()
+CPU::CPU() : logger("logs/cpu.txt")
 {
 	a = 0x00;
 	x = 0x00;
@@ -32,10 +32,14 @@ CPU::CPU()
 		_XXX(),					_I("STA", STA, IDX, 6), _XXX(),					_XXX(), _I("STY", STY, ZPG, 3), _I("STA", STA, ZPG, 3), _I("STX", STX, ZPG, 3), _XXX(), _I("DEY", DEY, IMP, 2), _XXX(),					_I("TXA", TXA, IMP, 2), _XXX(), _I("STY", STY, ABS, 4), _I("STA", STA, ABS, 4), _I("STX", STX, ABS, 4), _XXX(),
 		_I("BCC", BCC, REL, 2), _I("STA", STA, IDY, 6), _XXX(),					_XXX(), _I("STY", STY, ZPX, 4), _I("STA", STA, ZPX, 4), _I("STX", STX, ZPY, 4), _XXX(), _I("TYA", TYA, IMP, 2), _I("STA", STA, ABY, 5), _I("TXS", TXS, IMP, 2), _XXX(), _XXX(),					_I("STA", STA, ABX, 5), _XXX(),					_XXX(),
 		_I("LDY", LDY, IMM, 2), _I("LDA", LDA, IDX, 6), _I("LDX", LDX, IMM, 2), _XXX(), _I("LDY", LDY, ZPG, 3), _I("LDA", LDA, ZPG, 3), _I("LDX", LDX, ZPG, 3), _XXX(), _I("TAY", TAY, IMP, 2), _I("LDA", LDA, IMM, 2), _I("TAX", TAX, IMP, 2), _XXX(), _I("LDY", LDY, ABS, 4), _I("LDA", LDA, ABS, 4), _I("LDX", LDX, ABS, 4), _XXX(),
+		_I("BCS", BCS, REL, 2), _I("LDA", LDA, IDY, 5), _XXX(),					_XXX(), _I("LDY", LDY, ZPX, 4), _I("LDA", LDA, ZPX, 4), _I("LDX", LDX, ZPY, 4), _XXX(), _I("CLV", CLV, IMP, 2), _I("LDA", LDA, ABY, 4), _I("TSX", TSX, IMP, 2), _XXX(), _I("LDY", LDY, ABX, 4), _I("LDA", LDA, ABX, 4), _I("LDX", LDX, ABY, 4), _XXX(),
+		_I("CPY", CPY, IMM, 2), _I("CMP", CMP, IDX, 6), _XXX(),					_XXX(), _I("CPY", CPY, ZPG, 3), _I("CMP", CMP, ZPG, 3), _I("DEC", DEC, ZPG, 5), _XXX(), _I("INY", INY, IMP, 2), _I("CMP", CMP, IMM, 2), _I("DEX", DEX, IMP, 2), _XXX(), _I("CPY", CPY, ABS, 4), _I("CMP", CMP, ABS, 4), _I("DEC", DEC, ABS, 6), _XXX(),
+		_I("BNE", BNE, REL, 2), _I("CMP", CMP, IDY, 5), _XXX(),					_XXX(), _XXX(),					_I("CMP", CMP, ZPX, 4), _I("DEC", DEC, ZPX, 6), _XXX(), _I("CLD", CLD, IMP, 2), _I("CMP", CMP, ABY, 4), _XXX(),					_XXX(),	_XXX(),					_I("CMP", CMP, ABX, 4), _I("DEC", DEC, ABX, 7), _XXX(),
+		_I("CPX", CPX, IMM, 2), _I("SBC", SBC, IDX, 6), _XXX(),					_XXX(), _I("CPX", CPX, ZPG, 3), _I("SBC", SBC, ZPG, 3), _I("INC", INC, ZPG, 5), _XXX(), _I("INX", INX, IMP, 2), _I("SBC", SBC, IMM, 2), _I("NOP", NOP, IMP, 2), _XXX(), _I("CPX", CPX, ABS, 4), _I("SBC", SBC, ABS, 4), _I("INC", INC, ABS, 6), _XXX(),
+		_I("BEQ", BEQ, REL, 2), _I("SBC", SBC, IDY, 5), _XXX(),					_XXX(), _XXX(),					_I("SBC", SBC, ZPX, 4), _I("INC", INC, ZPX, 6), _XXX(), _I("SED", SED, IMP, 2), _I("SBC", SBC, ABY, 4), _XXX(),					_XXX(),	_XXX(),					_I("SBC", SBC, ABX, 4), _I("INC", INC, ABX, 7), _XXX()
 	};
 }
 
-// Step CPU by one cycle
 void CPU::step()
 {
 	if (cycles > 0)
@@ -45,11 +49,40 @@ void CPU::step()
 	else
 	{
 		// Process opcode
+		opcode = memory->read(pc);
 		Instruction ins = instructions[opcode];
+		instructionLength = 1;
 		int modeExtra = (this->*ins.addressingMode)();
 		int runExtra = (this->*ins.run)();
 
-		pc++;
+		// Debug
+		printf("INSTR: %s\nPC: %X\nOPCODE: %X\n", ins.instruction.c_str(), pc, opcode);
+
+		if (operand == nullptr)
+		{
+			printf("OPERAND: nullptr\n");
+		}
+		else
+		{
+			printf("OPERAND: %X\n", *operand);
+		}
+
+		printf("STATUS (NO-BDIZC): ");
+
+		for (int i = 0; i < 8; i++)
+		{
+			uint8_t bit = (p >> 7 - i) & 0b00000001;
+			printf("%d", bit);
+		}
+
+		printf("\n");
+
+		printf("A: %d | $%X\n", a, a);
+		printf("X: %d | $%X\n", x, x);
+		printf("Y: %d | $%X\n", y, y);
+		printf("------------------------------\n\n");
+
+		pc += instructionLength;
 		cycles += ins.cycles;
 
 		if (modeExtra > 0 && runExtra > 0)
@@ -61,104 +94,538 @@ void CPU::step()
 	totalCycles++;
 }
 
-// Set status flag
 void CPU::setFlag(Flag flag)
 {
 	p |= (uint8_t)flag;
 }
 
-// Get whether status flag has been sets
+void CPU::clearFlag(Flag flag)
+{
+	p &= ~(uint8_t)flag;
+}
+
 bool CPU::hasFlag(Flag flag) const
 {
 	return (p & (uint8_t)flag) > 0;
+}
+
+void CPU::setMemory(Memory *memory)
+{
+	this->memory = memory;
+}
+
+void CPU::checkOverflow(uint8_t target, uint8_t result)
+{
+	if (target > 0 && *operand > 0 && result < 0)
+	{
+		setFlag(Flag::Overflow);
+	}
+	else if (target < 0 && *operand < 0 && result > 0)
+	{
+		setFlag(Flag::Overflow);
+	}
+	else
+	{
+		clearFlag(Flag::Overflow);
+	}
+}
+
+void CPU::checkNegative(uint8_t target)
+{
+	if ((target & 0b10000000) > 0)
+	{
+		setFlag(Flag::Negative);
+	}
+	else
+	{
+		clearFlag(Flag::Negative);
+	}
+}
+
+void CPU::checkZero(uint8_t target)
+{
+	if (target == 0)
+	{
+		setFlag(Flag::Zero);
+	}
+	else
+	{
+		clearFlag(Flag::Zero);
+	}
 }
 
 
 /* Addressing Modes */
 
 // Implicit or implied
-int IMP()
+int CPU::IMP()
 {
-	
+	// No operand
+	operand = nullptr;
+
+	return 0;
 }
 
 // Accumulator
-int ACC()
+int CPU::ACC()
 {
-	
+	// Operand is accumulator
+	operand = &a;
+
+	return 0;
 }
 
 // Immediate
-int IMM()
+int CPU::IMM()
 {
+	// Operand given in 1 byte after instruction
+	operand = memory->get(pc + 1);
+	instructionLength++;
 
+	return 0;
 }
 
 // Zero-page
-int ZPG()
+int CPU::ZPG()
 {
+	// Operand is a memory address in range $0000-$00FF, in 1 byte after instruction
+	uint16_t address = memory->read(pc + 1);
+	operand = memory->get(address);
+	instructionLength++;
 
+	return 0;
 }
 
 // Zero-page, X
-int ZPX()
+int CPU::ZPX()
 {
+	// Operand is a memory address in range $0000-$00FF added to X register
+	uint16_t address = memory->read(pc + 1) + x;
+	operand = memory->get(address);
+	instructionLength++;
 
+	return 0;
 }
 
 // Zero-page, Y
-int ZPY()
+int CPU::ZPY()
 {
+	// Operand is a memory address in range $0000-$00FF added to Y register
+	uint16_t address = memory->read(pc + 1) + y;
+	operand = memory->get(address);
+	instructionLength++;
 
+	return 0;
 }
 
 // Relative
-int REL()
+int CPU::REL()
 {
-
+	// TODO
+	return 0;
 }
 
 // Absolute
-int ABS()
+int CPU::ABS()
 {
+	// Operand is an address after the instruction, stored in little-endian
+	uint16_t address = memory->read(pc + 2) << 8;
+	address |= memory->read(pc + 1);
+	operand = memory->get(address);
+	instructionLength += 2;
 
+	return 0;
 }
 
-// Absolute, X
-int ABX()
+// Absolute, X (+)
+int CPU::ABX()
 {
+	// Operand is an address after the instruction, stored in little-endian, added to X
+	uint16_t address = memory->read(pc + 2) << 8;
+	address |= memory->read(pc + 1);
+	operand = memory->get(address + x);
+	instructionLength += 2;
 
+	// TODO: Check if violating page boundary
+	return 1;
 }
 
-// Absolute, Y
-int ABY()
+// Absolute, Y (+)
+int CPU::ABY()
 {
+	// Operand is an address after the instruction, stored in little-endian, added to Y
+	uint16_t address = memory->read(pc + 2) << 8;
+	address |= memory->read(pc + 1);
+	operand = memory->get(address + y);
+	instructionLength += 2;
 
+	// TODO: Check if violating page boundary
+	return 1;
 }
 
-// Indirect
-int IND()
+// Indirect (only used by JMP)
+int CPU::IND()
 {
+	// TODO: document
+	uint16_t address = memory->read(pc + 2) << 8;
+	address |= memory->read(pc + 1);
+	operand = memory->get(address);
+	instructionLength += 2;
 
+	return 0;
 }
 
 // Indirect, X
-int IDX()
+int CPU::IDX()
 {
-
+	return 0;
 }
 
-// Indirect, Y
-int IDY()
+// Indirect, Y (+)
+int CPU::IDY()
 {
-
+	return 1;
 }
 
 
 /* Instructions */
 
 // Unknown or illegal instruction, do nothing (same functionality as NOP)
-int XXX()
+int CPU::XXX()
+{
+	return 0;
+}
+
+// A + M + C -> A, C (NZCV); Add with carry
+int CPU::ADC()
+{
+	uint8_t result = a + *operand + hasFlag(Flag::Carry);
+
+	// Carry flag
+	uint16_t carryCheck = a + *operand + hasFlag(Flag::Carry);
+	if (carryCheck > 255 || carryCheck < -255)
+	{
+		setFlag(Flag::Carry);
+	}
+
+	// Other flags
+	checkZero(a);
+	checkOverflow(a, result);
+	checkNegative(a);
+
+	a = result;
+
+	// ABX, ABY, IDY add one cycle if page boundary crossed
+	return 1;
+}
+
+// A & M -> A (NZ); Logical AND on accumulator and memory
+int CPU::AND()
+{
+	a &= *operand;
+
+	if (a == 0)
+	{
+		setFlag(Flag::Zero);
+	}
+
+	if ((a & 0b10000000) != 0)
+	{
+		setFlag(Flag::Negative);
+	}
+
+	// ABX, ABY, IDY addressing modes add one cycle if page boundary crossed
+	return 1;
+}
+
+int CPU::ASL()
+{
+	// TODO: Handle flags
+	*operand = *operand << 1;
+	return 0;
+}
+
+int CPU::BCC()
+{
+	return 0;
+}
+
+int CPU::BCS()
+{
+	return 0;
+}
+
+int CPU::BEQ()
+{
+	return 0;
+}
+
+int CPU::BIT()
+{
+	return 0;
+}
+
+int CPU::BMI()
+{
+	return 0;
+}
+
+int CPU::BNE()
+{
+	return 0;
+}
+
+int CPU::BPL()
+{
+	return 0;
+}
+
+int CPU::BRK()
+{
+	return 0;
+}
+
+int CPU::BVC()
+{
+	return 0;
+}
+
+int CPU::BVS()
+{
+	return 0;
+}
+
+int CPU::CLC()
+{
+	return 0;
+}
+
+int CPU::CLD()
+{
+	return 0;
+}
+
+int CPU::CLI()
+{
+	return 0;
+}
+
+int CPU::CLV()
+{
+	return 0;
+}
+
+int CPU::CMP()
+{
+	return 0;
+}
+
+int CPU::CPX()
+{
+	return 0;
+}
+
+int CPU::CPY()
+{
+	return 0;
+}
+
+// M - 1 -> M; (NZ); Decrement memory by one
+int CPU::DEC()
+{
+	(*operand)--;
+
+	checkNegative(*operand);
+	checkZero(*operand);
+
+	return 0;
+}
+
+// X - 1 -> X; (NZ); Decrement X register by one
+int CPU::DEX()
+{
+	x--;
+
+	checkNegative(x);
+	checkZero(x);
+
+	return 0;
+}
+
+// Y - 1 -> Y; (NZ); Decrement Y register by one
+int CPU::DEY()
+{
+	y--;
+
+	checkNegative(y);
+	checkZero(y);
+
+	return 0;
+}
+
+int CPU::EOR()
+{
+	return 0;
+}
+
+int CPU::INC()
+{
+	return 0;
+}
+
+int CPU::INX()
+{
+	return 0;
+}
+
+int CPU::INY()
+{
+	return 0;
+}
+
+int CPU::JMP()
+{
+	uint16_t address = (*(operand + 1) << 8) | *operand;
+	pc = address - instructionLength;
+	return 0;
+}
+
+int CPU::JSR()
+{
+	return 0;
+}
+
+int CPU::LDA()
+{
+	return 0;
+}
+
+int CPU::LDX()
+{
+	return 0;
+}
+
+int CPU::LDY()
+{
+	return 0;
+}
+
+int CPU::LSR()
+{
+	return 0;
+}
+
+int CPU::NOP()
+{
+	return 0;
+}
+
+int CPU::ORA()
+{
+	return 0;
+}
+
+int CPU::PHA()
+{
+	return 0;
+}
+
+int CPU::PHP()
+{
+	return 0;
+}
+
+int CPU::PLA()
+{
+	return 0;
+}
+
+int CPU::PLP()
+{
+	return 0;
+}
+
+int CPU::ROL()
+{
+	return 0;
+}
+
+int CPU::ROR()
+{
+	return 0;
+}
+
+int CPU::RTI()
+{
+	return 0;
+}
+
+int CPU::RTS()
+{
+	return 0;
+}
+
+int CPU::SBC()
+{
+	return 0;
+}
+
+int CPU::SEC()
+{
+	return 0;
+}
+
+int CPU::SED()
+{
+	return 0;
+}
+
+int CPU::SEI()
+{
+	return 0;
+}
+
+int CPU::STA()
+{
+	return 0;
+}
+
+int CPU::STX()
+{
+	return 0;
+}
+
+int CPU::STY()
+{
+	return 0;
+}
+
+int CPU::TAX()
+{
+	return 0;
+}
+
+int CPU::TAY()
+{
+	return 0;
+}
+
+int CPU::TSX()
+{
+	return 0;
+}
+
+int CPU::TXA()
+{
+	return 0;
+}
+
+int CPU::TXS()
+{
+	return 0;
+}
+
+int CPU::TYA()
 {
 	return 0;
 }

@@ -6,6 +6,7 @@
 
 #include "ROM.h"
 #include "Memory.h"
+#include "Logger.h"
 
 class CPU
 {
@@ -31,9 +32,21 @@ public:
 	};
 
 	CPU();
+
+	// Step CPU by one single cycle
 	void step();
+
+	// Set status flag
 	void setFlag(Flag flag);
+
+	// Clear status flag
+	void clearFlag(Flag flag);
+
+	// Returns whether status flag is set or not
 	bool hasFlag(Flag flag) const;
+
+	// Sets memory pointer
+	void setMemory(Memory *memory);
 
 private:
 	// Registers
@@ -41,8 +54,10 @@ private:
 	uint8_t p, sp;
 	uint16_t pc;
 
-	// Current opcode
+	// Used for current instruction
 	uint8_t opcode;
+	uint8_t *operand;
+	uint8_t instructionLength;
 
 	// Cycle related things
 	uint8_t cycles;
@@ -51,9 +66,19 @@ private:
 	// Other NES components
 	ROM *rom;
 	Memory *memory;
+	Logger logger;
 
 	// Instruction table
 	std::vector<Instruction> instructions;
+
+	// Sets negative flag if accumulator is negative
+	void checkNegative(uint8_t target);
+
+	// Sets overflow flag if result is an overflow
+	void checkOverflow(uint8_t target, uint8_t result);
+
+	// Sets zero flag if accumulator is zero
+	void checkZero(uint8_t target);
 
 	// Addressing modes (return true if possible to need an extra cycle)
 	int IMP(), ACC(), IMM(), ZPG(), ZPX(), ZPY(), REL(),

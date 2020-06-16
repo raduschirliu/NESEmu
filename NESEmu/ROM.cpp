@@ -17,10 +17,10 @@ void ROM::read()
 		// Read header
 		stream.get((char *)&header, sizeof(Header));
 
-		// Check if trainer (512 bytes) is present
+		// Check if trainer is present
 		if (header.mapperFlags1 & 0b100)
 		{
-			// Skip header if present
+			// Skip trainer if it is present (512 bytes)
 			stream.seekg(512, std::ios_base::cur);
 		}
 

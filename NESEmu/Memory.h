@@ -6,8 +6,15 @@ class Memory
 {
 public:
 	Memory();
-	void cpuWrite(uint8_t address, uint8_t data);
-	uint8_t cpuRead(uint8_t address) const;
+
+	// Return pointer to a place in memory
+	uint8_t *get(uint16_t address);
+	
+	// Return value of a place in memory
+	uint8_t read(uint16_t address);
+
+	// Set value in memory at address
+	void set(uint16_t address, uint8_t value);
 
 private:
 	// CPU Memory from $0000 - $07FFF

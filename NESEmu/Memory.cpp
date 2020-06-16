@@ -5,31 +5,41 @@ Memory::Memory()
 	
 }
 
-void Memory::cpuWrite(uint8_t address, uint8_t data)
+uint8_t *Memory::get(uint16_t address)
 {
-	if (address >= 0 && address <= 0x1FFF)
+	if (address >= 0x0000 && address <= 0x1FFF)
 	{
-		// Wrap around when accessing memory > $07FF
+		// Get from CPU memory ($0000 - $1FFF, mirrored > $07FF)
 		address %= 0x0800;
-		cpuMem[address] = data;
+		return &cpuMem[address];
 	}
-	else
+	else if (address >= 0x2000 && address <= 0x200)
 	{
-		// Address not in CPU RAM range
+		// Get from PPU memory ($2000 - $3FFF, mirrored > $2008)
 	}
+
+	// TODO: Implement the rest
+	return nullptr;
 }
 
-uint8_t Memory::cpuRead(uint8_t address) const
+uint8_t Memory::read(uint16_t address)
 {
-	if (address >= 0 && address <= 0x1FFF)
+	uint8_t *ptr = get(address);
+
+	if (ptr != nullptr)
 	{
-		// Wrap around when accessing memory > $07FF
-		address %= 0x0800;
-		return cpuMem[address];
+		return *ptr;
 	}
-	else
+
+	return -1;
+}
+
+void Memory::set(uint16_t address, uint8_t value)
+{
+	uint8_t *ptr = get(address);
+
+	if (ptr != nullptr)
 	{
-		// Address not in CPU RAM range
-		return -1;
+		*ptr = value;
 	}
 }
