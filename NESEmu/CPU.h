@@ -80,6 +80,9 @@ private:
 	// Sets zero flag if accumulator is zero
 	void checkZero(uint8_t target);
 
+	// Performs a branch and checks if page boundary is crossed
+	int performBranch();
+
 	// Addressing modes (return true if possible to need an extra cycle)
 	int IMP(), ACC(), IMM(), ZPG(), ZPX(), ZPY(), REL(),
 		ABS(), ABX(), ABY(), IND(), IDX(), IDY();

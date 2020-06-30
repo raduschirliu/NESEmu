@@ -2,7 +2,7 @@
 
 Memory::Memory()
 {
-	
+	// TODO: Move arrays to heap
 }
 
 uint8_t *Memory::get(uint16_t address)

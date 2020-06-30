@@ -44,6 +44,9 @@ void CPU::step()
 {
 	if (cycles > 0)
 	{
+		printf("Stepping...\n");
+		printf("PC: %X\n", pc);
+		printf("CYCLE: %d\n\n", totalCycles);
 		cycles--;
 	}
 	else
@@ -53,10 +56,12 @@ void CPU::step()
 		Instruction ins = instructions[opcode];
 		instructionLength = 1;
 		int modeExtra = (this->*ins.addressingMode)();
-		int runExtra = (this->*ins.run)();
 
-		// Debug
+		// ---- Debug
+		printf("Executing\n");
+		printf("------------------------------\n");
 		printf("INSTR: %s\nPC: %X\nOPCODE: %X\n", ins.instruction.c_str(), pc, opcode);
+		printf("LENGTH: %d\nCYCLES: %d\n", instructionLength, ins.cycles);
 
 		if (operand == nullptr)
 		{
@@ -80,7 +85,11 @@ void CPU::step()
 		printf("A: %d | $%X\n", a, a);
 		printf("X: %d | $%X\n", x, x);
 		printf("Y: %d | $%X\n", y, y);
+		printf("CYCLE: %d\n", totalCycles);
 		printf("------------------------------\n\n");
+		// ---- Debug
+
+		int runExtra = (this->*ins.run)();
 
 		pc += instructionLength;
 		cycles += ins.cycles;
@@ -89,6 +98,8 @@ void CPU::step()
 		{
 			cycles += runExtra;
 		}
+
+		cycles--;
 	}
 
 	totalCycles++;
@@ -154,6 +165,15 @@ void CPU::checkZero(uint8_t target)
 	}
 }
 
+int CPU::performBranch()
+{
+	// Update the PC
+	int8_t offset = *operand;
+	pc += offset;
+
+	// TODO: Check if branch occurs on same page or different page
+	return 1;
+}
 
 /* Addressing Modes */
 
@@ -218,11 +238,14 @@ int CPU::ZPY()
 	return 0;
 }
 
-// Relative
+// Relative (Only used by branch) [+]
 int CPU::REL()
 {
-	// TODO
-	return 0;
+	// Operand is a SIGNED bit after the instruction
+	operand = memory->get(pc + 1);
+	instructionLength++;
+
+	return 1;
 }
 
 // Absolute
@@ -237,7 +260,7 @@ int CPU::ABS()
 	return 0;
 }
 
-// Absolute, X (+)
+// Absolute, X [+]
 int CPU::ABX()
 {
 	// Operand is an address after the instruction, stored in little-endian, added to X
@@ -246,11 +269,12 @@ int CPU::ABX()
 	operand = memory->get(address + x);
 	instructionLength += 2;
 
+	// TODO: Deal with carry
 	// TODO: Check if violating page boundary
 	return 1;
 }
 
-// Absolute, Y (+)
+// Absolute, Y [+]
 int CPU::ABY()
 {
 	// Operand is an address after the instruction, stored in little-endian, added to Y
@@ -259,6 +283,7 @@ int CPU::ABY()
 	operand = memory->get(address + y);
 	instructionLength += 2;
 
+	// TODO: Deal with carry
 	// TODO: Check if violating page boundary
 	return 1;
 }
@@ -281,7 +306,7 @@ int CPU::IDX()
 	return 0;
 }
 
-// Indirect, Y (+)
+// Indirect, Y [+]
 int CPU::IDY()
 {
 	return 1;
@@ -338,25 +363,50 @@ int CPU::AND()
 	return 1;
 }
 
+// M << 1 -> M; (NZC); Shift left one bit
 int CPU::ASL()
 {
-	// TODO: Handle flags
 	*operand = *operand << 1;
+	
+	// Check flags
+	checkNegative(*operand);
+	checkZero(*operand);
+
+	// TODO: Check carry flag
+
 	return 0;
 }
 
+// C ?= 0 -> Branch; (); Branch on carry clear
 int CPU::BCC()
 {
+	if (!hasFlag(Flag::Carry))
+	{
+		return performBranch();
+	}
+
 	return 0;
 }
 
+// C ?= 1 -> Branch; (); Branch on carry set
 int CPU::BCS()
 {
+	if (hasFlag(Flag::Carry))
+	{
+		return performBranch();
+	}
+
 	return 0;
 }
 
+// Z ?= 1 -> Branch; (); Branch on result zero
 int CPU::BEQ()
 {
+	if (hasFlag(Flag::Zero))
+	{
+		return performBranch();
+	}
+
 	return 0;
 }
 
@@ -365,18 +415,36 @@ int CPU::BIT()
 	return 0;
 }
 
+// N ?= 1 -> Branch; (); Branch on result negative
 int CPU::BMI()
 {
+	if (hasFlag(Flag::Negative))
+	{
+		return performBranch();
+	}
+
 	return 0;
 }
 
+// Z ?= 0 -> Branch; (); Branch on result not zero
 int CPU::BNE()
 {
+	if (!hasFlag(Flag::Zero))
+	{
+		return performBranch();
+	}
+
 	return 0;
 }
 
+// N ?= 0 -> Branch; (); Branch on result positive
 int CPU::BPL()
 {
+	if (!hasFlag(Flag::Negative))
+	{
+		return performBranch();
+	}
+
 	return 0;
 }
 
@@ -385,33 +453,53 @@ int CPU::BRK()
 	return 0;
 }
 
+// V ?= 0 -> Branch; (); Branch on overflow clear
 int CPU::BVC()
 {
+	if (!hasFlag(Flag::Overflow))
+	{
+		return performBranch();
+	}
+
 	return 0;
 }
 
+// V = 1 -> Branch; (); Branch on overflow set
 int CPU::BVS()
 {
+	if (hasFlag(Flag::Overflow))
+	{
+		return performBranch();
+	}
+
 	return 0;
 }
 
+// 0 -> C; (C); Clear carry flag
 int CPU::CLC()
 {
+	clearFlag(Flag::Carry);
 	return 0;
 }
 
+// 0 -> D; (D); Clear decimal flag
 int CPU::CLD()
 {
+	clearFlag(Flag::Decimal);
 	return 0;
 }
 
+// 0 -> I; (I); Clear interrupt flag
 int CPU::CLI()
 {
+	clearFlag(Flag::Interrupt);
 	return 0;
 }
 
+// 0 -> V; (V); Clear overflow flag
 int CPU::CLV()
 {
+	clearFlag(Flag::Overflow);
 	return 0;
 }
 
@@ -520,9 +608,17 @@ int CPU::NOP()
 	return 0;
 }
 
+// A | M -> A; (NZ); OR memory and accumulator
 int CPU::ORA()
 {
-	return 0;
+	a |= *operand;
+
+	// Check flags
+	checkZero(a);
+	checkNegative(a);
+
+	// ABX, ABY, IDY addressing modes add one cycle if page boundary crossed
+	return 1;
 }
 
 int CPU::PHA()
@@ -570,62 +666,111 @@ int CPU::SBC()
 	return 0;
 }
 
+// 1 -> C; (C); Set carry flag
 int CPU::SEC()
 {
+	setFlag(Flag::Carry);
 	return 0;
 }
 
+// 1 -> D; (D); Set decimal flag
 int CPU::SED()
 {
+	setFlag(Flag::Decimal);
 	return 0;
 }
 
+// 1 -> I; (I); Set interrupt flag
 int CPU::SEI()
 {
+	setFlag(Flag::Interrupt);
 	return 0;
 }
 
+// A -> M; (); Store accumulator in memory
 int CPU::STA()
 {
+	*operand = a;
 	return 0;
 }
 
+// X -> M; (); Store X in memory
 int CPU::STX()
 {
+	*operand = x;
 	return 0;
 }
 
+// Y -> M; (); Store Y in memory
 int CPU::STY()
 {
+	*operand = y;
 	return 0;
 }
 
+// A -> X; (NZ); Transfer accumulator to X
 int CPU::TAX()
 {
+	x = a;
+
+	// Check flags
+	checkNegative(x);
+	checkZero(x);
+
 	return 0;
 }
 
+// A -> Y; (NZ); Transfer accumulator to Y
 int CPU::TAY()
 {
+	y = a;
+
+	// Check flags
+	checkNegative(y);
+	checkZero(y);
+
 	return 0;
 }
 
+// SP -> X; (NZ); Transfer stack pointer to X
 int CPU::TSX()
 {
+	x = sp;
+
+	// Check flags
+	checkNegative(x);
+	checkZero(x);
+
 	return 0;
 }
 
+// X -> A; (NZ); Transfer X to accumulator
 int CPU::TXA()
 {
+	a = x;
+
+	// Check flags
+	checkNegative(a);
+	checkZero(a);
+
 	return 0;
 }
 
+// X -> SP; (); Transfer X to stack pointer
 int CPU::TXS()
 {
+	sp = x;
 	return 0;
 }
 
+// Y -> A; (NZ); Transfer Y to accumulator
 int CPU::TYA()
 {
+	a = y;
+
+	// Check flags
+	checkNegative(a);
+	checkZero(a);
+
 	return 0;
 }
