@@ -71,11 +71,14 @@ private:
 	// Instruction table
 	std::vector<Instruction> instructions;
 
+	// Sets overflow flag if result is an overflow
+	void checkOverflow(int8_t target, int8_t result);
+
+	// Sets carry flag if result requires a carry
+	void checkCarry(int16_t result);
+
 	// Sets negative flag if accumulator is negative
 	void checkNegative(uint8_t target);
-
-	// Sets overflow flag if result is an overflow
-	void checkOverflow(uint8_t target, uint8_t result);
 
 	// Sets zero flag if accumulator is zero
 	void checkZero(uint8_t target);

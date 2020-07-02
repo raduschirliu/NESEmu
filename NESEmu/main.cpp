@@ -30,14 +30,14 @@ int main()
 
     CPU cpu;
     cpu.setMemory(&memory);
-    cpu.step();
-    cpu.step();
-    cpu.step();
+    //cpu.step();
+    //cpu.step();
+    //cpu.step();
 
-    cpu.step();
-    cpu.step();
-    cpu.step();
-    cpu.step();
+    //cpu.step();
+    //cpu.step();
+    //cpu.step();
+    //cpu.step();
 
     return 0;
 }

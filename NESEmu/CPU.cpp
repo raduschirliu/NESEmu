@@ -125,19 +125,33 @@ void CPU::setMemory(Memory *memory)
 	this->memory = memory;
 }
 
-void CPU::checkOverflow(uint8_t target, uint8_t result)
+void CPU::checkOverflow(int8_t target, int8_t result)
 {
-	if (target > 0 && *operand > 0 && result < 0)
+	int8_t signedOperand = *operand;
+
+	if (target > 0 && signedOperand > 0 && result < 0)
 	{
 		setFlag(Flag::Overflow);
 	}
-	else if (target < 0 && *operand < 0 && result > 0)
+	else if (target < 0 && signedOperand < 0 && result > 0)
 	{
 		setFlag(Flag::Overflow);
 	}
 	else
 	{
 		clearFlag(Flag::Overflow);
+	}
+}
+
+void CPU::checkCarry(int16_t value)
+{
+	if (value > 127 || value < -128)
+	{
+		setFlag(Flag::Carry);
+	}
+	else
+	{
+		clearFlag(Flag::Carry);
 	}
 }
 
@@ -326,17 +340,10 @@ int CPU::ADC()
 {
 	uint8_t result = a + *operand + hasFlag(Flag::Carry);
 
-	// Carry flag
-	uint16_t carryCheck = a + *operand + hasFlag(Flag::Carry);
-	if (carryCheck > 255 || carryCheck < -255)
-	{
-		setFlag(Flag::Carry);
-	}
-
-	// Other flags
-	checkZero(a);
+	checkNegative(result);
+	checkZero(result);
+	checkCarry(a + *operand + hasFlag(Flag::Carry));
 	checkOverflow(a, result);
-	checkNegative(a);
 
 	a = result;
 
@@ -349,15 +356,8 @@ int CPU::AND()
 {
 	a &= *operand;
 
-	if (a == 0)
-	{
-		setFlag(Flag::Zero);
-	}
-
-	if ((a & 0b10000000) != 0)
-	{
-		setFlag(Flag::Negative);
-	}
+	checkNegative(a);
+	checkZero(a);
 
 	// ABX, ABY, IDY addressing modes add one cycle if page boundary crossed
 	return 1;
@@ -368,11 +368,9 @@ int CPU::ASL()
 {
 	*operand = *operand << 1;
 	
-	// Check flags
 	checkNegative(*operand);
 	checkZero(*operand);
-
-	// TODO: Check carry flag
+	checkCarry(*operand << 1);
 
 	return 0;
 }
@@ -448,8 +446,17 @@ int CPU::BPL()
 	return 0;
 }
 
+// ; (I); Force interrupt, push PC+2 and status pointer
 int CPU::BRK()
 {
+	setFlag(Flag::Interrupt);
+
+	memory->set(sp, pc >> 4); // PC high byte
+	memory->set(sp - 1, pc & 0x00ff); // PC low byte
+	memory->set(sp - 2, p); // Status
+
+	sp -= 3;
+
 	return 0;
 }
 
@@ -503,19 +510,43 @@ int CPU::CLV()
 	return 0;
 }
 
+// A - M; (NZC); Compare memory with accumulator
 int CPU::CMP()
 {
-	return 0;
+	uint8_t result = a - *operand;
+
+	checkNegative(result);
+	checkZero(result);
+	checkCarry(a - *operand);
+
+	// ABX, ABY, IDY add one cycle if page boundary crossed
+	return 1;
 }
 
+// X - M; (NZC); Compare memory with X
 int CPU::CPX()
 {
-	return 0;
+	uint8_t result = x - *operand;
+
+	checkNegative(result);
+	checkZero(result);
+	checkCarry(x - *operand);
+
+	// ABX, ABY, IDY add one cycle if page boundary crossed
+	return 1;
 }
 
+// Y - M; (NZC); Comapre memory with Y
 int CPU::CPY()
 {
-	return 0;
+	uint8_t result = y - *operand;
+
+	checkNegative(result);
+	checkZero(result);
+	checkCarry(y - *operand);
+
+	// ABX, ABY, IDY add one cycle if page boundary crossed
+	return 1;
 }
 
 // M - 1 -> M; (NZ); Decrement memory by one
@@ -556,23 +587,42 @@ int CPU::EOR()
 	return 0;
 }
 
+// M + 1 -> M; (NZ); Increment memory by one
 int CPU::INC()
 {
+	(*operand)++;
+
+	checkNegative(*operand);
+	checkZero(*operand);
+
 	return 0;
 }
 
+// X + 1 -> X; (NZ); Increment X by one
 int CPU::INX()
 {
+	x++;
+
+	checkNegative(x);
+	checkZero(x);
+
 	return 0;
 }
 
+// Y + 1 -> Y; (NZ); Increment Y by one
 int CPU::INY()
 {
+	y++;
+
+	checkNegative(y);
+	checkZero(y);
+
 	return 0;
 }
 
 int CPU::JMP()
 {
+	// TODO: fix this
 	uint16_t address = (*(operand + 1) << 8) | *operand;
 	pc = address - instructionLength;
 	return 0;
@@ -583,19 +633,40 @@ int CPU::JSR()
 	return 0;
 }
 
+// M -> A; (NZ); Load accumulator with memory
 int CPU::LDA()
 {
-	return 0;
+	a = *operand;
+
+	checkNegative(a);
+	checkZero(a);
+
+	// ABX, ABY, IDY add one cycle if page boundary crossed
+	return 1;
 }
 
+// M -> X; (NZ); Load X with memory
 int CPU::LDX()
 {
-	return 0;
+	x = *operand;
+
+	checkNegative(x);
+	checkZero(x);
+
+	// ABY adds one cycle if page boundary crossed
+	return 1;
 }
 
+// M -> Y; (NZ); Load Y with memory
 int CPU::LDY()
 {
-	return 0;
+	y = *operand;
+
+	checkNegative(y);
+	checkZero(y);
+
+	// ABX adds one cycle if page boundary crossed
+	return 1;
 }
 
 int CPU::LSR()
@@ -603,6 +674,7 @@ int CPU::LSR()
 	return 0;
 }
 
+// ; (); No operation
 int CPU::NOP()
 {
 	return 0;
