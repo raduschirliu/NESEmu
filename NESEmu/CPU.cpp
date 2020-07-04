@@ -58,7 +58,7 @@ void CPU::step()
 		int modeExtra = (this->*ins.addressingMode)();
 
 		// ---- Debug
-		printf("Executing\n");
+		printf("Pre-Execution\n");
 		printf("------------------------------\n");
 		printf("INSTR: %s\nPC: %X\nOPCODE: %X\n", ins.instruction.c_str(), pc, opcode);
 		printf("LENGTH: %d\nCYCLES: %d\n", instructionLength, ins.cycles);
@@ -582,9 +582,16 @@ int CPU::DEY()
 	return 0;
 }
 
+// A XOR M -> A; (NZ); Exclusive OR (XOR) memory with accumulator
 int CPU::EOR()
 {
-	return 0;
+	a = a ^ *operand;
+
+	checkNegative(a);
+	checkZero(a);
+
+	// ABX, ABY, IDY require extra cycle if page boundary crossed
+	return 1;
 }
 
 // M + 1 -> M; (NZ); Increment memory by one
@@ -669,8 +676,15 @@ int CPU::LDY()
 	return 1;
 }
 
+// M >> 1 -> M; (NZC); Left shift operand
 int CPU::LSR()
 {
+	*operand >>= 1;
+
+	clearFlag(Flag::Negative);
+	checkZero(*operand);
+	checkCarry(*operand);
+
 	return 0;
 }
 
@@ -693,43 +707,86 @@ int CPU::ORA()
 	return 1;
 }
 
+// Push A; (); Push accumulator on stack
 int CPU::PHA()
 {
+	memory->set(sp, a);
+	sp--;
+
 	return 0;
 }
 
+// Push P; (); Push processor status on stack
 int CPU::PHP()
 {
+	memory->set(sp, p);
+	p--;
+
 	return 0;
 }
 
+// Pull A; (); Pull acumulator from stack
 int CPU::PLA()
 {
+	sp++;
+	a = memory->read(sp);
+
 	return 0;
 }
 
+// Pull P; (); Pull processor status from stack
 int CPU::PLP()
 {
+	sp++;
+	p = memory->read(sp);
+
 	return 0;
 }
 
+// M << 1 <- C -> M; (NZC); Rotate one bit left with carry from right
 int CPU::ROL()
 {
+	int16_t signedOperand = *operand << 1 + hasFlag(Flag::Carry);
+	*operand = *operand << 1 + hasFlag(Flag::Carry);
+
+	checkNegative(*operand);
+	checkZero(*operand);
+	checkCarry(signedOperand);
+
 	return 0;
 }
 
+// C -> M >> 1 -> M; (NZC); Rotate one bit right with carry from left
 int CPU::ROR()
 {
+	int16_t signedOperand = (*operand >> 1) | (hasFlag(Flag::Carry) << 7);
+	*operand = (*operand >> 1) | (hasFlag(Flag::Carry) << 7);
+
+	checkNegative(*operand);
+	checkZero(*operand);
+	checkCarry(signedOperand);
+
 	return 0;
 }
 
+// Pull P, Pull PC; (); Return from interrupt
 int CPU::RTI()
 {
+	sp++;
+	p = memory->read(sp);
+
+	sp++;
+	pc = memory->read(sp);
+
 	return 0;
 }
 
+// Pull PC, PC + 1 -> PC; (); Return from subroutine
 int CPU::RTS()
 {
+	sp++;
+	pc = memory->read(sp) + 1;
+
 	return 0;
 }
 
