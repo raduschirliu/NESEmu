@@ -238,6 +238,8 @@ int CPU::ZPX()
 	operand = memory->get(address);
 	instructionLength++;
 
+	// TODO: Take zero page wrap-around into account
+
 	return 0;
 }
 
@@ -269,6 +271,10 @@ int CPU::ABS()
 	uint16_t address = memory->read(pc + 2) << 8;
 	address |= memory->read(pc + 1);
 	operand = memory->get(address);
+
+	// Jump target is the 16-bit address after the instruction
+	jumpTarget = address;
+
 	instructionLength += 2;
 
 	return 0;
@@ -305,10 +311,15 @@ int CPU::ABY()
 // Indirect (only used by JMP)
 int CPU::IND()
 {
-	// TODO: document
+	// Jump target is a 16-bit value at address specified after the instruction, stored in little-endian
 	uint16_t address = memory->read(pc + 2) << 8;
 	address |= memory->read(pc + 1);
-	operand = memory->get(address);
+
+	jumpTarget = memory->read(address + 1) << 8;
+	jumpTarget |= memory->read(address);
+
+	// Operand unused
+	operand = nullptr;
 	instructionLength += 2;
 
 	return 0;
@@ -317,12 +328,41 @@ int CPU::IND()
 // Indirect, X
 int CPU::IDX()
 {
+	// TODO: Test this
+
+	// Read the pointer address after the instruction and add X to it
+	uint16_t pointer = memory->read(pc + 2) << 8;
+	pointer |= memory->read(pc + 1);
+	pointer += x;
+
+	// Read the address located at the pointer
+	uint16_t address = memory->read(pc + 2) << 8;
+	address |= memory->read(pc + 1);
+
+	operand = memory->get(address);
+	instructionLength += 2;
+
+	// TODO: Take zero page wrap-around into account
 	return 0;
 }
 
 // Indirect, Y [+]
 int CPU::IDY()
 {
+	// TODO: Test this
+
+	// Read the pointer address after the instruction
+	uint16_t pointer = memory->read(pc + 2) << 8;
+	pointer |= memory->read(pc + 1);
+
+	// Read the address located at the pointer, and add Y to it
+	uint16_t address = memory->read(pc + 2) << 8;
+	address |= memory->read(pc + 1);
+	address += y;
+
+	operand = memory->get(address);
+	instructionLength += 2;
+
 	return 1;
 }
 
@@ -627,16 +667,20 @@ int CPU::INY()
 	return 0;
 }
 
+// Target -> PC; (); Jump to new location
 int CPU::JMP()
 {
-	// TODO: fix this
-	uint16_t address = (*(operand + 1) << 8) | *operand;
-	pc = address - instructionLength;
+	pc = jumpTarget;
 	return 0;
 }
 
+// Push PC + 2, Target -> PC; (); Jump to new location, saving return address
 int CPU::JSR()
 {
+	memory->set(sp, pc + instructionLength);
+	sp--;
+	pc = jumpTarget;
+
 	return 0;
 }
 
@@ -720,7 +764,7 @@ int CPU::PHA()
 int CPU::PHP()
 {
 	memory->set(sp, p);
-	p--;
+	sp--;
 
 	return 0;
 }
@@ -790,9 +834,21 @@ int CPU::RTS()
 	return 0;
 }
 
+// A - M - C -> A; (NZCV); Subtract memory from accumulator with borrow
 int CPU::SBC()
 {
-	return 0;
+	// TODO: this could be wrong
+	uint8_t result = a - *operand - hasFlag(Flag::Carry);
+
+	checkNegative(result);
+	checkZero(result);
+	checkCarry(a - *operand - hasFlag(Flag::Carry));
+	checkOverflow(a, result);
+
+	a = result;
+
+	// ABX, ABY, IDY add one cycle if page boundary crossed
+	return 1;
 }
 
 // 1 -> C; (C); Set carry flag

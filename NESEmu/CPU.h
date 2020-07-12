@@ -58,6 +58,7 @@ private:
 	uint8_t opcode;
 	uint8_t *operand;
 	uint8_t instructionLength;
+	uint16_t jumpTarget;
 
 	// Cycle related things
 	uint8_t cycles;
