@@ -31,6 +31,7 @@ public:
 		uint8_t cycles;
 	};
 
+	// Initialize CPU
 	CPU();
 
 	// Step CPU by one single cycle
@@ -47,6 +48,9 @@ public:
 
 	// Sets memory pointer
 	void setMemory(Memory *memory);
+
+	// Sets program counter
+	void setPC(uint16_t pc);
 
 private:
 	// Registers

@@ -1,4 +1,5 @@
 #include "Memory.h"
+#include <stdio.h>
 
 Memory::Memory()
 {
@@ -13,9 +14,14 @@ uint8_t *Memory::get(uint16_t address)
 		address %= 0x0800;
 		return &cpuMem[address];
 	}
-	else if (address >= 0x2000 && address <= 0x200)
+	else if (address >= 0x2000 && address <= 0x3FFF)
 	{
 		// Get from PPU memory ($2000 - $3FFF, mirrored > $2008)
+	}
+	else if (address >= 0x4020 && address <= 0xFFFF)
+	{
+		// Get from cartridge Memory ($4020 - $FFFF)
+		return &romMem[address - 0x4020];
 	}
 
 	// TODO: Implement the rest

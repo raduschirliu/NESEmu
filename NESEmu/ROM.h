@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "Memory.h"
 
 class ROM
 {
@@ -25,7 +26,7 @@ public:
 	} mirroring;
 
 	ROM(std::string path);
-	void read();
+	void read(Memory *memory);
 	uint8_t getMapperID() const;
 
 private:

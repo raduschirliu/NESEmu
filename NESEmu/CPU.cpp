@@ -6,7 +6,7 @@
 #define _XXX() { "XXX", &CPU::XXX, &CPU::IMP, 2 }
 
 // Initialize CPU
-CPU::CPU() : logger("logs/cpu.txt")
+CPU::CPU() : logger("C:\\Dev\\Projects\\nesemu\\logs\\cpu.txt")
 {
 	a = 0x00;
 	x = 0x00;
@@ -17,6 +17,10 @@ CPU::CPU() : logger("logs/cpu.txt")
 	opcode = 0x00;
 	totalCycles = 0;
 	cycles = 0;
+
+	// TEST
+	p = 0x24;
+	sp = 0xFD;
 
 	// Initialize instruction table
 	instructions =
@@ -80,13 +84,18 @@ void CPU::step()
 			printf("%d", bit);
 		}
 
-		printf("\n");
+		printf(" | $%X\n", p);
 
 		printf("A: %d | $%X\n", a, a);
 		printf("X: %d | $%X\n", x, x);
 		printf("Y: %d | $%X\n", y, y);
+		printf("SP: %d | $%X\n", sp, sp);
 		printf("CYCLE: %d\n", totalCycles);
 		printf("------------------------------\n\n");
+
+		char buf[500];
+		sprintf_s(buf, "%04X  %02X  %s\t\tA:%02X X:%02X Y:%02X P:%02X SP:%02X\tCYC:%d\n", pc, opcode, ins.instruction.c_str(), a, x, y, p, sp, totalCycles);
+		logger.write(buf);
 		// ---- Debug
 
 		int runExtra = (this->*ins.run)();
@@ -123,6 +132,11 @@ bool CPU::hasFlag(Flag flag) const
 void CPU::setMemory(Memory *memory)
 {
 	this->memory = memory;
+}
+
+void CPU::setPC(uint16_t pc)
+{
+	this->pc = pc;
 }
 
 void CPU::checkOverflow(int8_t target, int8_t result)
@@ -448,8 +462,22 @@ int CPU::BEQ()
 	return 0;
 }
 
+// op6-> V, op7 -> N, A and M; (NZV); Operand bits 6/7 transfered to status bits 6/7. Operand anded with accumulator
 int CPU::BIT()
 {
+	// Bits 7 and 6 transferred to the status register
+	uint8_t bit7 = 0b1000000 & *operand;
+	p |= bit7;
+
+	uint8_t bit6 = 0b0100000 & *operand;
+	p |= bit6;
+
+	// Operand and accumulator ANDed to get zero flag value
+	if ((a & *operand) == 0)
+	{
+		setFlag(Flag::Zero);
+	}
+
 	return 0;
 }
 
@@ -491,9 +519,9 @@ int CPU::BRK()
 {
 	setFlag(Flag::Interrupt);
 
-	memory->set(sp, pc >> 4); // PC high byte
-	memory->set(sp - 1, pc & 0x00ff); // PC low byte
-	memory->set(sp - 2, p); // Status
+	memory->set(sp - 1, pc >> 8); // PC high byte
+	memory->set(sp - 2, pc & 0x00FF); // PC low byte
+	memory->set(sp - 3, p); // Status
 
 	sp -= 3;
 
@@ -670,16 +698,19 @@ int CPU::INY()
 // Target -> PC; (); Jump to new location
 int CPU::JMP()
 {
-	pc = jumpTarget;
+	pc = jumpTarget - instructionLength;
 	return 0;
 }
 
 // Push PC + 2, Target -> PC; (); Jump to new location, saving return address
 int CPU::JSR()
 {
-	memory->set(sp, pc + instructionLength);
-	sp--;
-	pc = jumpTarget;
+	uint16_t returnAddress = pc + instructionLength;
+	memory->set(sp - 1, (returnAddress & 0xFF00) >> 8);
+	memory->set(sp - 2, returnAddress & 0x00FF);
+	sp -= 2;
+
+	pc = jumpTarget - instructionLength;
 
 	return 0;
 }
@@ -754,8 +785,8 @@ int CPU::ORA()
 // Push A; (); Push accumulator on stack
 int CPU::PHA()
 {
-	memory->set(sp, a);
-	sp--;
+	memory->set(sp - 1, a);
+	sp -= 2;
 
 	return 0;
 }
@@ -763,8 +794,8 @@ int CPU::PHA()
 // Push P; (); Push processor status on stack
 int CPU::PHP()
 {
-	memory->set(sp, p);
-	sp--;
+	memory->set(sp - 1, p);
+	sp -= 2;
 
 	return 0;
 }
@@ -772,8 +803,8 @@ int CPU::PHP()
 // Pull A; (); Pull acumulator from stack
 int CPU::PLA()
 {
-	sp++;
 	a = memory->read(sp);
+	sp++;
 
 	return 0;
 }
@@ -781,8 +812,8 @@ int CPU::PLA()
 // Pull P; (); Pull processor status from stack
 int CPU::PLP()
 {
-	sp++;
 	p = memory->read(sp);
+	sp++;
 
 	return 0;
 }
@@ -816,11 +847,11 @@ int CPU::ROR()
 // Pull P, Pull PC; (); Return from interrupt
 int CPU::RTI()
 {
-	sp++;
 	p = memory->read(sp);
-
 	sp++;
+
 	pc = memory->read(sp);
+	sp++;
 
 	return 0;
 }
@@ -828,8 +859,11 @@ int CPU::RTI()
 // Pull PC, PC + 1 -> PC; (); Return from subroutine
 int CPU::RTS()
 {
-	sp++;
-	pc = memory->read(sp) + 1;
+	uint16_t returnAddress = memory->read(sp + 1) << 8;
+	returnAddress |= memory->read(sp);
+
+	pc = returnAddress - instructionLength;
+	sp += 2;
 
 	return 0;
 }

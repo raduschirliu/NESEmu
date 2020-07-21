@@ -4,19 +4,17 @@
 
 int main()
 {
-    uint8_t bytes[] = { 0xe8, 0xe8, 0xe8, 0x8a, 0x38, 0x6a };
-
     Memory memory;
     
-    for (int i = 0; i < sizeof(bytes) / sizeof(bytes[0]); i++)
-    {
-        memory.set(i, bytes[i]);
-    }
+    ROM rom("C:\\Dev\\Projects\\nesemu\\roms\\nestest.nes");
+    rom.read(&memory);
 
     CPU cpu;
     cpu.setMemory(&memory);
+    cpu.setPC(0xC000);
 
-    for (int i = 0; i < 14; i++)
+    // 26554 cycles for all
+    for (int i = 0; i < 180; i++)
     {
         cpu.step();
     }
