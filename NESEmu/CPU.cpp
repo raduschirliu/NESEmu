@@ -462,15 +462,19 @@ int CPU::BIT()
 {
 	// Bits 7 and 6 transferred to the status register
 	uint8_t bit7 = 0b1000000 & *operand;
-	p |= bit7;
+	p ^= (-bit7 ^ p) & (1 << 7);
 
 	uint8_t bit6 = 0b0100000 & *operand;
-	p |= bit6;
+	p ^= (-bit6 ^ p) & (1 << 6);
 
 	// Operand and accumulator ANDed to get zero flag value
 	if ((a & *operand) == 0)
 	{
 		setFlag(Flag::Zero);
+	}
+	else
+	{
+		clearFlag(Flag::Zero);
 	}
 
 	return 0;
