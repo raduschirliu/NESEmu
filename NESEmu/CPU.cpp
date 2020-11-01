@@ -582,9 +582,19 @@ int CPU::CMP()
 {
 	uint8_t result = a - *operand;
 
+	printf("A: %d\nM: %d\nR: %d\n", a, *operand, result);
+
 	checkNegative(result);
 	checkZero(result);
-	checkCarry(a - *operand);
+	
+	if (a >= *operand)
+	{
+		setFlag(Flag::Carry);
+	}
+	else
+	{
+		clearFlag(Flag::Carry);
+	}
 
 	// ABX, ABY, IDY add one cycle if page boundary crossed
 	return 1;
@@ -597,7 +607,15 @@ int CPU::CPX()
 
 	checkNegative(result);
 	checkZero(result);
-	checkCarry(x - *operand);
+	
+	if (x >= *operand)
+	{
+		setFlag(Flag::Carry);
+	}
+	else
+	{
+		clearFlag(Flag::Carry);
+	}
 
 	// ABX, ABY, IDY add one cycle if page boundary crossed
 	return 1;
@@ -610,7 +628,15 @@ int CPU::CPY()
 
 	checkNegative(result);
 	checkZero(result);
-	checkCarry(y - *operand);
+	
+	if (y >= *operand)
+	{
+		setFlag(Flag::Carry);
+	}
+	else
+	{
+		clearFlag(Flag::Carry);
+	}
 
 	// ABX, ABY, IDY add one cycle if page boundary crossed
 	return 1;
