@@ -516,11 +516,11 @@ int CPU::BPL()
 // ; (I); Force interrupt, push PC+2 and status pointer
 int CPU::BRK()
 {
-	setFlag(Flag::Interrupt);
-
 	memory->set(sp - 1, pc >> 8); // PC high byte
 	memory->set(sp - 2, pc & 0x00FF); // PC low byte
 	memory->set(sp - 3, p); // Status
+	
+	setFlag(Flag::Interrupt);
 
 	sp -= 3;
 
@@ -784,26 +784,36 @@ int CPU::ORA()
 // Push A; (); Push accumulator on stack
 int CPU::PHA()
 {
-	memory->set(sp - 1, a);
-	sp -= 2;
+	sp -= 1;
+	memory->set(sp, a);
 
 	return 0;
 }
 
-// Push P; (); Push processor status on stack
+// Push P; (UB); Push processor status on stack
 int CPU::PHP()
 {
-	memory->set(sp - 1, p);
-	sp -= 2;
+	uint8_t originalP = p;
+
+	setFlag(Flag::Break);
+	setFlag(Flag::Unused);
+
+	sp -= 1;
+	memory->set(sp, p);
+
+	p = originalP;
 
 	return 0;
 }
 
-// Pull A; (); Pull acumulator from stack
+// Pull A; (NZ); Pull acumulator from stack
 int CPU::PLA()
 {
 	a = memory->read(sp);
 	sp++;
+
+	checkZero(a);
+	checkNegative(a);
 
 	return 0;
 }
@@ -813,6 +823,8 @@ int CPU::PLP()
 {
 	p = memory->read(sp);
 	sp++;
+
+	// TODO: Ignore bits 4 and 5
 
 	return 0;
 }
@@ -846,6 +858,8 @@ int CPU::ROR()
 // Pull P, Pull PC; (); Return from interrupt
 int CPU::RTI()
 {
+	// TODO: Ignore bits 5 & 4
+
 	p = memory->read(sp);
 	sp++;
 
