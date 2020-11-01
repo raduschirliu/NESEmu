@@ -6,7 +6,7 @@
 #define _XXX() { "XXX", &CPU::XXX, &CPU::IMP, 2 }
 
 // Initialize CPU
-CPU::CPU() : logger("C:\\Dev\\Projects\\nesemu\\logs\\cpu.txt")
+CPU::CPU(Memory *memory) : logger("C:\\Dev\\Projects\\nesemu\\logs\\cpu.txt"), memory(memory)
 {
 	a = 0x00;
 	x = 0x00;
@@ -127,11 +127,6 @@ void CPU::clearFlag(Flag flag)
 bool CPU::hasFlag(Flag flag) const
 {
 	return (p & (uint8_t)flag) > 0;
-}
-
-void CPU::setMemory(Memory *memory)
-{
-	this->memory = memory;
 }
 
 void CPU::setPC(uint16_t pc)

@@ -32,7 +32,7 @@ public:
 	};
 
 	// Initialize CPU
-	CPU();
+	CPU(Memory *memory);
 
 	// Step CPU by one single cycle
 	void step();
@@ -45,9 +45,6 @@ public:
 
 	// Returns whether status flag is set or not
 	bool hasFlag(Flag flag) const;
-
-	// Sets memory pointer
-	void setMemory(Memory *memory);
 
 	// Sets program counter
 	void setPC(uint16_t pc);

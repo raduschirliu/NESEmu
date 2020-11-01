@@ -19,18 +19,18 @@ public:
 private:
 	// CPU Memory from $0000 - $07FFF
 	// Mirrored 3 times from $0800 - $1FFF
-	uint8_t cpuMem[2048];
+	uint8_t *cpuMem;
 
 	// PPU Memory from $2000 - $2007
 	// Mirrored every 8 bytes from $2008 - $3FFF
-	uint8_t ppuMem[8];
+	uint8_t *ppuMem;
 
 	// APU & I/O Memory from $4000 - $4017
-	uint8_t apuMem[24];
+	uint8_t *apuMem;
 
 	// APU & I/O Memory (usually disabled) from $4018 - $401F
-	uint8_t testMem[8];
+	uint8_t *testMem;
 
 	// Cartridge Memory, PRG ROM, PRG RAM, Mappers, from $4020 - $FFFF
-	uint8_t romMem[49120];
+	uint8_t *romMem;
 };

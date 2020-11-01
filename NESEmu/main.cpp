@@ -9,12 +9,11 @@ int main()
     ROM rom("C:\\Dev\\Projects\\nesemu\\roms\\nestest.nes");
     rom.read(&memory);
 
-    CPU cpu;
-    cpu.setMemory(&memory);
+    CPU cpu(&memory);
     cpu.setPC(0xC000);
 
-    // 26554 cycles for all
-    for (int i = 0; i < 180; i++)
+    // 26554 cycles for entire ROM
+    for (int i = 0; i < 26554; i++)
     {
         cpu.step();
     }

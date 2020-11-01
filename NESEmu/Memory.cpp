@@ -3,7 +3,11 @@
 
 Memory::Memory()
 {
-	// TODO: Move arrays to heap
+	cpuMem = new uint8_t[2048];
+	ppuMem = new uint8_t[8];
+	apuMem = new uint8_t[24];
+	testMem = new uint8_t[8];
+	romMem = new uint8_t[49120];
 }
 
 uint8_t *Memory::get(uint16_t address)
