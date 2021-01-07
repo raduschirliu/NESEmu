@@ -18,5 +18,7 @@ int main()
         cpu.step();
     }
 
+    printf("Executed 26554 cycles of NESTest ROM\n");
+
     return 0;
 }

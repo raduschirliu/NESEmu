@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include "CPU.h"
 
+// Debugging
+#define DEBUG_CONSOLE false
+#define DEBUG_LOG true
+
 // Convenience macros for defining CPU instructions
 #define _I(NAME, RUN, MODE, CYCLES) { NAME, &CPU::RUN, &CPU::MODE, CYCLES }
 #define _XXX() { "XXX", &CPU::XXX, &CPU::IMP, 2 }
@@ -54,9 +58,13 @@ void CPU::step()
 {
 	if (cycles > 0)
 	{
-		printf("Stepping...\n");
-		printf("PC: %X\n", pc);
-		printf("CYCLE: %d\n\n", totalCycles);
+		if (DEBUG_CONSOLE)
+		{
+			printf("Stepping...\n");
+			printf("PC: %X\n", pc);
+			printf("CYCLE: %d\n\n", totalCycles);
+		}
+		
 		cycles--;
 	}
 	else
@@ -68,40 +76,46 @@ void CPU::step()
 		int modeExtra = (this->*ins.addressingMode)();
 
 		// ---- Debug
-		printf("Pre-Execution\n");
-		printf("------------------------------\n");
-		printf("INSTR: %s\nPC: %X\nOPCODE: %X\n", ins.instruction.c_str(), pc, opcode);
-		printf("LENGTH: %d\nCYCLES: %d\n", instructionLength, ins.cycles);
-
-		if (operand == nullptr)
+		if (DEBUG_CONSOLE)
 		{
-			printf("OPERAND: nullptr\n");
+			printf("Pre-Execution\n");
+			printf("------------------------------\n");
+			printf("INSTR: %s\nPC: %X\nOPCODE: %X\n", ins.instruction.c_str(), pc, opcode);
+			printf("LENGTH: %d\nCYCLES: %d\n", instructionLength, ins.cycles);
+
+			if (operand == nullptr)
+			{
+				printf("OPERAND: nullptr\n");
+			}
+			else
+			{
+				printf("OPERAND: %X\n", *operand);
+			}
+
+			printf("STATUS (NO-BDIZC): ");
+
+			for (int i = 0; i < 8; i++)
+			{
+				uint8_t bit = ((p >> 7) - i) & 0b00000001;
+				printf("%d", bit);
+			}
+
+			printf(" | $%X\n", p);
+
+			printf("A: %d | $%X\n", a, a);
+			printf("X: %d | $%X\n", x, x);
+			printf("Y: %d | $%X\n", y, y);
+			printf("SP: %d | $%X\n", sp, sp);
+			printf("CYCLE: %d\n", totalCycles);
+			printf("------------------------------\n\n");
 		}
-		else
+
+		if (DEBUG_LOG)
 		{
-			printf("OPERAND: %X\n", *operand);
+			char buf[500];
+			sprintf_s(buf, "%04X  %02X  %s\t\tA:%02X X:%02X Y:%02X P:%02X SP:%02X\tCYC:%d\n", pc, opcode, ins.instruction.c_str(), a, x, y, p, sp, totalCycles);
+			logger.write(buf);
 		}
-
-		printf("STATUS (NO-BDIZC): ");
-
-		for (int i = 0; i < 8; i++)
-		{
-			uint8_t bit = ((p >> 7) - i) & 0b00000001;
-			printf("%d", bit);
-		}
-
-		printf(" | $%X\n", p);
-
-		printf("A: %d | $%X\n", a, a);
-		printf("X: %d | $%X\n", x, x);
-		printf("Y: %d | $%X\n", y, y);
-		printf("SP: %d | $%X\n", sp, sp);
-		printf("CYCLE: %d\n", totalCycles);
-		printf("------------------------------\n\n");
-
-		char buf[500];
-		sprintf_s(buf, "%04X  %02X  %s\t\tA:%02X X:%02X Y:%02X P:%02X SP:%02X\tCYC:%d\n", pc, opcode, ins.instruction.c_str(), a, x, y, p, sp, totalCycles);
-		logger.write(buf);
 		// ---- Debug
 
 		int runExtra = (this->*ins.run)();
@@ -400,12 +414,20 @@ int CPU::XXX()
 // A + M + C -> A, C (NZCV); Add with carry
 int CPU::ADC()
 {
-	uint8_t result = a + *operand + hasFlag(Flag::Carry);
+	uint16_t result = a + *operand + hasFlag(Flag::Carry);
 
 	checkNegative(result);
 	checkZero(result);
-	checkCarry(a + *operand + hasFlag(Flag::Carry));
 	checkOverflow(a, result);
+
+	if (result > 0xFF)
+	{
+		setFlag(Flag::Carry);
+	}
+	else
+	{
+		clearFlag(Flag::Carry);
+	}
 
 	a = result;
 
@@ -428,11 +450,19 @@ int CPU::AND()
 // M << 1 -> M; (NZC); Shift left one bit
 int CPU::ASL()
 {
-	*operand = *operand << 1;
+	uint16_t result = *operand << 1;
 	
-	checkNegative(*operand);
-	checkZero(*operand);
-	checkCarry(*operand << 1);
+	checkNegative(result);
+	checkZero(result);
+	
+	if (result > 0xFF)
+	{
+		setFlag(Flag::Carry);
+	}
+	else
+	{
+		clearFlag(Flag::Carry);
+	}
 
 	return 0;
 }
@@ -936,18 +966,14 @@ int CPU::RTS()
 // A - M - C -> A; (NZCV); Subtract memory from accumulator with borrow
 int CPU::SBC()
 {
-	// TODO: this could be wrong
-	uint8_t result = a - *operand - hasFlag(Flag::Carry);
+	// To perform subtraction, can invert all bits of operand (giving -operand - 1) and pass to ADC
+	uint8_t normalOperand = *operand;
+	*operand = ~(*operand);
+	
+	int ret = ADC();
+	*operand = normalOperand;
 
-	checkNegative(result);
-	checkZero(result);
-	checkCarry(a - *operand - hasFlag(Flag::Carry));
-	checkOverflow(a, result);
-
-	a = result;
-
-	// ABX, ABY, IDY add one cycle if page boundary crossed
-	return 1;
+	return ret;
 }
 
 // 1 -> C; (C); Set carry flag
