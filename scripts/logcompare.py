@@ -4,7 +4,7 @@ import sys
 log_folder = '..\\logs\\'
 
 EXPECTED_LOG = 'expected.log'
-TEST_LOG = 'cpu.txt'
+TEST_LOG = 'cpu.log'
 REGEXES = [
     '(?P<value>^\w{4}  [0-9A-F]{2})', # PC + instruction byte
     'A:(?P<value>[0-9A-F]{2})', # Acumulator
@@ -31,7 +31,17 @@ def main():
         expected_line = expected.readline()
         test_line = test.readline()
 
+        if len(expected_line) == 0 and len(test_line) == 0:
+            break
+            
         if len(expected_line) == 0 or len(test_line) == 0:
+            print('Error, found mismatched log at line ' + str(line_number))
+            print()
+            print('EXPECTED:')
+            print(expected_line)
+            print('GOT:')
+            print(test_line)
+
             break
         
         for regex in REGEXES:

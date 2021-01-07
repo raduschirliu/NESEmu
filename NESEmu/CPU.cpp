@@ -10,7 +10,7 @@
 #define _XXX() { "XXX", &CPU::XXX, &CPU::IMP, 2 }
 
 // Initialize CPU
-CPU::CPU(Memory *memory) : logger("C:\\Dev\\Projects\\nesemu\\logs\\cpu.txt"), memory(memory)
+CPU::CPU(Memory *memory) : logger("C:\\Dev\\Projects\\nesemu\\logs\\cpu.log"), memory(memory)
 {
 	if (memory == nullptr)
 	{
