@@ -8,6 +8,8 @@ int main()
     
     ROM rom("C:\\Dev\\Projects\\nesemu\\roms\\nestest.nes");
     rom.read(&memory);
+    printf("Mapper: %u\n", rom.getMapperID());
+    printf("ROM size: %u\n", rom.header.prgBanks * 0x4000);
 
     CPU cpu(&memory);
     cpu.setPC(0xC000);
@@ -19,6 +21,10 @@ int main()
     }
 
     printf("Executed 26554 cycles of NESTest ROM\n");
+
+    printf("Test results:\n");
+    printf("\t0x02: %02X\n", memory.read(0x02));
+    printf("\t0x03: %02X\n", memory.read(0x03));
 
     return 0;
 }

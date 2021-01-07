@@ -38,7 +38,9 @@ void ROM::read(Memory *memory)
 		// Set mirroring
 		mirroring = (Mirroring)(header.mapperFlags1 & 0x1);
 
-		// TEST: write all data to memory
+		// TODO: Implement mappers
+		// TEST: Write 0x4000 bytes (16KB) to memory, mirrored at 0x8000-0xBFFF and 0xC000-0xFFFF
+		// Equivalent to using mapper 0
 		uint16_t offset = 0;
 		uint8_t byte;
 
@@ -47,15 +49,15 @@ void ROM::read(Memory *memory)
 		while (!stream.eof() && offset < 0x4000)
 		{
 			stream.read((char *)&byte, 1);
-			//memory->set(0x8000 + offset, byte);
+			memory->set(0x8000 + offset, byte);
 			memory->set(0xC000 + offset, byte);
 
-			//printf("%X -> %X\n", 0xC000 + offset, byte);
 			offset++;
 		}
 
-		printf("%X, %X\n", 0x8000 + offset, 0xC000 + offset);
-		printf("Done, loaded %d bytes\n\n", offset);
+		printf("Done, loaded %d bytes in memory locations:\n", offset);
+		printf("\t%X - %X\n", 0x8000, 0x8000 + offset - 1);
+		printf("\t%X - %X\n\n", 0xC000, 0xC000 + offset - 1);
 	}
 	else
 	{
