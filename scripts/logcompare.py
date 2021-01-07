@@ -16,6 +16,8 @@ REGEXES = [
 ]
 
 def main():
+    global log_folder
+    
     if len(sys.argv) == 2:
         log_folder = sys.argv[1]
 
