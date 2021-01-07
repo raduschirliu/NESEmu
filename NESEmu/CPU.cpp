@@ -8,6 +8,12 @@
 // Initialize CPU
 CPU::CPU(Memory *memory) : logger("C:\\Dev\\Projects\\nesemu\\logs\\cpu.txt"), memory(memory)
 {
+	if (memory == nullptr)
+	{
+		printf("Invalid memory pointer provided to CPU\n");
+		return;
+	}
+
 	a = 0x00;
 	x = 0x00;
 	y = 0x00;
@@ -235,6 +241,14 @@ int CPU::ZPG()
 	uint16_t address = memory->read(pc + 1);
 	operand = memory->get(address);
 	instructionLength++;
+
+	/*
+	std::string str = "Memory address: " + std::to_string(address);
+	str += "\n";
+	str += "Operand value: " + std::to_string(*operand);
+	str += "\n";
+	logger.write(str);
+	*/
 
 	return 0;
 }
@@ -466,6 +480,12 @@ int CPU::BIT()
 
 	uint8_t bit6 = 0b0100000 & *operand;
 	p ^= (-bit6 ^ p) & (1 << 6);
+
+	std::string str = "Operand: " + std::to_string(*operand);
+	str += "\nBit 7: " + std::to_string(bit7);
+	str += "\nBit 6: " + std::to_string(bit6);
+	str += "\n";
+	logger.write(str);
 
 	// Operand and accumulator ANDed to get zero flag value
 	if ((a & *operand) == 0)

@@ -10,6 +10,12 @@ ROM::ROM(std::string path)
 
 void ROM::read(Memory *memory)
 {
+	if (memory == nullptr)
+	{
+		printf("Invalid memory pointer provided to ROM\n");
+		return;
+	}
+
 	std::ifstream stream;
 	stream.open(path, std::ifstream::binary);
 
