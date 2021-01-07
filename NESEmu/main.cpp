@@ -12,7 +12,7 @@ int main()
     CPU cpu(&memory);
     cpu.setPC(0xC000);
 
-    // 26554 cycles for entire ROM
+    // 26554 cycles for entire NESTest ROM
     for (int i = 0; i < 26554; i++)
     {
         cpu.step();

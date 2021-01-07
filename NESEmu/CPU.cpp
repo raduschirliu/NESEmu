@@ -86,7 +86,7 @@ void CPU::step()
 
 		for (int i = 0; i < 8; i++)
 		{
-			uint8_t bit = (p >> 7 - i) & 0b00000001;
+			uint8_t bit = ((p >> 7) - i) & 0b00000001;
 			printf("%d", bit);
 		}
 
@@ -106,6 +106,7 @@ void CPU::step()
 
 		int runExtra = (this->*ins.run)();
 
+		// TODO: Fix cycle calculation, runs behind
 		pc += instructionLength;
 		cycles += ins.cycles;
 
@@ -243,11 +244,9 @@ int CPU::ZPG()
 	instructionLength++;
 
 	/*
-	std::string str = "Memory address: " + std::to_string(address);
-	str += "\n";
-	str += "Operand value: " + std::to_string(*operand);
-	str += "\n";
-	logger.write(str);
+	char buff[500];
+	sprintf_s(buff, "\tMemory address: %02X\n\tMemory address value: %02X\n", address, *operand);
+	logger.write(buff);
 	*/
 
 	return 0;
@@ -471,21 +470,21 @@ int CPU::BEQ()
 	return 0;
 }
 
-// op6-> V, op7 -> N, A and M; (NZV); Operand bits 6/7 transfered to status bits 6/7. Operand anded with accumulator
+// op6 -> V, op7 -> N, A and M; (NZV); Operand bits 6/7 transfered to status bits 6/7. Operand anded with accumulator
 int CPU::BIT()
 {
 	// Bits 7 and 6 transferred to the status register
-	uint8_t bit7 = 0b1000000 & *operand;
-	p ^= (-bit7 ^ p) & (1 << 7);
+	uint8_t bit7 = !!(*operand >> 7);
+	p ^= (-bit7 ^ p) & (1UL << 7);
 
-	uint8_t bit6 = 0b0100000 & *operand;
-	p ^= (-bit6 ^ p) & (1 << 6);
+	uint8_t bit6 = !!((*operand >> 6) & 0b01);
+	p ^= (-bit6 ^ p) & (1UL << 6);
 
-	std::string str = "Operand: " + std::to_string(*operand);
-	str += "\nBit 7: " + std::to_string(bit7);
-	str += "\nBit 6: " + std::to_string(bit6);
-	str += "\n";
-	logger.write(str);
+	/*
+	char buff[500];
+	sprintf_s(buff, "\tOperand: %02X\n\tBit 7: %02X\n\tBit 6: %02X\n\tacc & op: %02X\n", *operand, bit7, bit6, (a & *operand));
+	logger.write(buff);
+	*/
 
 	// Operand and accumulator ANDed to get zero flag value
 	if ((a & *operand) == 0)
@@ -602,7 +601,7 @@ int CPU::CMP()
 {
 	uint8_t result = a - *operand;
 
-	printf("A: %d\nM: %d\nR: %d\n", a, *operand, result);
+	//printf("A: %d\nM: %d\nR: %d\n", a, *operand, result);
 
 	checkNegative(result);
 	checkZero(result);
@@ -867,10 +866,17 @@ int CPU::PLA()
 // Pull P; (); Pull processor status from stack
 int CPU::PLP()
 {
+	// Bits 4 and 5 are kept same from prior to pulling status from stack
+	uint8_t bit4 = hasFlag(Flag::Break);
+	uint8_t bit5 = hasFlag(Flag::Unused);
+
+	// Read new status from stack
 	p = memory->read(sp);
 	sp++;
 
-	// TODO: Ignore bits 4 and 5
+	// Apply old bits to 4 and 5
+	p ^= (-bit4 ^ p) & (1UL << 4);
+	p ^= (-bit5 ^ p) & (1UL << 5);
 
 	return 0;
 }
@@ -878,7 +884,7 @@ int CPU::PLP()
 // M << 1 <- C -> M; (NZC); Rotate one bit left with carry from right
 int CPU::ROL()
 {
-	int16_t signedOperand = *operand << 1 + hasFlag(Flag::Carry);
+	int16_t signedOperand = (*operand << 1) + hasFlag(Flag::Carry);
 	*operand = *operand << 1 + hasFlag(Flag::Carry);
 
 	checkNegative(*operand);
