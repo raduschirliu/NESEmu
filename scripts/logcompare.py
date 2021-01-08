@@ -50,6 +50,16 @@ def main():
             expected_match = re.search(regex, expected_line)
             test_match = re.search(regex, test_line)
 
+            if expected_match == None or test_match == None:
+                print('Error, something broke at line ' + str(line_number))
+                print()
+                print('EXPECTED:')
+                print(expected_line)
+                print('GOT:')
+                print(test_line)
+                
+                break
+
             if expected_match.group('value') != test_match.group('value'):
                 print('Error, found mismatched log at line ' + str(line_number))
                 print()

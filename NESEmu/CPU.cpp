@@ -8,6 +8,7 @@
 // Convenience macros for defining CPU instructions
 #define _I(NAME, RUN, MODE, CYCLES) { NAME, &CPU::RUN, &CPU::MODE, CYCLES }
 #define _XXX() { "XXX", &CPU::XXX, &CPU::IMP, 2 }
+#define SP_ADDRESS (sp + 0x0100)
 
 // Initialize CPU
 CPU::CPU(Memory *memory) : logger("C:\\Dev\\Projects\\nesemu\\logs\\cpu.log"), memory(memory)
@@ -23,7 +24,7 @@ CPU::CPU(Memory *memory) : logger("C:\\Dev\\Projects\\nesemu\\logs\\cpu.log"), m
 	y = 0x00;
 	p = 0x00;
 	pc = 0x0000;
-	sp = 0x01FF;
+	sp = 0xFF;
 	opcode = 0x00;
 	totalCycles = 0;
 	cycles = 0;
@@ -256,12 +257,6 @@ int CPU::ZPG()
 	uint16_t address = memory->read(pc + 1);
 	operand = memory->get(address);
 	instructionLength++;
-
-	/*
-	char buff[500];
-	sprintf_s(buff, "\tMemory address: %02X\n\tMemory address value: %02X\n", address, *operand);
-	logger.write(buff);
-	*/
 
 	return 0;
 }
@@ -510,12 +505,6 @@ int CPU::BIT()
 	uint8_t bit6 = !!((*operand >> 6) & 0b01);
 	p ^= (-bit6 ^ p) & (1UL << 6);
 
-	/*
-	char buff[500];
-	sprintf_s(buff, "\tOperand: %02X\n\tBit 7: %02X\n\tBit 6: %02X\n\tacc & op: %02X\n", *operand, bit7, bit6, (a & *operand));
-	logger.write(buff);
-	*/
-
 	// Operand and accumulator ANDed to get zero flag value
 	if ((a & *operand) == 0)
 	{
@@ -565,12 +554,13 @@ int CPU::BPL()
 // ; (I); Force interrupt, push PC+2 and status pointer
 int CPU::BRK()
 {
-	memory->set(sp - 1, pc >> 8); // PC high byte
-	memory->set(sp - 2, pc & 0x00FF); // PC low byte
-	memory->set(sp - 3, p); // Status
+	memory->set(SP_ADDRESS, pc >> 8); // PC high byte
+	memory->set(SP_ADDRESS - 1, pc & 0x00FF); // PC low byte
+	memory->set(SP_ADDRESS - 2, p); // Status
 	
 	setFlag(Flag::Interrupt);
 
+	// Set SP to next empty slot
 	sp -= 3;
 
 	return 0;
@@ -780,8 +770,8 @@ int CPU::JMP()
 int CPU::JSR()
 {
 	uint16_t returnAddress = pc + instructionLength;
-	memory->set(sp - 1, (returnAddress & 0xFF00) >> 8);
-	memory->set(sp - 2, returnAddress & 0x00FF);
+	memory->set(SP_ADDRESS, (returnAddress & 0xFF00) >> 8);
+	memory->set(SP_ADDRESS - 1, returnAddress & 0x00FF);
 	sp -= 2;
 
 	pc = jumpTarget - instructionLength;
@@ -859,8 +849,14 @@ int CPU::ORA()
 // Push A; (); Push accumulator on stack
 int CPU::PHA()
 {
-	sp -= 1;
-	memory->set(sp, a);
+	/*
+	char buf[255];
+	sprintf_s(buf, "\tPushed accumulator to: %04X = %02X\n", SP_ADDRESS, a);
+	logger.write(buf);
+	*/
+
+	memory->set(SP_ADDRESS, a);
+	sp--;
 
 	return 0;
 }
@@ -873,8 +869,8 @@ int CPU::PHP()
 	setFlag(Flag::Break);
 	setFlag(Flag::Unused);
 
-	sp -= 1;
-	memory->set(sp, p);
+	memory->set(SP_ADDRESS, p);
+	sp--;
 
 	p = originalP;
 
@@ -884,8 +880,8 @@ int CPU::PHP()
 // Pull A; (NZ); Pull acumulator from stack
 int CPU::PLA()
 {
-	a = memory->read(sp);
 	sp++;
+	a = memory->read(SP_ADDRESS);
 
 	checkZero(a);
 	checkNegative(a);
@@ -901,8 +897,8 @@ int CPU::PLP()
 	uint8_t bit5 = hasFlag(Flag::Unused);
 
 	// Read new status from stack
-	p = memory->read(sp);
 	sp++;
+	p = memory->read(SP_ADDRESS);
 
 	// Apply old bits to 4 and 5
 	p ^= (-bit4 ^ p) & (1UL << 4);
@@ -940,13 +936,21 @@ int CPU::ROR()
 // Pull P, Pull PC; (); Return from interrupt
 int CPU::RTI()
 {
-	// TODO: Ignore bits 5 & 4
+	// Bits 4 and 5 are kept same from prior to pulling status from stack
+	uint8_t bit4 = hasFlag(Flag::Break);
+	uint8_t bit5 = hasFlag(Flag::Unused);
 
-	p = memory->read(sp);
+	// Read new status from stack
 	sp++;
+	p = memory->read(SP_ADDRESS);
 
-	pc = memory->read(sp);
+	// Apply old bits to 4 and 5
+	p ^= (-bit4 ^ p) & (1UL << 4);
+	p ^= (-bit5 ^ p) & (1UL << 5);
+
+	// Read PC from stack
 	sp++;
+	pc = memory->read(SP_ADDRESS);
 
 	return 0;
 }
@@ -954,8 +958,8 @@ int CPU::RTI()
 // Pull PC, PC + 1 -> PC; (); Return from subroutine
 int CPU::RTS()
 {
-	uint16_t returnAddress = memory->read(sp + 1) << 8;
-	returnAddress |= memory->read(sp);
+	uint16_t returnAddress = memory->read(SP_ADDRESS + 2) << 8;
+	returnAddress |= memory->read(SP_ADDRESS + 1);
 
 	pc = returnAddress - instructionLength;
 	sp += 2;
