@@ -829,7 +829,15 @@ int CPU::LDY()
 int CPU::LSR()
 {
 	// Original bit 0 shifted into carry
-	setFlagValue(Flag::Carry, *operand & 0x01);
+	//setFlagValue(Flag::Carry, !!(*operand & 0x01));
+	if (!!(*operand & 0x01) == 0)
+	{
+		clearFlag(Flag::Carry);
+	}
+	else
+	{
+		setFlag(Flag::Carry);
+	}
 
 	// Shift operand to right 1 bit
 	*operand >>= 1;
