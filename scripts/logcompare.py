@@ -33,6 +33,10 @@ def main():
         expected_line = expected.readline()
         test_line = test.readline()
 
+        # Ignore lines that start with tabs, are meant for debug
+        while test_line.startswith('\t'):
+            test_line = test.readline()
+
         if len(expected_line) == 0 and len(test_line) == 0:
             break
             
