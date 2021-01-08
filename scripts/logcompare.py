@@ -38,7 +38,7 @@ def main():
             test_line = test.readline()
 
         if len(expected_line) == 0 and len(test_line) == 0:
-            break
+            return
             
         if len(expected_line) == 0 or len(test_line) == 0:
             print('Error, found mismatched log at line ' + str(line_number))
@@ -48,7 +48,7 @@ def main():
             print('GOT:')
             print(test_line)
 
-            break
+            return
         
         for regex in REGEXES:
             expected_match = re.search(regex, expected_line)
@@ -62,7 +62,7 @@ def main():
                 print('GOT:')
                 print(test_line)
                 
-                break
+                return
 
             if expected_match.group('value') != test_match.group('value'):
                 print('Error, found mismatched log at line ' + str(line_number))
