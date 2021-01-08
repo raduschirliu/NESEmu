@@ -927,12 +927,26 @@ int CPU::PLP()
 // M << 1 <- C -> M; (NZC); Rotate one bit left with carry from right
 int CPU::ROL()
 {
-	int16_t signedOperand = (*operand << 1) + hasFlag(Flag::Carry);
-	*operand = *operand << 1 + hasFlag(Flag::Carry);
+	// Get original bit 7 for new carry
+	uint8_t bit7 = !!(*operand & 0x80);
+	*operand <<= 1;
 
+	// Set old carry to bit 1
+	*operand |= hasFlag(Flag::Carry);
+
+	// Set new carry to original bit 7
+	if (bit7 == 0)
+	{
+		clearFlag(Flag::Carry);
+	}
+	else
+	{
+		setFlag(Flag::Carry);
+	}
+
+	// Other flag checks
 	checkNegative(*operand);
 	checkZero(*operand);
-	checkCarry(signedOperand);
 
 	return 0;
 }
@@ -940,12 +954,26 @@ int CPU::ROL()
 // C -> M >> 1 -> M; (NZC); Rotate one bit right with carry from left
 int CPU::ROR()
 {
-	int16_t signedOperand = (*operand >> 1) | (hasFlag(Flag::Carry) << 7);
-	*operand = (*operand >> 1) | (hasFlag(Flag::Carry) << 7);
+	// Get original bit 0 for new carry
+	uint8_t bit0 = !!(*operand & 0x01);
+	*operand >>= 1;
 
+	// Set old carry to bit 7
+	*operand |= (hasFlag(Flag::Carry) << 7);
+
+	// Set new carry to original bit 0
+	if (bit0 == 0)
+	{
+		clearFlag(Flag::Carry);
+	}
+	else
+	{
+		setFlag(Flag::Carry);
+	}
+
+	// Other flag checks
 	checkNegative(*operand);
 	checkZero(*operand);
-	checkCarry(signedOperand);
 
 	return 0;
 }
