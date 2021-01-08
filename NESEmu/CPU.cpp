@@ -769,11 +769,11 @@ int CPU::JMP()
 // Push PC + 2, Target -> PC; (); Jump to new location, saving return address
 int CPU::JSR()
 {
-	uint16_t returnAddress = pc + instructionLength;
+	uint16_t returnAddress = pc + 2;
 	memory->set(SP_ADDRESS, (returnAddress & 0xFF00) >> 8);
 	memory->set(SP_ADDRESS - 1, returnAddress & 0x00FF);
-	sp -= 2;
 
+	sp -= 2;
 	pc = jumpTarget - instructionLength;
 
 	return 0;
@@ -849,12 +849,6 @@ int CPU::ORA()
 // Push A; (); Push accumulator on stack
 int CPU::PHA()
 {
-	/*
-	char buf[255];
-	sprintf_s(buf, "\tPushed accumulator to: %04X = %02X\n", SP_ADDRESS, a);
-	logger.write(buf);
-	*/
-
 	memory->set(SP_ADDRESS, a);
 	sp--;
 
@@ -948,9 +942,14 @@ int CPU::RTI()
 	p ^= (-bit4 ^ p) & (1UL << 4);
 	p ^= (-bit5 ^ p) & (1UL << 5);
 
-	// Read PC from stack
-	sp++;
-	pc = memory->read(SP_ADDRESS);
+	// Read PC from stack (in high, low order)
+	uint16_t returnAddress = memory->read(SP_ADDRESS + 2) << 8;
+	returnAddress |= memory->read(SP_ADDRESS + 1);
+
+	// PC should be set to return address pulled from stack
+	// But PC will be automatically incremented later, so decrement now to negate
+	pc = returnAddress - 1;
+	sp += 2;
 
 	return 0;
 }
@@ -958,10 +957,13 @@ int CPU::RTI()
 // Pull PC, PC + 1 -> PC; (); Return from subroutine
 int CPU::RTS()
 {
+	// Read PC from stack (in high, low order)
 	uint16_t returnAddress = memory->read(SP_ADDRESS + 2) << 8;
 	returnAddress |= memory->read(SP_ADDRESS + 1);
 
-	pc = returnAddress - instructionLength;
+	// PC should be set to returnAddress + 1, but is automatically incremented later
+	// Set PC to just return address to negate
+	pc = returnAddress;
 	sp += 2;
 
 	return 0;
