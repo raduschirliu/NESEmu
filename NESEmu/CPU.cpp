@@ -452,22 +452,24 @@ int CPU::AND()
 	return 1;
 }
 
-// M << 1 -> M; (NZC); Shift left one bit
+// M << 1 -> M; (NZC); Shift left by one bit
 int CPU::ASL()
 {
-	uint16_t result = *operand << 1;
-	
-	checkNegative(result);
-	checkZero(result);
-	
-	if (result > 0xFF)
-	{
-		setFlag(Flag::Carry);
-	}
-	else
+	// Shift original bit 7 into carry
+	if (!!(*operand & 0x80) == 0)
 	{
 		clearFlag(Flag::Carry);
 	}
+	else
+	{
+		setFlag(Flag::Carry);
+	}
+
+	// Shift operand left one bit
+	*operand <<= 1;
+	
+	checkNegative(*operand);
+	checkZero(*operand);
 
 	return 0;
 }
