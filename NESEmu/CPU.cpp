@@ -146,6 +146,16 @@ void CPU::clearFlag(Flag flag)
 	p &= ~(uint8_t)flag;
 }
 
+void CPU::setStatusBit(uint8_t bit, uint8_t value)
+{
+	p ^= (-value ^ p) & (1UL << bit);
+}
+
+void CPU::setFlagValue(Flag flag, uint8_t value)
+{
+	setStatusBit((uint8_t)flag, value);
+}
+
 bool CPU::hasFlag(Flag flag) const
 {
 	return (p & (uint8_t)flag) > 0;
@@ -500,10 +510,10 @@ int CPU::BIT()
 {
 	// Bits 7 and 6 transferred to the status register
 	uint8_t bit7 = !!(*operand >> 7);
-	p ^= (-bit7 ^ p) & (1UL << 7);
+	setStatusBit(7, bit7);
 
 	uint8_t bit6 = !!((*operand >> 6) & 0b01);
-	p ^= (-bit6 ^ p) & (1UL << 6);
+	setStatusBit(6, bit6);
 
 	// Operand and accumulator ANDed to get zero flag value
 	if ((a & *operand) == 0)
@@ -815,14 +825,17 @@ int CPU::LDY()
 	return 1;
 }
 
-// M >> 1 -> M; (NZC); Left shift operand
+// M >> 1 -> M; (NZC); Logically right shift operand
 int CPU::LSR()
 {
+	// Original bit 0 shifted into carry
+	setFlagValue(Flag::Carry, *operand & 0x01);
+
+	// Shift operand to right 1 bit
 	*operand >>= 1;
 
 	clearFlag(Flag::Negative);
 	checkZero(*operand);
-	checkCarry(*operand);
 
 	return 0;
 }
@@ -895,8 +908,8 @@ int CPU::PLP()
 	p = memory->read(SP_ADDRESS);
 
 	// Apply old bits to 4 and 5
-	p ^= (-bit4 ^ p) & (1UL << 4);
-	p ^= (-bit5 ^ p) & (1UL << 5);
+	setStatusBit(4, bit4);
+	setStatusBit(5, bit5);
 
 	return 0;
 }
@@ -939,8 +952,8 @@ int CPU::RTI()
 	p = memory->read(SP_ADDRESS);
 
 	// Apply old bits to 4 and 5
-	p ^= (-bit4 ^ p) & (1UL << 4);
-	p ^= (-bit5 ^ p) & (1UL << 5);
+	setStatusBit(4, bit4);
+	setStatusBit(5, bit5);
 
 	// Read PC from stack (in high, low order)
 	uint16_t returnAddress = memory->read(SP_ADDRESS + 2) << 8;

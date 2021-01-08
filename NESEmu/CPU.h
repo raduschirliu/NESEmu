@@ -43,6 +43,12 @@ public:
 	// Clear status flag
 	void clearFlag(Flag flag);
 
+	// Set single status bit value (value MUST be 0/1)
+	void setStatusBit(uint8_t bit, uint8_t value);
+
+	// Set single status flag value (value MUST be 0/1)
+	void setFlagValue(Flag flag, uint8_t value);
+
 	// Returns whether status flag is set or not
 	bool hasFlag(Flag flag) const;
 
