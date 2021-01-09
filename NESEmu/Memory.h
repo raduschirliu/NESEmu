@@ -6,6 +6,7 @@ class Memory
 {
 public:
 	Memory();
+	~Memory();
 
 	// Return pointer to a place in memory
 	uint8_t *get(uint16_t address);

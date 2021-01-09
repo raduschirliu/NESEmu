@@ -3,11 +3,22 @@
 
 Memory::Memory()
 {
+	// Allocate memory arrays for all NES components
 	cpuMem = new uint8_t[2048];
 	ppuMem = new uint8_t[8];
 	apuMem = new uint8_t[24];
 	testMem = new uint8_t[8];
 	romMem = new uint8_t[49120];
+}
+
+Memory::~Memory()
+{
+	// Deallocate all memory arrays
+	delete[] cpuMem;
+	delete[] ppuMem;
+	delete[] apuMem;
+	delete[] testMem;
+	delete[] romMem;
 }
 
 uint8_t *Memory::get(uint16_t address)
