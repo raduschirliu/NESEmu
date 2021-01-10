@@ -240,6 +240,7 @@ int CPU::IMP()
 {
 	// No operand
 	operand = nullptr;
+	instructionLength = 1;
 
 	return 0;
 }
@@ -249,6 +250,7 @@ int CPU::ACC()
 {
 	// Operand is accumulator
 	operand = &a;
+	instructionLength = 1;
 
 	return 0;
 }
@@ -258,7 +260,7 @@ int CPU::IMM()
 {
 	// Operand given in 1 byte after instruction
 	operand = memory->get(pc + 1);
-	instructionLength++;
+	instructionLength = 2;
 
 	return 0;
 }
@@ -269,7 +271,7 @@ int CPU::ZPG()
 	// Operand is a memory address in range $0000-$00FF, in 1 byte after instruction
 	uint16_t address = memory->read(pc + 1);
 	operand = memory->get(address);
-	instructionLength++;
+	instructionLength = 2;
 
 	return 0;
 }
@@ -280,7 +282,7 @@ int CPU::ZPX()
 	// Operand is a memory address in range $0000-$00FF added to X register
 	uint16_t address = memory->read(pc + 1) + x;
 	operand = memory->get(address);
-	instructionLength++;
+	instructionLength = 2;
 
 	// TODO: Take zero page wrap-around into account
 
@@ -293,7 +295,7 @@ int CPU::ZPY()
 	// Operand is a memory address in range $0000-$00FF added to Y register
 	uint16_t address = memory->read(pc + 1) + y;
 	operand = memory->get(address);
-	instructionLength++;
+	instructionLength = 2;
 
 	return 0;
 }
@@ -303,7 +305,7 @@ int CPU::REL()
 {
 	// Operand is a SIGNED bit after the instruction
 	operand = memory->get(pc + 1);
-	instructionLength++;
+	instructionLength = 2;
 
 	return 1;
 }
@@ -318,8 +320,7 @@ int CPU::ABS()
 
 	// Jump target is the 16-bit address after the instruction
 	jumpTarget = address;
-
-	instructionLength += 2;
+	instructionLength = 3;
 
 	return 0;
 }
@@ -331,7 +332,7 @@ int CPU::ABX()
 	uint16_t address = memory->read(pc + 2) << 8;
 	address |= memory->read(pc + 1);
 	operand = memory->get(address + x);
-	instructionLength += 2;
+	instructionLength = 3;
 
 	// TODO: Deal with carry
 	// TODO: Check if violating page boundary
@@ -345,7 +346,7 @@ int CPU::ABY()
 	uint16_t address = memory->read(pc + 2) << 8;
 	address |= memory->read(pc + 1);
 	operand = memory->get(address + y);
-	instructionLength += 2;
+	instructionLength = 3;
 
 	// TODO: Deal with carry
 	// TODO: Check if violating page boundary
@@ -364,7 +365,7 @@ int CPU::IND()
 
 	// Operand unused
 	operand = nullptr;
-	instructionLength += 2;
+	instructionLength = 3;
 
 	return 0;
 }
@@ -382,7 +383,7 @@ int CPU::IDX()
 	address |= memory->read(pointer);
 
 	operand = memory->get(address);
-	instructionLength += 1;
+	instructionLength = 2;
 
 	return 0;
 }
@@ -400,7 +401,7 @@ int CPU::IDY()
 	address += y;
 
 	operand = memory->get(address);
-	instructionLength += 1;
+	instructionLength = 2;
 
 	return 1;
 }
