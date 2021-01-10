@@ -122,6 +122,7 @@ void CPU::step()
 		int runExtra = (this->*ins.run)();
 
 		// TODO: Fix cycle calculation, runs behind
+		// Likely due to not adding extra cycles on page boundary being crossed
 		pc += instructionLength;
 		cycles += ins.cycles;
 
@@ -132,6 +133,8 @@ void CPU::step()
 
 		cycles--;
 	}
+
+	printf("PC: %04X\n", pc);
 
 	totalCycles++;
 }
@@ -369,40 +372,35 @@ int CPU::IND()
 // Indirect, X
 int CPU::IDX()
 {
-	// TODO: Test this
-
-	// Read the pointer address after the instruction and add X to it
-	uint16_t pointer = memory->read(pc + 2) << 8;
-	pointer |= memory->read(pc + 1);
+	// Read the pointer address after the instruction and add X register to it
+	uint8_t pointer = memory->read(pc + 1);
 	pointer += x;
 
-	// Read the address located at the pointer
-	uint16_t address = memory->read(pc + 2) << 8;
-	address |= memory->read(pc + 1);
+	// Read the address located at the pointer (high-byte first)
+	// Also ensuring that (pointer + 1) for fetching high byte follows zero-page wrap-around
+	uint16_t address = memory->read((pointer + 1) & 0xFF) << 8;
+	address |= memory->read(pointer);
 
 	operand = memory->get(address);
-	instructionLength += 2;
+	instructionLength += 1;
 
-	// TODO: Take zero page wrap-around into account
 	return 0;
 }
 
 // Indirect, Y [+]
 int CPU::IDY()
 {
-	// TODO: Test this
-
 	// Read the pointer address after the instruction
-	uint16_t pointer = memory->read(pc + 2) << 8;
-	pointer |= memory->read(pc + 1);
+	uint8_t pointer = memory->read(pc + 1);
+	pointer += x;
 
-	// Read the address located at the pointer, and add Y to it
-	uint16_t address = memory->read(pc + 2) << 8;
-	address |= memory->read(pc + 1);
+	// Read the address located at the pointer (high-byte first), and add register Y to it
+	uint16_t address = memory->read(pointer + 1) << 8;
+	address |= memory->read(pointer);
 	address += y;
 
 	operand = memory->get(address);
-	instructionLength += 2;
+	instructionLength += 1;
 
 	return 1;
 }
