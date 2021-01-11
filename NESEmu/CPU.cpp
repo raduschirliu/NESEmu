@@ -395,7 +395,8 @@ int CPU::IDY()
 	uint8_t pointer = memory->read(pc + 1);
 
 	// Read the address located at the pointer (high-byte first), and add register Y to it
-	uint16_t address = memory->read(pointer + 1) << 8;
+	// Also ensuring that (pointer + 1) for fetching high byte follows zero-page wrap-around
+	uint16_t address = memory->read((pointer + 1) & 0xFF) << 8;
 	address |= memory->read(pointer);
 	address += y;
 
