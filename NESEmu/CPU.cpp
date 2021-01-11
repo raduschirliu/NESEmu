@@ -393,7 +393,6 @@ int CPU::IDY()
 {
 	// Read the pointer address after the instruction
 	uint8_t pointer = memory->read(pc + 1);
-	pointer += x;
 
 	// Read the address located at the pointer (high-byte first), and add register Y to it
 	uint16_t address = memory->read(pointer + 1) << 8;
