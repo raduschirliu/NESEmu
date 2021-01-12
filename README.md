@@ -7,7 +7,7 @@ This project is not focused on being a perfectly accurate emulation of the NES a
 
 #### Planned features
 
-- [ ] 6502 CPU
+- [ ] CPU
     - [x] Registers and memory map
     - [x] All addressing modes
     - [ ] All official opcodes
@@ -37,3 +37,8 @@ This project is not focused on being a perfectly accurate emulation of the NES a
     - [ ] Stepping through CPU instructions
     - [ ] Palette viewer
     - [ ] Pattern table viewer
+
+## Building
+
+The project is being developed in C++ using Visual Studio 2019, and currently has no external dependencies.  
+It has so far only been tested under Windows 10, and can be built from within VS after the project has been imported.
