@@ -29,6 +29,9 @@ CPU::CPU(Memory *memory) : logger("C:\\Dev\\Projects\\nesemu\\logs\\cpu.log"), m
 	totalCycles = 0;
 	cycles = 0;
 
+	// Find reset vector at 0xFFFC, and set initial PC
+	pc = (memory->read(0xFFFD) << 8) | memory->read(0xFFFC);
+
 	// TEST
 	p = 0x24;
 	sp = 0xFD;

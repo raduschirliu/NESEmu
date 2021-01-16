@@ -8,10 +8,13 @@ int main()
     
     ROM rom("C:\\Dev\\Projects\\nesemu\\roms\\nestest.nes");
     rom.read(&memory);
+
+    CPU cpu(&memory);
+
     printf("Mapper: %u\n", rom.getMapperID());
     printf("ROM size: %u\n", rom.header.prgBanks * 0x4000);
 
-    CPU cpu(&memory);
+    // Set PC to 0xC000 to put NESTest rom into "automation" mode
     cpu.setPC(0xC000);
 
     // 26554 cycles for entire NESTest ROM
@@ -22,6 +25,7 @@ int main()
 
     printf("Executed 26554 cycles of NESTest ROM\n");
 
+    // Read NESTest test result codes
     printf("Test results:\n");
     printf("\t0x02: %02X\n", memory.read(0x02));
     printf("\t0x03: %02X\n", memory.read(0x03));
