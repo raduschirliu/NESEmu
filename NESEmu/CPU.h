@@ -8,9 +8,11 @@
 #include "Memory.h"
 #include "Logger.h"
 
+// Handles emulation of the NES 6502 CPU
 class CPU
 {
 public:
+	// An emun represantation of the 8 status flags used for the 6502's status (p) register
 	enum class Flag : uint8_t
 	{
 		Carry = 1 << 0,
@@ -23,6 +25,7 @@ public:
 		Negative = 1 << 7
 	};
 
+	// A representation of the an instruction and it's associated addressing mode
 	struct Instruction
 	{
 		std::string instruction;
@@ -67,13 +70,15 @@ private:
 	uint8_t instructionLength;
 	uint16_t jumpTarget;
 
-	// Cycle related things
+	// Cycle related stats
 	uint8_t cycles;
 	uint32_t totalCycles;
 
-	// Other NES components
+	// Other NES components, external to the CPU
 	ROM *rom;
 	Memory *memory;
+
+	// Logger for debugging
 	Logger logger;
 
 	// Instruction table

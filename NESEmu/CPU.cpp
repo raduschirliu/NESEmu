@@ -8,6 +8,8 @@
 // Convenience macros for defining CPU instructions
 #define _I(NAME, RUN, MODE, CYCLES) { NAME, &CPU::RUN, &CPU::MODE, CYCLES }
 #define _XXX() { "XXX", &CPU::XXX, &CPU::IMP, 2 }
+
+// Since the SP is only 8-bit, and the stack starts at 0x0100, this is a utility to calculate the full SP address
 #define SP_ADDRESS (sp + 0x0100)
 
 // Initialize CPU

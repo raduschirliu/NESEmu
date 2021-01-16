@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+// TODO
+// Base class for mapper representation
 class Mapper
 {
 public:

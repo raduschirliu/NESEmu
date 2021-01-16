@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+// Represents the 2KB of internal RAM that is addressable by the 6502 CPU
 class Memory
 {
 public:
