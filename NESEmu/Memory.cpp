@@ -26,12 +26,24 @@ uint8_t *Memory::get(uint16_t address)
 	if (address >= 0x0000 && address <= 0x1FFF)
 	{
 		// Get from CPU memory ($0000 - $1FFF, mirrored > $07FF)
-		address %= 0x0800;
-		return &cpuMem[address];
+		uint16_t target = address % 0x0800;
+		return &cpuMem[target];
 	}
 	else if (address >= 0x2000 && address <= 0x3FFF)
 	{
 		// Get from PPU memory ($2000 - $3FFF, mirrored > $2008)
+		uint16_t target = (address - 0x2000) % 0x0009;
+		return &ppuMem[target];
+	}
+	else if (address >= 0x4000 && address <= 0x4017)
+	{
+		// Get from APU & I/O Memory ($4000 - $4017)
+		return &apuMem[address - 0x4000];
+	}
+	else if (address >= 0x4018 && address <= 0x401F)
+	{
+		// Get from APU & I/O test Memory (usually disabled) ($4018 - $401F)
+		return &testMem[address - 0x4018];
 	}
 	else if (address >= 0x4020 && address <= 0xFFFF)
 	{
@@ -39,7 +51,6 @@ uint8_t *Memory::get(uint16_t address)
 		return &romMem[address - 0x4020];
 	}
 
-	// TODO: Implement the rest
 	return nullptr;
 }
 

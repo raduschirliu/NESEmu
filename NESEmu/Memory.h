@@ -8,13 +8,13 @@ public:
 	Memory();
 	~Memory();
 
-	// Return pointer to a place in memory
+	// Return pointer to a place in memory, or nullptr if out of bounds
 	uint8_t *get(uint16_t address);
 	
-	// Return value of a place in memory
+	// Return value of a place in memory, or -1 if not found
 	uint8_t read(uint16_t address);
 
-	// Set value in memory at address
+	// Set value in memory at address, or does nothing if out of bounds
 	void set(uint16_t address, uint8_t value);
 
 private:
