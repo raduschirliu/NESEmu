@@ -6,7 +6,7 @@ int main()
 {
     Memory memory;
     
-    ROM rom("C:\\Dev\\Projects\\nesemu\\roms\\nestest.nes");
+    ROM rom("..\\roms\\nestest.nes");
     rom.read(&memory);
 
     CPU cpu(&memory);
