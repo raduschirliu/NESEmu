@@ -2,11 +2,14 @@
 
 #include <cstdint>
 
-// Represents the 2KB of internal RAM that is addressable by the 6502 CPU
+// Represents the 64KB of RAM that is addressable by the 6502 CPU
 class Memory
 {
 public:
+	// Initialize all empty memory blocks
 	Memory();
+
+	// Deallocate all memory
 	~Memory();
 
 	// Return pointer to a place in memory, or nullptr if out of bounds
@@ -19,20 +22,20 @@ public:
 	void set(uint16_t address, uint8_t value);
 
 private:
-	// CPU Memory from $0000 - $07FFF
+	// Internal 2KB of CPU Memory (from $0000 - $07FFF)
 	// Mirrored 3 times from $0800 - $1FFF
 	uint8_t *cpuMem;
 
-	// PPU Memory from $2000 - $2007
+	// PPU Memory mapped registers (from $2000 - $2007)
 	// Mirrored every 8 bytes from $2008 - $3FFF
 	uint8_t *ppuMem;
 
-	// APU & I/O Memory from $4000 - $4017
+	// APU & I/O Memory (from $4000 - $4017)
 	uint8_t *apuMem;
 
-	// APU & I/O Memory (usually disabled) from $4018 - $401F
+	// APU & I/O Memory - usually disabled (from $4018 - $401F)
 	uint8_t *testMem;
 
-	// Cartridge Memory, PRG ROM, PRG RAM, Mappers, from $4020 - $FFFF
+	// Cartridge Memory: PRG ROM, PRG RAM, and mapper registers (from $4020 - $FFFF)
 	uint8_t *romMem;
 };
