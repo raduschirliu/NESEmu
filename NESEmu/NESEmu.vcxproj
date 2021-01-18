@@ -152,14 +152,18 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mapper.cpp" />
+    <ClCompile Include="mappers\Mapper0.cpp" />
     <ClCompile Include="Memory.cpp" />
+    <ClCompile Include="PPU.cpp" />
     <ClCompile Include="ROM.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Mapper.h" />
+    <ClInclude Include="mappers\Mapper0.h" />
     <ClInclude Include="Memory.h" />
+    <ClInclude Include="PPU.h" />
     <ClInclude Include="ROM.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

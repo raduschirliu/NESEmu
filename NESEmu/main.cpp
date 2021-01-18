@@ -1,13 +1,15 @@
 #include <iostream>
 #include <stdio.h>
 #include "CPU.h"
+#include "PPU.h"
 
 int main()
 {
+    PPU ppu;
     Memory memory;
     
     ROM rom("..\\roms\\nestest.nes");
-    rom.read(&memory);
+    rom.map(&memory, &ppu);
 
     CPU cpu(&memory);
 

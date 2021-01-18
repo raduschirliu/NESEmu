@@ -8,11 +8,11 @@ ROM::ROM(std::string path)
 	mapperID = 0;
 }
 
-void ROM::read(Memory *memory)
+void ROM::map(Memory *memory, PPU *ppu)
 {
-	if (memory == nullptr)
+	if (memory == nullptr || ppu == nullptr)
 	{
-		printf("Invalid memory pointer provided to ROM\n");
+		printf("Invalid memory pointer provided to main Memory or PPU\n");
 		return;
 	}
 

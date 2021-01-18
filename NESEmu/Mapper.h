@@ -7,8 +7,7 @@
 class Mapper
 {
 public:
-	Mapper();
-	~Mapper();
+	Mapper(uint8_t prgBanks, uint8_t chrBanks);
 
 private:
 	uint8_t prgBanks;
