@@ -13,7 +13,7 @@
 #define SP_ADDRESS (sp + 0x0100)
 
 // Initialize CPU
-CPU::CPU(Memory *memory) : logger("C:\\Dev\\Projects\\nesemu\\logs\\cpu.log"), memory(memory)
+CPU::CPU(Memory *memory) : logger("..\\logs\\cpu.log"), memory(memory)
 {
 	if (memory == nullptr)
 	{
