@@ -27,6 +27,7 @@ def main():
         log_folder = sys.argv[1]
 
     line_number = 0
+    line_number_test = 0
     expected = open(log_folder + EXPECTED_LOG, 'r')
     test = open(log_folder + TEST_LOG, 'r')
 
@@ -35,18 +36,22 @@ def main():
 
     while True:
         line_number += 1
+        line_number_test += 1
         expected_line = expected.readline()
         test_line = test.readline()
 
         # Ignore lines that start with tabs, are meant for debug
         while test_line.startswith('\t'):
+            line_number_test += 1
             test_line = test.readline()
 
         if len(expected_line) == 0 and len(test_line) == 0:
             return
             
         if len(expected_line) == 0 or len(test_line) == 0:
-            print('Error, found mismatched log at line ' + str(line_number))
+            print('Error, found mismatched log at line: ')
+            print('\tExpected log line number: ' + str(line_number))
+            print('\tTest log line number: ' + str(line_number_test))
             print()
             print('EXPECTED:')
             print(expected_line)
