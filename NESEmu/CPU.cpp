@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "CPU.h"
 
+#include <iomanip>
+#include <sstream>
+
 // Debugging
 #define DEBUG_CONSOLE false
 #define DEBUG_LOG true
@@ -39,6 +42,7 @@ CPU::CPU(Memory *memory) : logger("..\\logs\\cpu.log"), memory(memory)
 	sp = 0xFD;
 
 	// Initialize instruction table
+	// Hi-nibble on vertical, Lo-nibble on horizontal
 	instructions =
 	{
 		_I("BRK", BRK, IMP, 7), _I("ORA", ORA, IDX, 6), _XXX(),					_XXX(), _XXX(),					_I("ORA", ORA, ZPG, 3), _I("ASL", ASL, ZPG, 5), _XXX(), _I("PHP", PHP, IMP, 3), _I("ORA", ORA, IMM, 2),	_I("ASL", ASL, ACC, 2), _XXX(), _XXX(),					_I("ORA", ORA, ABS, 4), _I("ASL", ASL, ABS, 6), _XXX(),
@@ -371,6 +375,23 @@ int CPU::IND()
 	// Operand unused
 	operand = nullptr;
 	instructionLength = 3;
+
+	std::stringstream ss;
+	ss << "\t-->Next: JMP IND\n" << std::hex;
+
+	ss << "\tROM: " <<
+		(int)(memory->read(pc + 2)) << " " <<
+		(int)(memory->read(pc + 1)) << "\n";
+
+	ss << "\tAddress: " <<
+		(int)(memory->read(address + 2)) << " " <<
+		(int)(memory->read(address + 1)) << "\n";
+
+	ss << "\t@ Address: " <<
+		(int)memory->read(address + 1) << " " <<
+		(int)memory->read(address) << "\n";
+
+	logger.write(ss.str());
 
 	return 0;
 }
@@ -1061,6 +1082,13 @@ int CPU::SEI()
 // A -> M; (); Store accumulator in memory
 int CPU::STA()
 {
+	std::stringstream ss;
+	ss << "\tSTA\n" << std::hex <<
+		"\tTarget: " << (int)memory->read(pc + 2) << " " << (int)memory->read(pc + 1) <<
+		"\tValue: " << (int)a << "\n";
+
+	logger.write(ss.str());
+
 	*operand = a;
 	return 0;
 }
