@@ -75,3 +75,16 @@ void Memory::set(uint16_t address, uint8_t value)
 		*ptr = value;
 	}
 }
+
+uint8_t *Memory::readRange(uint16_t start, uint16_t end)
+{
+	size_t size = end - start;
+	uint8_t *mem = new uint8_t[size];
+
+	for (size_t i = 0; i < size; i++)
+	{
+		mem[i] = read(start + i);
+	}
+
+	return mem;
+}

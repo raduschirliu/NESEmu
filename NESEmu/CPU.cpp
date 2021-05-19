@@ -5,8 +5,8 @@
 #include <sstream>
 
 // Debugging
-#define DEBUG_CONSOLE false
-#define DEBUG_LOG true
+bool constexpr DEBUG_CONSOLE = false;
+bool constexpr DEBUG_LOG = true;
 
 // Convenience macros for defining CPU instructions
 #define _I(NAME, RUN, MODE, CYCLES) { NAME, &CPU::RUN, &CPU::MODE, CYCLES }
