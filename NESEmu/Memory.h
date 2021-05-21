@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Logger.h"
 #include <cstdint>
 
 // Represents the 64KB of RAM that is addressable by the 6502 CPU
@@ -24,6 +25,9 @@ public:
 	// Reads and returns a NEW array containing range of memory, if it exists.
 	// If not, will contain zeros. Array index 0 -> range start.
 	uint8_t *readRange(uint16_t start, uint16_t end);
+
+	// Dump entire contents of memory ($0000 - $FFFF) to given logger
+	void dump(Logger &logger);
 
 private:
 	// Internal 2KB of CPU Memory (from $0000 - $07FFF)

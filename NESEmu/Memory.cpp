@@ -1,5 +1,7 @@
 #include "Memory.h"
 #include <stdio.h>
+#include <iomanip>
+#include <sstream>
 
 Memory::Memory()
 {
@@ -87,4 +89,30 @@ uint8_t *Memory::readRange(uint16_t start, uint16_t end)
 	}
 
 	return mem;
+}
+
+void Memory::dump(Logger &logger)
+{
+	std::stringstream ss;
+
+	ss << "Complete memory dump\n"
+		<< "--------------------\n"
+		<< std::hex;
+
+	// Dump 8 bytes per line
+	for (int base = 0; base <= 0xFFFF; base += 8)
+	{
+		ss << std::setw(4) << std::setfill('0')
+			<< base << ":\t";
+
+		for (int line = 0; line < 8; line++)
+		{
+			ss << std::setw(2) << std::setfill('0')
+				<< (int)read(base + line) << " ";
+		}
+
+		ss << std::endl;
+	}
+
+	logger.write(ss.str());
 }

@@ -85,6 +85,12 @@ void CPU::step()
 		instructionLength = 1;
 		int modeExtra = (this->*ins.addressingMode)();
 
+		// TEMP
+		if (operand == memory->get(0x02ff))
+		{
+			logger.write("\t-> Next instruction writing to 0x02FF\n");
+		}
+
 		// ---- Debug
 		if (DEBUG_CONSOLE)
 		{
@@ -379,19 +385,30 @@ int CPU::IND()
 	std::stringstream ss;
 	ss << "\t-->Next: JMP IND\n" << std::hex;
 
-	ss << "\tROM: " <<
+	ss << "\tInstruction: " <<
 		(int)(memory->read(pc + 2)) << " " <<
 		(int)(memory->read(pc + 1)) << "\n";
 
-	ss << "\tAddress: " <<
-		(int)(memory->read(address + 2)) << " " <<
-		(int)(memory->read(address + 1)) << "\n";
+	ss << "\tAddress: " << (int)address << "\n";
 
-	ss << "\t@ Address: " <<
-		(int)memory->read(address + 1) << " " <<
-		(int)memory->read(address) << "\n";
+	ss << "\tMemory dump:\n";
+
+	for (uint16_t i = address - 2; i < address + 2; i++)
+	{
+		ss << "\t[" << (int)address << "] " << (int)memory->read(address) << "\n";
+	}
+
+	ss << "\tAt wrapped address (0x0200): " <<
+		(int)(memory->read(0x0200)) << "\n";
 
 	logger.write(ss.str());
+
+	Logger memlog("..\\logs\\memdump.log");
+	memory->dump(memlog);
+
+	// Some weird wrapping error occuring here?
+
+	ss << "\tMemory dumped to file\n";
 
 	return 0;
 }
@@ -1083,13 +1100,28 @@ int CPU::SEI()
 int CPU::STA()
 {
 	std::stringstream ss;
-	ss << "\tSTA\n" << std::hex <<
-		"\tTarget: " << (int)memory->read(pc + 2) << " " << (int)memory->read(pc + 1) <<
-		"\tValue: " << (int)a << "\n";
+	ss << "\tSTA\n" << std::hex;
+
+	ss << "\tTarget: "
+		<< (int)memory->read(pc + 2) << " "
+		<< (int)memory->read(pc + 1) << "\n";
+	
+	ss << "\tValue: " << (int)a << "\n";
+
+	*operand = a;
+
+	uint8_t *mem = memory->readRange(0x02ff - 2, 0x02ff + 2);
+	ss << "\tMemory region after write: ";
+
+	for (int i = 0; i < 4; i++)
+	{
+		ss << (int)mem[i] << " ";
+	}
+
+	ss << "\n";
 
 	logger.write(ss.str());
 
-	*operand = a;
 	return 0;
 }
 
