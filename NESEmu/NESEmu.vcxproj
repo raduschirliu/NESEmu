@@ -148,23 +148,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CPU.cpp" />
-    <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Mapper.cpp" />
-    <ClCompile Include="mappers\Mapper0.cpp" />
-    <ClCompile Include="Memory.cpp" />
-    <ClCompile Include="PPU.cpp" />
-    <ClCompile Include="ROM.cpp" />
+    <ClCompile Include="src\CPU.cpp" />
+    <ClCompile Include="src\debug\Logger.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Mapper.cpp" />
+    <ClCompile Include="src\mappers\Mapper0.cpp" />
+    <ClCompile Include="src\Memory.cpp" />
+    <ClCompile Include="src\PPU.cpp" />
+    <ClCompile Include="src\ROM.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CPU.h" />
-    <ClInclude Include="Logger.h" />
-    <ClInclude Include="Mapper.h" />
-    <ClInclude Include="mappers\Mapper0.h" />
-    <ClInclude Include="Memory.h" />
-    <ClInclude Include="PPU.h" />
-    <ClInclude Include="ROM.h" />
+    <ClInclude Include="src\CPU.h" />
+    <ClInclude Include="src\debug\Logger.h" />
+    <ClInclude Include="src\Mapper.h" />
+    <ClInclude Include="src\mappers\Mapper0.h" />
+    <ClInclude Include="src\Memory.h" />
+    <ClInclude Include="src\PPU.h" />
+    <ClInclude Include="src\ROM.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

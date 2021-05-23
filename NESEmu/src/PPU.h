@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Logger.h"
+#include "debug/Logger.h"
 
 // TODO: Implement NES PPU
 class PPU

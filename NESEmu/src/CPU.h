@@ -6,7 +6,7 @@
 
 #include "ROM.h"
 #include "Memory.h"
-#include "Logger.h"
+#include "debug/Logger.h"
 
 // Handles emulation of the NES 6502 CPU
 class CPU

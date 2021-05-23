@@ -95,7 +95,7 @@ void Memory::dump(Logger &logger)
 {
 	std::stringstream ss;
 
-	ss << "Complete memory dump\n"
+	ss << "Full memory dump\n"
 		<< "--------------------\n"
 		<< std::hex;
 

@@ -387,35 +387,6 @@ int CPU::IND()
 	operand = nullptr;
 	instructionLength = 3;
 
-	std::stringstream ss;
-	//ss << "\t-->Next: JMP IND\n" << std::hex;
-
-	//ss << "\tInstruction: " <<
-	//	(int)(memory->read(pc + 2)) << " " <<
-	//	(int)(memory->read(pc + 1)) << "\n";
-
-	//ss << "\tAddress: " << (int)address << "\n";
-
-	//ss << "\tMemory dump:\n";
-
-	//for (uint16_t i = address - 2; i < address + 2; i++)
-	//{
-	//	ss << "\t[" << (int)address << "] " << (int)memory->read(address) << "\n";
-	//}
-
-	//ss << "\tAt wrapped address (0x0200): " <<
-	//	(int)(memory->read(0x0200)) << "\n";
-
-	logger.write(ss.str());
-
-	if (address == 0x02FF)
-	{
-		Logger memlog("..\\logs\\memdump.log");
-		memory->dump(memlog);
-	}
-
-	ss << "\tMemory dumped to file\n";
-
 	return 0;
 }
 
