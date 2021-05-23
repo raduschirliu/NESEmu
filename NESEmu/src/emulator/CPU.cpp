@@ -305,6 +305,10 @@ int CPU::ZPY()
 {
 	// Operand is a memory address in range $0000-$00FF added to Y register
 	uint16_t address = memory->read(pc + 1) + y;
+
+	// Take zero page wrap-around into account (wrap if past $00FF)
+	address %= 0x0100;
+
 	operand = memory->get(address);
 	instructionLength = 2;
 
