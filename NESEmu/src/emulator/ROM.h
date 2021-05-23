@@ -1,9 +1,9 @@
 #pragma once
 
-#include <string>
 #include "Mapper.h"
 #include "Memory.h"
 #include "PPU.h"
+#include <string>
 
 // Representation of a ROM, which handles loading and dealing with files in the iNES format
 class ROM

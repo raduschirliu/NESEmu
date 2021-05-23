@@ -1,12 +1,12 @@
 #pragma once
 
+#include "ROM.h"
+#include "Memory.h"
+#include "../debug/Logger.h"
+
 #include <cstdint>
 #include <string>
 #include <vector>
-
-#include "ROM.h"
-#include "Memory.h"
-#include "debug/Logger.h"
 
 // Handles emulation of the NES 6502 CPU
 class CPU

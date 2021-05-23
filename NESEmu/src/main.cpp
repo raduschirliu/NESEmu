@@ -1,9 +1,10 @@
+#include "emulator/CPU.h"
+#include "emulator/PPU.h"
+
 #include <iostream>
 #include <stdio.h>
-#include "CPU.h"
-#include "PPU.h"
 
-int main()
+int main(int argc, char **argv)
 {
     PPU ppu;
     Memory memory;

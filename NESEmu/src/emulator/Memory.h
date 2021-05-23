@@ -1,6 +1,6 @@
 #pragma once
 
-#include "debug/Logger.h"
+#include "../debug/Logger.h"
 #include <cstdint>
 
 // Represents the 64KB of RAM that is addressable by the 6502 CPU

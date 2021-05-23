@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Mapper.h"
+#include "../emulator/Mapper.h"
 
 class Mapper0 : public Mapper
 {
