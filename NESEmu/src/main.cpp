@@ -1,5 +1,6 @@
 #include "emulator/CPU.h"
 #include "emulator/PPU.h"
+#include "debug/Logger.h"
 
 #include <iostream>
 #include <stdio.h>
@@ -32,6 +33,11 @@ int main(int argc, char **argv)
     printf("Test results:\n");
     printf("\t0x02: %02X\n", memory.read(0x02));
     printf("\t0x03: %02X\n", memory.read(0x03));
+    
+    // Dump memory post-run
+    Logger memlog("..\\logs\\post-run-memory.log");
+    memory.dump(memlog);
+    printf("Memory dumped post-run");
 
     return 0;
 }
