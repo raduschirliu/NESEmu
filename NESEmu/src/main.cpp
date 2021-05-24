@@ -2,14 +2,16 @@
 #include "emulator/PPU.h"
 #include "debug/Logger.h"
 
+#include "graphics/Display.h"
+
 #include <iostream>
 #include <stdio.h>
 
-int main(int argc, char **argv)
+void testEmulator()
 {
     PPU ppu;
     Memory memory;
-    
+
     ROM rom("..\\roms\\nestest.nes");
     rom.map(&memory, &ppu);
 
@@ -33,11 +35,23 @@ int main(int argc, char **argv)
     printf("Test results:\n");
     printf("\t0x02: %02X\n", memory.read(0x02));
     printf("\t0x03: %02X\n", memory.read(0x03));
-    
+
     // Dump memory post-run
     Logger memlog("..\\logs\\post-run-memory.log");
     memory.dump(memlog);
     printf("Memory dumped post-run");
+}
+
+void testGraphics()
+{
+    Display display;
+    display.init();
+    display.loop();
+}
+
+int main(int argc, char **argv)
+{
+    testGraphics();
 
     return 0;
 }
