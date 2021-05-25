@@ -45,7 +45,12 @@ void testEmulator()
 void testGraphics()
 {
     Display display;
-    display.init();
+
+    if (!display.init())
+    {
+        return;
+    }
+
     display.loop();
 }
 
