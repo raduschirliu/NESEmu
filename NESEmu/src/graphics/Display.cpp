@@ -78,7 +78,7 @@ void Display::loop()
         ImGui::NewFrame();
 
         // Drawing...
-        ImGui::ShowDemoWindow(&demoWindowOpen);
+        // ImGui::ShowDemoWindow(&demoWindowOpen);
 
         // Update OpenGL
         int width, height;
