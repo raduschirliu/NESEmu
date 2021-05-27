@@ -113,5 +113,8 @@
     <ClInclude Include="src\graphics\imgui\imgui_impl_opengl3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\IDrawable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

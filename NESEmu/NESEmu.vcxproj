@@ -173,6 +173,7 @@
     <ClInclude Include="src\debug\Logger.h" />
     <ClInclude Include="src\emulator\Mapper.h" />
     <ClInclude Include="src\graphics\Display.h" />
+    <ClInclude Include="src\graphics\IDrawable.h" />
     <ClInclude Include="src\graphics\imgui\imconfig.h" />
     <ClInclude Include="src\graphics\imgui\imgui.h" />
     <ClInclude Include="src\graphics\imgui\imgui_impl_glfw.h" />
