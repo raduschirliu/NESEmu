@@ -30,8 +30,14 @@ public:
 		Vertical
 	} mirroring;
 
+	// Initialize ROM without any file
+	ROM();
+
 	// Initialize ROM with given file path
 	ROM(std::string path);
+
+	// Load ROM from given file path
+	void load(std::string path);
 
 	// Reads ROM from file path and maps it into memory based on mapper configuration
 	void map(Memory *memory, PPU *ppu);

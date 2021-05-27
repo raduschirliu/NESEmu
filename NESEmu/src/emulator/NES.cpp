@@ -1,4 +1,4 @@
-#include "Display.h"
+#include "NES.h"
 #include <stdio.h>
 
 const char *WINDOW_TITLE = "nesemu";
@@ -8,15 +8,24 @@ static void glfwErrorCallback(int error, const char *desc)
     printf("GLFW error: %i %s\n", error, desc);
 }
 
-Display::Display()
+NES::NES(): cpu(&memory)
 {
     windowWidth = 1280;
     windowHeight = 720;
-    shouldTerminate = false;
+    shouldShutdown = false;
     window = nullptr;
 }
 
-bool Display::init()
+void NES::load(std::string path)
+{
+	rom.load(path);
+	rom.map(&memory, &ppu);
+
+	printf("Mapper: %u\n", rom.getMapperID());
+	printf("ROM size: %u\n", rom.header.prgBanks * 0x4000);
+}
+
+bool NES::init()
 {
     // Init GLFW
     glfwSetErrorCallback(glfwErrorCallback);
@@ -25,7 +34,7 @@ bool Display::init()
     {
         return false;
     }
-    
+
     // Configure window to use OpenGL 3.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -61,24 +70,24 @@ bool Display::init()
     return true;
 }
 
-void Display::loop()
+void NES::run()
 {
     bool demoWindowOpen = true;
 
     // Draw window and poll events
-    while (!glfwWindowShouldClose(window) && !shouldTerminate)
+    while (!glfwWindowShouldClose(window) && !shouldShutdown)
     {
         // Poll events
         glfwPollEvents();
         glfwGetWindowSize(window, &windowWidth, &windowHeight);
-        
+
         // Start new ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
         // Drawing...
-        // ImGui::ShowDemoWindow(&demoWindowOpen);
+        ImGui::ShowDemoWindow(&demoWindowOpen);
 
         // Update OpenGL
         int width, height;
@@ -89,7 +98,7 @@ void Display::loop()
         // Render ImGui
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        
+
         // Swap buffers and finish frame
         glfwSwapBuffers(window);
     }
@@ -101,9 +110,10 @@ void Display::loop()
 
     glfwDestroyWindow(window);
     glfwTerminate();
+    shutdown();
 }
 
-void Display::terminate()
+void NES::shutdown()
 {
-    shouldTerminate = true;
+    shouldShutdown = true;
 }

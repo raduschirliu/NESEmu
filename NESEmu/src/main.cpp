@@ -1,8 +1,7 @@
 #include "emulator/CPU.h"
 #include "emulator/PPU.h"
 #include "debug/Logger.h"
-
-#include "graphics/Display.h"
+#include "emulator/NES.h"
 
 #include <iostream>
 #include <stdio.h>
@@ -42,21 +41,17 @@ void testEmulator()
     printf("Memory dumped post-run");
 }
 
-void testGraphics()
-{
-    Display display;
-
-    if (!display.init())
-    {
-        return;
-    }
-
-    display.loop();
-}
-
 int main(int argc, char **argv)
 {
-    testGraphics();
+    NES nes;
+
+    if (!nes.init())
+    {
+        return 1;
+    }
+
+    nes.load("..\\roms\\nestest.nes");
+    nes.run();
 
     return 0;
 }
