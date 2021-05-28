@@ -72,8 +72,6 @@ bool NES::init()
 
 void NES::run()
 {
-    bool demoWindowOpen = true;
-
     // Draw window and poll events
     while (!glfwWindowShouldClose(window) && !shouldShutdown)
     {
@@ -86,8 +84,7 @@ void NES::run()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // Drawing...
-        ImGui::ShowDemoWindow(&demoWindowOpen);
+        
 
         // Update OpenGL
         int width, height;

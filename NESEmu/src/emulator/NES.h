@@ -4,6 +4,9 @@
 #include "Memory.h"
 #include "PPU.h"
 #include "../graphics/Graphics.h"
+#include "../graphics/IDrawable.h"
+
+#include <vector>
 
 class NES
 {
@@ -25,6 +28,7 @@ public:
 private:
 	int windowWidth, windowHeight;
 	bool shouldShutdown;
+	std::vector<IDrawable> drawables;
 	GLFWwindow *window;
 	Memory memory;
 	CPU cpu;
