@@ -55,8 +55,32 @@ public:
 	// Returns whether status flag is set or not
 	bool hasFlag(Flag flag) const;
 
+	// Returns flag register (p)
+	uint8_t getStatusRegister() const;
+
 	// Sets program counter
 	void setPC(uint16_t pc);
+
+	// Returns program counter
+	uint16_t getPC() const;
+
+	/// Returns stack pointer
+	uint8_t getSP() const;
+
+	// Get A register
+	uint8_t getA() const;
+
+	// Get X register
+	uint8_t getX() const;
+
+	// Get Y register
+	uint8_t getY() const;
+
+	// Gets total occured cycles
+	uint32_t getCycles() const;
+
+	// Get current opcode
+	uint8_t getOpcode() const;
 
 private:
 	// Registers

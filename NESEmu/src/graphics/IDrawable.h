@@ -11,7 +11,7 @@ public:
 	void enable() { enabled = true; }
 	void disable() { enabled = false; }
 
-private:
+protected:
 	// Whether the window is enabled or not
 	bool enabled = false;
 };

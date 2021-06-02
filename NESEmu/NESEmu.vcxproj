@@ -153,7 +153,8 @@
   <ItemGroup>
     <ClCompile Include="src\emulator\CPU.cpp" />
     <ClCompile Include="src\debug\Logger.cpp" />
-    <ClCompile Include="src\graphics\Display.cpp" />
+    <ClCompile Include="src\emulator\NES.cpp" />
+    <ClCompile Include="src\graphics\CpuWindow.cpp" />
     <ClCompile Include="src\graphics\imgui\imgui.cpp" />
     <ClCompile Include="src\graphics\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\graphics\imgui\imgui_draw.cpp" />
@@ -172,7 +173,9 @@
     <ClInclude Include="src\emulator\CPU.h" />
     <ClInclude Include="src\debug\Logger.h" />
     <ClInclude Include="src\emulator\Mapper.h" />
-    <ClInclude Include="src\graphics\Display.h" />
+    <ClInclude Include="src\graphics\CpuWindow.h" />
+    <ClInclude Include="src\emulator\NES.h" />
+    <ClInclude Include="src\graphics\Graphics.h" />
     <ClInclude Include="src\graphics\IDrawable.h" />
     <ClInclude Include="src\graphics\imgui\imconfig.h" />
     <ClInclude Include="src\graphics\imgui\imgui.h" />

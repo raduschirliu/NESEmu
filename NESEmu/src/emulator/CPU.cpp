@@ -174,9 +174,49 @@ bool CPU::hasFlag(Flag flag) const
 	return (p & (uint8_t)flag) > 0;
 }
 
+uint8_t CPU::getStatusRegister() const
+{
+	return p;
+}
+
 void CPU::setPC(uint16_t pc)
 {
 	this->pc = pc;
+}
+
+uint16_t CPU::getPC() const
+{
+	return pc;
+}
+
+uint8_t CPU::getSP() const
+{
+	return sp;
+}
+
+uint8_t CPU::getA() const
+{
+	return a;
+}
+
+uint8_t CPU::getX() const
+{
+	return x;
+}
+
+uint8_t CPU::getY() const
+{
+	return y;
+}
+
+uint32_t CPU::getCycles() const
+{
+	return totalCycles;
+}
+
+uint8_t CPU::getOpcode() const
+{
+	return opcode;
 }
 
 void CPU::checkOverflow(int8_t target, int8_t result)

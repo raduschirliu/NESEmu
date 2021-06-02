@@ -1,4 +1,6 @@
-#include "Display.h"
+#include "NES.h"
+#include "../graphics/CpuWindow.h"
+
 #include <stdio.h>
 
 const char *WINDOW_TITLE = "nesemu";
@@ -8,7 +10,7 @@ static void glfwErrorCallback(int error, const char *desc)
     printf("GLFW error: %i %s\n", error, desc);
 }
 
-Display::Display()
+NES::NES(): cpu(&memory)
 {
     windowWidth = 1280;
     windowHeight = 720;
@@ -16,7 +18,7 @@ Display::Display()
     window = nullptr;
 }
 
-bool Display::init()
+bool NES::init()
 {
     // Init GLFW
     glfwSetErrorCallback(glfwErrorCallback);
@@ -58,10 +60,13 @@ bool Display::init()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
+    // Init drawables
+    drawables.push_back(new CpuWindow(cpu));
+
     return true;
 }
 
-void Display::loop()
+void NES::run()
 {
     bool demoWindowOpen = true;
 
@@ -79,6 +84,11 @@ void Display::loop()
 
         // Drawing...
         // ImGui::ShowDemoWindow(&demoWindowOpen);
+
+        for (IDrawable *drawable : drawables)
+        {
+            drawable->draw();
+        }
 
         // Update OpenGL
         int width, height;
@@ -103,7 +113,7 @@ void Display::loop()
     glfwTerminate();
 }
 
-void Display::terminate()
+void NES::terminate()
 {
     shouldTerminate = true;
 }
