@@ -14,8 +14,17 @@ NES::NES(): cpu(&memory)
 {
     windowWidth = 1280;
     windowHeight = 720;
-    shouldTerminate = false;
+    shouldShutdown = false;
     window = nullptr;
+}
+
+void NES::load(std::string path)
+{
+	rom.load(path);
+	rom.map(&memory, &ppu);
+
+	printf("Mapper: %u\n", rom.getMapperID());
+	printf("ROM size: %u\n", rom.header.prgBanks * 0x4000);
 }
 
 bool NES::init()
@@ -27,7 +36,7 @@ bool NES::init()
     {
         return false;
     }
-    
+
     // Configure window to use OpenGL 3.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -68,22 +77,19 @@ bool NES::init()
 
 void NES::run()
 {
-    bool demoWindowOpen = true;
-
     // Draw window and poll events
-    while (!glfwWindowShouldClose(window) && !shouldTerminate)
+    while (!glfwWindowShouldClose(window) && !shouldShutdown)
     {
         // Poll events
         glfwPollEvents();
         glfwGetWindowSize(window, &windowWidth, &windowHeight);
-        
+
         // Start new ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // Drawing...
-        // ImGui::ShowDemoWindow(&demoWindowOpen);
+        
 
         for (IDrawable *drawable : drawables)
         {
@@ -99,7 +105,7 @@ void NES::run()
         // Render ImGui
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        
+
         // Swap buffers and finish frame
         glfwSwapBuffers(window);
     }
@@ -111,9 +117,10 @@ void NES::run()
 
     glfwDestroyWindow(window);
     glfwTerminate();
+    shutdown();
 }
 
-void NES::terminate()
+void NES::shutdown()
 {
-    shouldTerminate = true;
+    shouldShutdown = true;
 }

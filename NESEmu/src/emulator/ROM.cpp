@@ -2,7 +2,19 @@
 #include <fstream>
 #include <cerrno>
 
+ROM::ROM()
+{
+	path = "";
+	mapperID = 0;
+}
+
 ROM::ROM(std::string path)
+{
+	this->path = path;
+	mapperID = 0;
+}
+
+void ROM::load(std::string path)
 {
 	this->path = path;
 	mapperID = 0;

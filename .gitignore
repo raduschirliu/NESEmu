@@ -1,3 +1,6 @@
+# Ignore ImGui config files
+imgui.ini
+
 # Ignore Roms directory
 Roms/
 

@@ -50,6 +50,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    nes.load("..\\roms\\nestest.nes");
     nes.run();
 
     return 0;
