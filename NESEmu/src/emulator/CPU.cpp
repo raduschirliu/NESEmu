@@ -144,8 +144,6 @@ void CPU::step()
 		cycles--;
 	}
 
-	//printf("PC: %04X\n", pc);
-
 	totalCycles++;
 }
 
