@@ -27,6 +27,9 @@ public:
 	// Close window on next loop
 	void shutdown();
 
+	// Put the NES into debug mode. Load nestest, and put into automated test mode
+	void loadDebugMode();
+
 private:
 	int windowWidth, windowHeight;
 	bool shouldShutdown;

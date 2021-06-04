@@ -1,9 +1,9 @@
 #pragma once
 
-#include "IDrawable.h"
-#include "../emulator/CPU.h"
+#include "../Window.h"
+#include "../../emulator/CPU.h"
 
-class CpuWindow : public IDrawable
+class CpuWindow : public Window
 {
 public:
 	CpuWindow(CPU &cpu);

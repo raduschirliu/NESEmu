@@ -1,25 +1,33 @@
 #include "CpuWindow.h"
 
-#include "Graphics.h"
-
-CpuWindow::CpuWindow(CPU &cpu): cpu(cpu)
+CpuWindow::CpuWindow(CPU &cpu): Window(GLFW_KEY_F1), cpu(cpu)
 {
 	enable();
 }
 
 void CpuWindow::draw()
 {
+	// If window not enabled, don't draw it
 	if (!enabled)
 	{
 		return;
 	}
 
-	ImGui::Begin("CPU", &enabled);
+	// If collapsed, exit out early as optimization
+	if (!ImGui::Begin("CPU Debugger", &enabled))
+	{
+		ImGui::End();
+		return;
+	}
 
-	ImGui::Text("Cycle: %d", cpu.getCycles());
-	ImGui::Text("PC: $%X", cpu.getPC());
-	ImGui::Text("Opcode: $%X", cpu.getOpcode());
-	ImGui::Text("SP: $%X", cpu.getSP());
+	{
+		ImGui::BeginGroup();
+		ImGui::Text("Cycle: %d", cpu.getCycles());
+		ImGui::Text("PC: $%X", cpu.getPC());
+		ImGui::Text("Opcode: $%X", cpu.getOpcode());
+		ImGui::Text("SP: $%X", cpu.getSP());
+		ImGui::EndGroup();
+	}
 
 	char statusBuf[20];
 	uint8_t statusRegister = cpu.getStatusRegister();
@@ -39,6 +47,13 @@ void CpuWindow::draw()
 	if (ImGui::Button("Step"))
 	{
 		cpu.step();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Play"))
+	{
+
 	}
 
 	ImGui::End();

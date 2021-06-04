@@ -154,7 +154,7 @@
     <ClCompile Include="src\emulator\CPU.cpp" />
     <ClCompile Include="src\debug\Logger.cpp" />
     <ClCompile Include="src\emulator\NES.cpp" />
-    <ClCompile Include="src\graphics\CpuWindow.cpp" />
+    <ClCompile Include="src\graphics\windows\CpuWindow.cpp" />
     <ClCompile Include="src\graphics\imgui\imgui.cpp" />
     <ClCompile Include="src\graphics\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\graphics\imgui\imgui_draw.cpp" />
@@ -173,7 +173,7 @@
     <ClInclude Include="src\emulator\CPU.h" />
     <ClInclude Include="src\debug\Logger.h" />
     <ClInclude Include="src\emulator\Mapper.h" />
-    <ClInclude Include="src\graphics\CpuWindow.h" />
+    <ClInclude Include="src\graphics\windows\CpuWindow.h" />
     <ClInclude Include="src\emulator\NES.h" />
     <ClInclude Include="src\graphics\Graphics.h" />
     <ClInclude Include="src\graphics\IDrawable.h" />
@@ -185,6 +185,8 @@
     <ClInclude Include="src\graphics\imgui\imstb_rectpack.h" />
     <ClInclude Include="src\graphics\imgui\imstb_textedit.h" />
     <ClInclude Include="src\graphics\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\graphics\Window.h" />
+    <ClInclude Include="src\graphics\windows\DemoWindow.h" />
     <ClInclude Include="src\mappers\Mapper0.h" />
     <ClInclude Include="src\emulator\Memory.h" />
     <ClInclude Include="src\emulator\PPU.h" />

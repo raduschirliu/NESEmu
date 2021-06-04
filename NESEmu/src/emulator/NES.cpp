@@ -1,5 +1,6 @@
 #include "NES.h"
-#include "../graphics/CpuWindow.h"
+#include "../graphics/windows/DemoWindow.h"
+#include "../graphics/windows/CpuWindow.h"
 
 #include <stdio.h>
 
@@ -70,6 +71,7 @@ bool NES::init()
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
     // Init drawables
+    drawables.push_back(new DemoWindow());
     drawables.push_back(new CpuWindow(cpu));
 
     return true;
@@ -88,11 +90,11 @@ void NES::run()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
         
-
+        // Draw all drawable components
         for (IDrawable *drawable : drawables)
         {
+            drawable->update();
             drawable->draw();
         }
 
@@ -123,4 +125,10 @@ void NES::run()
 void NES::shutdown()
 {
     shouldShutdown = true;
+}
+
+void NES::loadDebugMode()
+{
+    load("..\\roms\\nestest.nes");
+    cpu.setPC(0xC000);
 }
