@@ -24,16 +24,35 @@ public:
 	// Main window event loop
 	void run();
 
+	// Emulate one single NES cycle step
+	void step();
+
 	// Close window on next loop
 	void shutdown();
+
+	// Set the 'running' state of NES
+	void setRunning(bool running);
+
+	// Gets whether the NES is running or paused
+	bool getRunning() const;
 
 	// Put the NES into debug mode. Load nestest, and put into automated test mode
 	void loadDebugMode();
 
 private:
+	// Window dimensions
 	int windowWidth, windowHeight;
+	
+	// Whether the emulation is running or paused
+	bool running;
+
+	// Whether the emulator window should close or not
 	bool shouldShutdown;
+
+	// GLFW window handle
 	GLFWwindow *window;
+
+	// List of all drawable components
 	std::vector<IDrawable*> drawables;
 
 	// NES Components

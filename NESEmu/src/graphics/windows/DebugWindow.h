@@ -1,14 +1,16 @@
 #pragma once
 
 #include "../Window.h"
+#include "../../emulator/NES.h"
 #include "../../emulator/CPU.h"
 
-class CpuWindow : public Window
+class DebugWindow : public Window
 {
 public:
-	CpuWindow(CPU &cpu);
+	DebugWindow(NES &nes, CPU &cpu);
 	void draw() override;
 
 private:
+	NES &nes;
 	CPU &cpu;
 };

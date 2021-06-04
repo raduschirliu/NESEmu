@@ -34,6 +34,21 @@ public:
 		uint8_t cycles;
 	};
 
+	// Represents current CPU state
+	struct State
+	{
+		// Registers, PC, and total cycles
+		uint8_t a, x, y, p, sp;
+		uint16_t pc;
+		uint32_t totalCycles;
+		uint8_t instructionLength;
+
+		// Current instruction
+		uint8_t opcode, cycles;
+		std::string instruction = "";
+		std::string addressingMode = "";
+	};
+
 	// Initialize CPU
 	CPU(Memory *memory);
 
@@ -55,32 +70,11 @@ public:
 	// Returns whether status flag is set or not
 	bool hasFlag(Flag flag) const;
 
-	// Returns flag register (p)
-	uint8_t getStatusRegister() const;
-
 	// Sets program counter
 	void setPC(uint16_t pc);
 
-	// Returns program counter
-	uint16_t getPC() const;
-
-	/// Returns stack pointer
-	uint8_t getSP() const;
-
-	// Get A register
-	uint8_t getA() const;
-
-	// Get X register
-	uint8_t getX() const;
-
-	// Get Y register
-	uint8_t getY() const;
-
-	// Gets total occured cycles
-	uint32_t getCycles() const;
-
-	// Get current opcode
-	uint8_t getOpcode() const;
+	// Returns current state of CPU and registers
+	State getState() const;
 
 private:
 	// Registers

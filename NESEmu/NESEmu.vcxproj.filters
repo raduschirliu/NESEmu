@@ -63,7 +63,10 @@
     <ClCompile Include="src\emulator\NES.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\windows\CpuWindow.cpp">
+    <ClCompile Include="src\graphics\windows\DebugWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\windows\MemoryViewWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -125,10 +128,13 @@
     <ClInclude Include="src\graphics\Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\windows\CpuWindow.h">
+    <ClInclude Include="src\graphics\windows\DemoWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\windows\DemoWindow.h">
+    <ClInclude Include="src\graphics\windows\DebugWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\windows\MemoryViewWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

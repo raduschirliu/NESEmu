@@ -1,6 +1,6 @@
 #include "NES.h"
 #include "../graphics/windows/DemoWindow.h"
-#include "../graphics/windows/CpuWindow.h"
+#include "../graphics/windows/DebugWindow.h"
 
 #include <stdio.h>
 
@@ -15,6 +15,7 @@ NES::NES(): cpu(&memory)
 {
     windowWidth = 1280;
     windowHeight = 720;
+    running = false;
     shouldShutdown = false;
     window = nullptr;
 }
@@ -72,13 +73,15 @@ bool NES::init()
 
     // Init drawables
     drawables.push_back(new DemoWindow());
-    drawables.push_back(new CpuWindow(cpu));
+    drawables.push_back(new DebugWindow(*this, cpu));
 
     return true;
 }
 
 void NES::run()
 {
+    running = true;
+
     // Draw window and poll events
     while (!glfwWindowShouldClose(window) && !shouldShutdown)
     {
@@ -90,6 +93,12 @@ void NES::run()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        // Emulate NES components if not paused
+        if (running)
+        {
+            step();
+        }
         
         // Draw all drawable components
         for (IDrawable *drawable : drawables)
@@ -122,9 +131,25 @@ void NES::run()
     shutdown();
 }
 
+void NES::step()
+{
+    // TODO: Emulate PPU
+    cpu.step();
+}
+
 void NES::shutdown()
 {
     shouldShutdown = true;
+}
+
+void NES::setRunning(bool running)
+{
+    this->running = running;
+}
+
+bool NES::getRunning() const
+{
+    return running;
 }
 
 void NES::loadDebugMode()
