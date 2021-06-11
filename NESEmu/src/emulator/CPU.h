@@ -47,7 +47,7 @@ public:
 		uint8_t opcode, cycles;
 		std::string instruction = "";
 		std::string addressingMode = "";
-	};
+	} state;
 
 	// Initialize CPU
 	CPU(Memory *memory);

@@ -1,6 +1,7 @@
 #include "NES.h"
 #include "../graphics/windows/DemoWindow.h"
 #include "../graphics/windows/DebugWindow.h"
+#include "../graphics/windows/MemoryViewWindow.h"
 
 #include <stdio.h>
 
@@ -74,6 +75,7 @@ bool NES::init()
     // Init drawables
     drawables.push_back(new DemoWindow());
     drawables.push_back(new DebugWindow(*this, cpu));
+    drawables.push_back(new MemoryViewWindow(memory));
 
     return true;
 }
