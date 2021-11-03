@@ -12,7 +12,7 @@ static void glfwErrorCallback(int error, const char *desc)
     printf("GLFW error: %i %s\n", error, desc);
 }
 
-NES::NES(): cpu(&memory)
+NES::NES(): cpu(memory)
 {
     windowWidth = 1280;
     windowHeight = 720;
@@ -24,7 +24,7 @@ NES::NES(): cpu(&memory)
 void NES::load(std::string path)
 {
 	rom.load(path);
-	rom.map(&memory, &ppu);
+	rom.map(memory, ppu);
 
 	printf("Mapper: %u\n", rom.getMapperID());
 	printf("ROM size: %u\n", rom.header.prgBanks * 0x4000);

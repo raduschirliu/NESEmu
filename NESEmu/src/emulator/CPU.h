@@ -29,8 +29,8 @@ public:
 	struct Instruction
 	{
 		std::string instruction;
-		int (CPU::*run)(void);
-		int (CPU::*addressingMode)(void);
+		int (CPU:: *run)(void);
+		int (CPU:: *addressingMode)(void);
 		uint8_t cycles;
 	};
 
@@ -50,7 +50,7 @@ public:
 	} state;
 
 	// Initialize CPU
-	CPU(Memory *memory);
+	CPU(Memory &memory);
 
 	// Step CPU by one single cycle
 	void step();
@@ -93,8 +93,8 @@ private:
 	uint32_t totalCycles;
 
 	// Other NES components, external to the CPU
-	ROM *rom;
-	Memory *memory;
+	// ROM &rom;
+	Memory &memory;
 
 	// Logger for debugging
 	Logger logger;

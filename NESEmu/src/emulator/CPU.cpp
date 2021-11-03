@@ -1,12 +1,12 @@
-#include <stdio.h>
 #include "CPU.h"
 
+#include <stdio.h>
 #include <iomanip>
 #include <sstream>
 
 // Debugging
-bool constexpr DEBUG_CONSOLE = false;
-bool constexpr DEBUG_LOG = true;
+static bool constexpr DEBUG_CONSOLE = false;
+static bool constexpr DEBUG_LOG = true;
 
 // Convenience macros for defining CPU instructions
 #define _I(NAME, RUN, MODE, CYCLES) { NAME, &CPU::RUN, &CPU::MODE, CYCLES }
@@ -16,14 +16,8 @@ bool constexpr DEBUG_LOG = true;
 #define SP_ADDRESS (sp + 0x0100)
 
 // Initialize CPU
-CPU::CPU(Memory *memory) : logger("..\\logs\\cpu.log"), memory(memory)
+CPU::CPU(Memory &memory) : logger("..\\logs\\cpu.log"), memory(memory)
 {
-	if (memory == nullptr)
-	{
-		printf("Invalid memory pointer provided to CPU\n");
-		return;
-	}
-
 	a = 0x00;
 	x = 0x00;
 	y = 0x00;
@@ -35,7 +29,7 @@ CPU::CPU(Memory *memory) : logger("..\\logs\\cpu.log"), memory(memory)
 	cycles = 0;
 
 	// Find reset vector at 0xFFFC, and set initial PC
-	pc = (memory->read(0xFFFD) << 8) | memory->read(0xFFFC);
+	pc = (memory.read(0xFFFD) << 8) | memory.read(0xFFFC);
 
 	// TEST
 	p = 0x24;
@@ -75,13 +69,13 @@ void CPU::step()
 			printf("PC: %X\n", pc);
 			printf("CYCLE: %d\n\n", totalCycles);
 		}
-		
+
 		cycles--;
 	}
 	else
 	{
 		// Process opcode
-		opcode = memory->read(pc);
+		opcode = memory.read(pc);
 		Instruction ins = instructions[opcode];
 		instructionLength = 1;
 		int modeExtra = (this->*ins.addressingMode)();
@@ -287,7 +281,7 @@ int CPU::ACC()
 int CPU::IMM()
 {
 	// Operand given in 1 byte after instruction
-	operand = memory->get(pc + 1);
+	operand = memory.get(pc + 1);
 	instructionLength = 2;
 
 	return 0;
@@ -297,8 +291,8 @@ int CPU::IMM()
 int CPU::ZPG()
 {
 	// Operand is a memory address in range $0000-$00FF, in 1 byte after instruction
-	uint16_t address = memory->read(pc + 1);
-	operand = memory->get(address);
+	uint16_t address = memory.read(pc + 1);
+	operand = memory.get(address);
 	instructionLength = 2;
 
 	return 0;
@@ -308,12 +302,12 @@ int CPU::ZPG()
 int CPU::ZPX()
 {
 	// Operand is a memory address in range $0000-$00FF added to X register
-	uint16_t address = memory->read(pc + 1) + x;
+	uint16_t address = memory.read(pc + 1) + x;
 
 	// Take zero page wrap-around into account (wrap if past $00FF)
 	address %= 0x0100;
-	
-	operand = memory->get(address);
+
+	operand = memory.get(address);
 	instructionLength = 2;
 
 	return 0;
@@ -323,12 +317,12 @@ int CPU::ZPX()
 int CPU::ZPY()
 {
 	// Operand is a memory address in range $0000-$00FF added to Y register
-	uint16_t address = memory->read(pc + 1) + y;
+	uint16_t address = memory.read(pc + 1) + y;
 
 	// Take zero page wrap-around into account (wrap if past $00FF)
 	address %= 0x0100;
 
-	operand = memory->get(address);
+	operand = memory.get(address);
 	instructionLength = 2;
 
 	return 0;
@@ -338,7 +332,7 @@ int CPU::ZPY()
 int CPU::REL()
 {
 	// Operand is a SIGNED bit after the instruction
-	operand = memory->get(pc + 1);
+	operand = memory.get(pc + 1);
 	instructionLength = 2;
 
 	return 1;
@@ -348,9 +342,9 @@ int CPU::REL()
 int CPU::ABS()
 {
 	// Operand is an address after the instruction, stored in little-endian
-	uint16_t address = memory->read(pc + 2) << 8;
-	address |= memory->read(pc + 1);
-	operand = memory->get(address);
+	uint16_t address = memory.read(pc + 2) << 8;
+	address |= memory.read(pc + 1);
+	operand = memory.get(address);
 
 	// Jump target is the 16-bit address after the instruction
 	jumpTarget = address;
@@ -363,9 +357,9 @@ int CPU::ABS()
 int CPU::ABX()
 {
 	// Operand is an address after the instruction, stored in little-endian, added to X
-	uint16_t address = memory->read(pc + 2) << 8;
-	address |= memory->read(pc + 1);
-	operand = memory->get(address + x);
+	uint16_t address = memory.read(pc + 2) << 8;
+	address |= memory.read(pc + 1);
+	operand = memory.get(address + x);
 	instructionLength = 3;
 
 	// TODO: Deal with carry
@@ -377,9 +371,9 @@ int CPU::ABX()
 int CPU::ABY()
 {
 	// Operand is an address after the instruction, stored in little-endian, added to Y
-	uint16_t address = memory->read(pc + 2) << 8;
-	address |= memory->read(pc + 1);
-	operand = memory->get(address + y);
+	uint16_t address = memory.read(pc + 2) << 8;
+	address |= memory.read(pc + 1);
+	operand = memory.get(address + y);
 	instructionLength = 3;
 
 	// TODO: Deal with carry
@@ -391,21 +385,21 @@ int CPU::ABY()
 int CPU::IND()
 {
 	// Jump target is a 16-bit value at address specified after the instruction, stored in little-endian
-	uint16_t address = memory->read(pc + 2) << 8;
-	address |= memory->read(pc + 1);
+	uint16_t address = memory.read(pc + 2) << 8;
+	address |= memory.read(pc + 1);
 
 	// Check if LSB falls on page boundary
 	if ((address & 0x00FF) == 0x00FF)
 	{
 		// If fetching LSB from page boundary, then wrap around and fetch MSB from page start
-		jumpTarget = memory->read(address & 0xFF00) << 8;
-		jumpTarget |= memory->read(address);
+		jumpTarget = memory.read(address & 0xFF00) << 8;
+		jumpTarget |= memory.read(address);
 	}
 	else
 	{
 		// If LSB is not on page boundary, fetch as normal
-		jumpTarget = memory->read(address + 1) << 8;
-		jumpTarget |= memory->read(address);
+		jumpTarget = memory.read(address + 1) << 8;
+		jumpTarget |= memory.read(address);
 	}
 
 	// Operand unused
@@ -419,15 +413,15 @@ int CPU::IND()
 int CPU::IDX()
 {
 	// Read the pointer address after the instruction and add X register to it
-	uint8_t pointer = memory->read(pc + 1);
+	uint8_t pointer = memory.read(pc + 1);
 	pointer += x;
 
 	// Read the address located at the pointer (high-byte first)
 	// Also ensuring that (pointer + 1) for fetching high byte follows zero-page wrap-around
-	uint16_t address = memory->read((pointer + 1) & 0xFF) << 8;
-	address |= memory->read(pointer);
+	uint16_t address = memory.read((pointer + 1) & 0xFF) << 8;
+	address |= memory.read(pointer);
 
-	operand = memory->get(address);
+	operand = memory.get(address);
 	instructionLength = 2;
 
 	return 0;
@@ -437,15 +431,15 @@ int CPU::IDX()
 int CPU::IDY()
 {
 	// Read the pointer address after the instruction
-	uint8_t pointer = memory->read(pc + 1);
+	uint8_t pointer = memory.read(pc + 1);
 
 	// Read the address located at the pointer (high-byte first), and add register Y to it
 	// Also ensuring that (pointer + 1) for fetching high byte follows zero-page wrap-around
-	uint16_t address = memory->read((pointer + 1) & 0xFF) << 8;
-	address |= memory->read(pointer);
+	uint16_t address = memory.read((pointer + 1) & 0xFF) << 8;
+	address |= memory.read(pointer);
 	address += y;
 
-	operand = memory->get(address);
+	operand = memory.get(address);
 	instructionLength = 2;
 
 	return 1;
@@ -511,7 +505,7 @@ int CPU::ASL()
 
 	// Shift operand left one bit
 	*operand <<= 1;
-	
+
 	checkNegative(*operand);
 	checkZero(*operand);
 
@@ -610,10 +604,10 @@ int CPU::BPL()
 // ; (I); Force interrupt, push PC+2 and status pointer
 int CPU::BRK()
 {
-	memory->set(SP_ADDRESS, pc >> 8); // PC high byte
-	memory->set(SP_ADDRESS - 1, pc & 0x00FF); // PC low byte
-	memory->set(SP_ADDRESS - 2, p); // Status
-	
+	memory.set(SP_ADDRESS, pc >> 8); // PC high byte
+	memory.set(SP_ADDRESS - 1, pc & 0x00FF); // PC low byte
+	memory.set(SP_ADDRESS - 2, p); // Status
+
 	setFlag(Flag::Interrupt);
 
 	// Set SP to next empty slot
@@ -681,7 +675,7 @@ int CPU::CMP()
 
 	checkNegative(result);
 	checkZero(result);
-	
+
 	if (a >= *operand)
 	{
 		setFlag(Flag::Carry);
@@ -702,7 +696,7 @@ int CPU::CPX()
 
 	checkNegative(result);
 	checkZero(result);
-	
+
 	if (x >= *operand)
 	{
 		setFlag(Flag::Carry);
@@ -723,7 +717,7 @@ int CPU::CPY()
 
 	checkNegative(result);
 	checkZero(result);
-	
+
 	if (y >= *operand)
 	{
 		setFlag(Flag::Carry);
@@ -826,8 +820,8 @@ int CPU::JMP()
 int CPU::JSR()
 {
 	uint16_t returnAddress = pc + 2;
-	memory->set(SP_ADDRESS, (returnAddress & 0xFF00) >> 8);
-	memory->set(SP_ADDRESS - 1, returnAddress & 0x00FF);
+	memory.set(SP_ADDRESS, (returnAddress & 0xFF00) >> 8);
+	memory.set(SP_ADDRESS - 1, returnAddress & 0x00FF);
 
 	sp -= 2;
 	pc = jumpTarget - instructionLength;
@@ -916,7 +910,7 @@ int CPU::ORA()
 // Push A; (); Push accumulator on stack
 int CPU::PHA()
 {
-	memory->set(SP_ADDRESS, a);
+	memory.set(SP_ADDRESS, a);
 	sp--;
 
 	return 0;
@@ -930,7 +924,7 @@ int CPU::PHP()
 	setFlag(Flag::Break);
 	setFlag(Flag::Unused);
 
-	memory->set(SP_ADDRESS, p);
+	memory.set(SP_ADDRESS, p);
 	sp--;
 
 	p = originalP;
@@ -942,7 +936,7 @@ int CPU::PHP()
 int CPU::PLA()
 {
 	sp++;
-	a = memory->read(SP_ADDRESS);
+	a = memory.read(SP_ADDRESS);
 
 	checkZero(a);
 	checkNegative(a);
@@ -959,7 +953,7 @@ int CPU::PLP()
 
 	// Read new status from stack
 	sp++;
-	p = memory->read(SP_ADDRESS);
+	p = memory.read(SP_ADDRESS);
 
 	// Apply old bits to 4 and 5
 	setStatusBit(4, bit4);
@@ -1031,15 +1025,15 @@ int CPU::RTI()
 
 	// Read new status from stack
 	sp++;
-	p = memory->read(SP_ADDRESS);
+	p = memory.read(SP_ADDRESS);
 
 	// Apply old bits to 4 and 5
 	setStatusBit(4, bit4);
 	setStatusBit(5, bit5);
 
 	// Read PC from stack (in high, low order)
-	uint16_t returnAddress = memory->read(SP_ADDRESS + 2) << 8;
-	returnAddress |= memory->read(SP_ADDRESS + 1);
+	uint16_t returnAddress = memory.read(SP_ADDRESS + 2) << 8;
+	returnAddress |= memory.read(SP_ADDRESS + 1);
 
 	// PC should be set to return address pulled from stack
 	// But PC will be automatically incremented later, so decrement now to negate
@@ -1053,8 +1047,8 @@ int CPU::RTI()
 int CPU::RTS()
 {
 	// Read PC from stack (in high, low order)
-	uint16_t returnAddress = memory->read(SP_ADDRESS + 2) << 8;
-	returnAddress |= memory->read(SP_ADDRESS + 1);
+	uint16_t returnAddress = memory.read(SP_ADDRESS + 2) << 8;
+	returnAddress |= memory.read(SP_ADDRESS + 1);
 
 	// PC should be set to returnAddress + 1, but is automatically incremented later
 	// Set PC to just return address to negate
@@ -1070,7 +1064,7 @@ int CPU::SBC()
 	// To perform subtraction, can invert all bits of operand (giving -operand - 1) and pass to ADC
 	uint8_t normalOperand = *operand;
 	*operand = ~(*operand);
-	
+
 	int ret = ADC();
 	*operand = normalOperand;
 

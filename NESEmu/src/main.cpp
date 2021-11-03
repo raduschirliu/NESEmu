@@ -12,9 +12,9 @@ void testEmulator()
     Memory memory;
 
     ROM rom("..\\roms\\nestest.nes");
-    rom.map(&memory, &ppu);
+    rom.map(memory, ppu);
 
-    CPU cpu(&memory);
+    CPU cpu(memory);
 
     printf("Mapper: %u\n", rom.getMapperID());
     printf("ROM size: %u\n", rom.header.prgBanks * 0x4000);

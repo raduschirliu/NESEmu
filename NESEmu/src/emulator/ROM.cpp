@@ -20,14 +20,8 @@ void ROM::load(std::string path)
 	mapperID = 0;
 }
 
-void ROM::map(Memory *memory, PPU *ppu)
+void ROM::map(Memory &memory, PPU &ppu)
 {
-	if (memory == nullptr || ppu == nullptr)
-	{
-		printf("Invalid memory pointer provided to main Memory or PPU\n");
-		return;
-	}
-
 	std::ifstream stream;
 	stream.open(path, std::ifstream::binary);
 
@@ -61,8 +55,8 @@ void ROM::map(Memory *memory, PPU *ppu)
 		while (!stream.eof() && offset < 0x4000)
 		{
 			stream.read((char *)&byte, 1);
-			memory->set(0x8000 + offset, byte);
-			memory->set(0xC000 + offset, byte);
+			memory.set(0x8000 + offset, byte);
+			memory.set(0xC000 + offset, byte);
 
 			offset++;
 		}
