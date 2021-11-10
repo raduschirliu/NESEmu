@@ -163,6 +163,7 @@
     <ClCompile Include="src\graphics\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\graphics\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\graphics\windows\MemoryViewWindow.cpp" />
+    <ClCompile Include="src\graphics\windows\PPUDebugWindow.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\emulator\Mapper.cpp" />
     <ClCompile Include="src\mappers\Mapper0.cpp" />
@@ -189,6 +190,7 @@
     <ClInclude Include="src\graphics\Window.h" />
     <ClInclude Include="src\graphics\windows\DemoWindow.h" />
     <ClInclude Include="src\graphics\windows\MemoryViewWindow.h" />
+    <ClInclude Include="src\graphics\windows\PPUDebugWindow.h" />
     <ClInclude Include="src\mappers\Mapper0.h" />
     <ClInclude Include="src\emulator\Memory.h" />
     <ClInclude Include="src\emulator\PPU.h" />

@@ -2,6 +2,7 @@
 #include "../graphics/windows/DemoWindow.h"
 #include "../graphics/windows/DebugWindow.h"
 #include "../graphics/windows/MemoryViewWindow.h"
+#include "../graphics/windows/PPUDebugWindow.h"
 
 #include <stdio.h>
 
@@ -12,7 +13,7 @@ static void glfwErrorCallback(int error, const char *desc)
     printf("GLFW error: %i %s\n", error, desc);
 }
 
-NES::NES(): cpu(memory)
+NES::NES(): cpu(memory), ppu(memory)
 {
     windowWidth = 1280;
     windowHeight = 720;
@@ -76,6 +77,7 @@ bool NES::init()
     drawables.push_back(new DemoWindow());
     drawables.push_back(new DebugWindow(*this, cpu));
     drawables.push_back(new MemoryViewWindow(memory));
+    drawables.push_back(new PPUDebugWindow(ppu));
 
     return true;
 }
@@ -135,8 +137,13 @@ void NES::run()
 
 void NES::step()
 {
-    // TODO: Emulate PPU
+    // 1 CPU cycle = 3 PPU cycles
     cpu.step();
+    
+    // TODO: Improve performance in the future. Fast-forward PPU when relevant registers update
+    ppu.step();
+    ppu.step();
+    ppu.step();
 }
 
 void NES::shutdown()

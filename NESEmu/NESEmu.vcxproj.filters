@@ -69,6 +69,9 @@
     <ClCompile Include="src\graphics\windows\MemoryViewWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\windows\PPUDebugWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\mappers\Mapper0.h">
@@ -135,6 +138,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\windows\MemoryViewWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\windows\PPUDebugWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

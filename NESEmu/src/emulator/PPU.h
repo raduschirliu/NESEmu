@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../debug/Logger.h"
+#include "Memory.h"
 
 // TODO: Implement NES PPU
 class PPU
@@ -15,11 +16,27 @@ public:
 		uint8_t xPos;
 	};
 
+	// Represents the PPU registers (0x2000 - 0x2007)
+	struct Registers
+	{
+		uint8_t ctrl;
+		uint8_t mask;
+		uint8_t status;
+		uint8_t oamAddr;
+		uint8_t oamData;
+		uint8_t scroll;
+		uint8_t addr;
+		uint8_t data;
+	};
+
 	// Initialize memory
-	PPU();
+	PPU(Memory &memory);
 	
 	// Cleanup memory
 	~PPU();
+
+	// Emulate one PPU cycle
+	void step();
 
 	// Returns pointer to memory location
 	uint8_t *getMemory(uint16_t address);
@@ -29,6 +46,9 @@ public:
 
 	// Sets value in memory location
 	void setMemory(uint16_t address, uint8_t value);
+
+	// Gets current value of PPU registers
+	Registers *getRegisters();
 
 private:
 	// Used for pattern tables, $0000 - $1FFF. Each pattern table being $1000 in size
@@ -43,7 +63,13 @@ private:
 	
 	// Internal Object Attribute Memory (256kB)
 	uint8_t *oam;
+
+	// PPU registers from CPU memory
+	Registers *registers;
 	
 	// Log PPU activities
 	Logger logger;
+
+	// CPU memory
+	Memory &memory;
 };

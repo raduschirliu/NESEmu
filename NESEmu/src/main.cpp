@@ -8,13 +8,12 @@
 
 void testEmulator()
 {
-    PPU ppu;
     Memory memory;
+    PPU ppu(memory);
+    CPU cpu(memory);
 
     ROM rom("..\\roms\\nestest.nes");
     rom.map(memory, ppu);
-
-    CPU cpu(memory);
 
     printf("Mapper: %u\n", rom.getMapperID());
     printf("ROM size: %u\n", rom.header.prgBanks * 0x4000);

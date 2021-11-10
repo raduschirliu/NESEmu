@@ -34,7 +34,7 @@ public:
 		uint8_t cycles;
 	};
 
-	// Represents current CPU state
+	// Represents current CPU state, used for debugging
 	struct State
 	{
 		// Registers, PC, and total cycles
