@@ -45,18 +45,29 @@ void ROM::map(Memory &memory, PPU &ppu)
 		mirroring = (Mirroring)(header.mapperFlags1 & 0x1);
 
 		// TODO: Implement mappers
-		// TEST: Write 0x4000 bytes (16KB) to memory, mirrored at 0x8000-0xBFFF and 0xC000-0xFFFF
-		// Equivalent to using mapper 0
+		// Equivalent to using mapper 0 (NROM)
 		uint16_t offset = 0;
 		uint8_t byte;
 
 		stream.seekg(1, std::ios_base::cur);
 
-		while (!stream.eof() && offset < 0x4000)
+		while (!stream.eof())
 		{
 			stream.read((char *)&byte, 1);
-			memory.set(0x8000 + offset, byte);
-			memory.set(0xC000 + offset, byte);
+			
+			// Copy first 16KB of PRG ROM to CPU memory
+			if (offset >= 0 && offset < 0x4000)
+			{
+				// TEST: Write 0x4000 bytes (16KB) to memory, mirrored at 0x8000-0xBFFF and 0xC000-0xFFFF
+				memory.set(0x8000 + offset, byte);
+				memory.set(0xC000 + offset, byte);
+			}
+
+			// Copy next 8KB of CHR ROM to PPU memory
+			if (offset >= 0x4000 && offset < 0x6000)
+			{
+				ppu.setMemory(offset - 0x4000, byte);
+			}
 
 			offset++;
 		}
@@ -74,4 +85,9 @@ void ROM::map(Memory &memory, PPU &ppu)
 uint8_t ROM::getMapperID() const
 {
 	return mapperID;
+}
+
+std::string ROM::getPath() const
+{
+	return path;
 }

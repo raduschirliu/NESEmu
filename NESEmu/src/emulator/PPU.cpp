@@ -3,13 +3,13 @@
 PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 {
 	// TODO: Properly patternTable, nameTable
-	patternTables = nullptr;
+	patternTables = new uint8_t[0x2000]; // TEST: Init pattern table to 16KB of memory
 	nameTables = nullptr;
 
 	paletteTables = new uint8_t[0x20]; // 32 bytes, not configurable/remapable
 	oam = new uint8_t[256]; // 256 bytes, internal PPU memory
 
-	// Set PPU registers from CPU memory
+	// Make PPU registers point to CPU memory
 	registers = reinterpret_cast<Registers *>(memory.get(0x2000));
 }
 

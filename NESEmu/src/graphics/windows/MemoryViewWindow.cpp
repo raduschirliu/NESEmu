@@ -23,19 +23,6 @@ void MemoryViewWindow::draw()
 		return;
 	}
 
-	if (ImGui::Button("Dump memory"))
-	{
-		// Dump entire memory region, 0x0000 - 0xFFFF
-		Logger dump("..\\logs\\memdump.log");
-		dump.write("Memory dump\n\n");
-
-		printMemory(0, 0xFFFF);
-		dump.write(ss.str().c_str());
-		
-		printf("Dumped memory to logs/memdump.log");
-		ss.str("");
-	}
-
 	// Initialize window
 	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_HorizontalScrollbar;
 	ImGui::BeginChild("Memory", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, 260), false, windowFlags);
@@ -110,6 +97,19 @@ void MemoryViewWindow::draw()
 		{
 			currentPage = (0xFFFF - pageSize) / pageSize;
 		}
+	}
+
+	// Dump entire memory region, 0x0000 - 0xFFFF
+	if (ImGui::Button("Dump memory"))
+	{
+		Logger dump("..\\logs\\memdump.log");
+		dump.write("Memory dump\n\n");
+
+		printMemory(0, 0xFFFF);
+		dump.write(ss.str().c_str());
+
+		printf("Dumped memory to logs/memdump.log");
+		ss.str("");
 	}
 
 	ImGui::End();

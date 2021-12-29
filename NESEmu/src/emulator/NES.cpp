@@ -27,8 +27,10 @@ void NES::load(std::string path)
 	rom.load(path);
 	rom.map(memory, ppu);
 
-	printf("Mapper: %u\n", rom.getMapperID());
-	printf("ROM size: %u\n", rom.header.prgBanks * 0x4000);
+    printf("Loaded ROM: %s\n", path.c_str());
+	printf("\tMapper: %u\n", rom.getMapperID());
+	printf("\tPRG ROM size: %u banks -> %u bytes\n", rom.header.prgBanks, rom.header.prgBanks * 0x4000);
+    printf("\tCHR ROM size: %u banks -> %u bytes\n", rom.header.chrBanks, rom.header.chrBanks * 0x2000);
 }
 
 bool NES::init()
@@ -84,7 +86,7 @@ bool NES::init()
 
 void NES::run()
 {
-    running = true;
+    // running = true;
 
     // Draw window and poll events
     while (!glfwWindowShouldClose(window) && !shouldShutdown)
@@ -165,4 +167,9 @@ void NES::loadDebugMode()
 {
     load("..\\roms\\nestest.nes");
     cpu.setPC(0xC000);
+}
+
+ROM& NES::getRom()
+{
+    return rom;
 }

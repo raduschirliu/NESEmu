@@ -20,31 +20,44 @@ void DebugWindow::draw()
 		return;
 	}
 
-	CPU::State cpuState = cpu.getState();
-
+	// CPU state
+	if (ImGui::CollapsingHeader("CPU State"))
 	{
-		ImGui::BeginGroup();
+		CPU::State cpuState = cpu.getState();
 		ImGui::Text("Cycle: %d", cpuState.totalCycles);
 		ImGui::Text("PC: $%X", cpuState.pc);
 		ImGui::Text("Opcode: $%X", cpuState.opcode);
 		ImGui::Text("SP: $%X", cpuState.sp);
-		ImGui::EndGroup();
+
+		char statusBuf[20];
+		uint8_t statusRegister = cpuState.p;
+
+		for (int i = 0; i < 8; i++)
+		{
+			uint8_t bit = ((statusRegister >> 7) - i) & 0b00000001;
+			sprintf_s(statusBuf + i, (size_t)20 - i, "%d", bit);
+		}
+
+		ImGui::Text("P: $%X | NO-BDIZC: %s", statusRegister, statusBuf);
+
+		ImGui::Text("A: $%X", cpuState.a);
+		ImGui::Text("X: $%X", cpuState.x);
+		ImGui::Text("Y: $%X", cpuState.y);
 	}
 
-	char statusBuf[20];
-	uint8_t statusRegister = cpuState.p;
+	ImGui::Spacing();
 
-	for (int i = 0; i < 8; i++)
+	// ROM info
+	if (ImGui::CollapsingHeader("ROM Info"))
 	{
-		uint8_t bit = ((statusRegister >> 7) - i) & 0b00000001;
-		sprintf_s(statusBuf + i, (size_t)20 - i, "%d", bit);
+		ROM rom = nes.getRom();
+		ImGui::Text("Path: %s", rom.getPath().c_str());
+		ImGui::Text("Mapper: %u", rom.getMapperID());
+		ImGui::Text("PRG ROM size: %u banks (%u bytes)", rom.header.prgBanks, rom.header.prgBanks * 0x4000);
+		ImGui::Text("CHR ROM size: %u banks (%u bytes)", rom.header.chrBanks, rom.header.chrBanks * 0x2000);
 	}
 
-	ImGui::Text("P: $%X | NO-BDIZC: %s", statusRegister, statusBuf);
-
-	ImGui::Text("A: $%X", cpuState.a);
-	ImGui::Text("X: $%X", cpuState.x);
-	ImGui::Text("Y: $%X", cpuState.y);
+	ImGui::Spacing();
 
 	// Step & play/pause buttons
 	{

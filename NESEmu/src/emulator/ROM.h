@@ -45,6 +45,9 @@ public:
 	// Returns the mapper ID associated with the ROM
 	uint8_t getMapperID() const;
 
+	// Returns the path of the ROM file on the disk
+	std::string getPath() const;
+
 private:
 	// ID of the mapper needed for the ROM
 	uint8_t mapperID;

@@ -39,6 +39,9 @@ public:
 	// Put the NES into debug mode. Load nestest, and put into automated test mode
 	void loadDebugMode();
 
+	// Returns a copy of the NES' ROM
+	ROM& getRom();
+
 private:
 	// Window dimensions
 	int windowWidth, windowHeight;
