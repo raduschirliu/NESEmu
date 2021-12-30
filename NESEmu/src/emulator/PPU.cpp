@@ -4,7 +4,7 @@ PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 {
 	// TODO: Properly patternTable, nameTable
 	patternTables = new uint8_t[0x2000]; // TEST: Init pattern table to 16KB of memory
-	nameTables = nullptr;
+	nameTables = new uint8_t[0x1000]; // TEST: Init just to be able to dump memory (8KB of memory)
 
 	paletteTables = new uint8_t[0x20]; // 32 bytes, not configurable/remapable
 	oam = new uint8_t[256]; // 256 bytes, internal PPU memory

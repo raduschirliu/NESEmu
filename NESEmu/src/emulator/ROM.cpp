@@ -72,9 +72,7 @@ void ROM::map(Memory &memory, PPU &ppu)
 			offset++;
 		}
 
-		printf("Done, loaded %d bytes in memory locations:\n", offset);
-		printf("\t%X - %X\n", 0x8000, 0x8000 + offset - 1);
-		printf("\t%X - %X\n\n", 0xC000, 0xC000 + offset - 1);
+		printf("Done, loaded %X (%d) bytes from ROM\n", offset, offset);
 	}
 	else
 	{
