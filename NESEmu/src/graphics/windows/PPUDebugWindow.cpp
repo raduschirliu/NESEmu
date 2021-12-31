@@ -43,7 +43,7 @@ void PPUDebugWindow::draw()
 		Logger dump("..\\logs\\chrrom_dump.log");
 		dump.write("CHR ROM dump\n\n");
 
-		printMemory(ppu, ss, 0x0000, 0x3FFF);
+		printMemory(ss, 0x0000, 0x3FFF);
 		dump.write(ss.str().c_str());
 
 		printf("Dumped CHR ROM to logs");
@@ -77,9 +77,30 @@ void PPUDebugWindow::draw()
 
 			ImGui::Spacing();
 
-			ImGui::Image((void *)(intptr_t)ptLeftTexture, ImVec2(512, 512));
+			ImGui::Image((void *)(intptr_t)ptLeftTexture, ImVec2(256, 256));
 			ImGui::SameLine();
-			ImGui::Image((void*)(intptr_t)ptRightTexture, ImVec2(512, 512));
+			ImGui::Image((void*)(intptr_t)ptRightTexture, ImVec2(256, 256));
+
+			ImGui::EndTabItem();
+		}
+
+		// Palette table
+		if (ImGui::BeginTabItem("Palette Table"))
+		{
+			ImDrawList *drawList = ImGui::GetWindowDrawList();
+			const ImVec2 pos = ImGui::GetCursorScreenPos();
+			const float size = 32;
+
+			for (int r = 0; r < 4; r++)
+			{
+				for (int c = 0; c < 15; c++)
+				{
+					float x = pos.x + c * size;
+					float y = pos.y + r * size;
+					ImU32 color = ImColor(255, 10, 10);
+					drawList->AddRectFilled(ImVec2(x, y), ImVec2(x + size, y + size), color);
+				}
+			}
 
 			ImGui::EndTabItem();
 		}
@@ -132,4 +153,23 @@ bool createPatternTableTexture(PPU& ppu, uint8_t tableIndex, GLuint* texture)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
 
 	return true;
+}
+
+void PPUDebugWindow::printMemory(std::stringstream& ss, uint16_t start, uint16_t end)
+{
+	// Draw 8 bytes per line from start address to end address
+	for (int base = start; base <= end; base += 8)
+	{
+		ss << std::hex
+			<< std::setw(4) << std::setfill('0')
+			<< base << ":\t";
+
+		for (int line = 0; line < 8; line++)
+		{
+			ss << std::setw(2) << std::setfill('0')
+				<< (int)ppu.readMemory(base + line) << " ";
+		}
+
+		ss << std::endl;
+	}
 }

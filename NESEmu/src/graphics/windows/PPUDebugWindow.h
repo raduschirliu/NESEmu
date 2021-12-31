@@ -11,5 +11,7 @@ public:
 	void draw() override;
 
 private:
+	void printMemory(std::stringstream& ss, uint16_t start, uint16_t end);
+
 	PPU &ppu;
 };
