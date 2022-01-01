@@ -3,10 +3,17 @@
 #include "../debug/Logger.h"
 #include "Memory.h"
 
-// TODO: Implement NES PPU
+#include <vector>
+
 class PPU
 {
 public:
+	// Represents a system palette color
+	struct Color
+	{
+		uint8_t r, g, b;
+	};
+
 	// Represents a 4 byte sprite stored in the Object Attribute Memory (OAM)
 	struct OamSprite
 	{
@@ -50,6 +57,9 @@ public:
 	// Gets current value of PPU registers
 	Registers *getRegisters();
 
+	// Returns the system palette
+	std::vector<PPU::Color> getSystemPalette();
+
 private:
 	// Used for pattern tables, $0000 - $1FFF. Each pattern table being $1000 in size
 	// Mapped to cartridge using bank switching
@@ -66,10 +76,16 @@ private:
 
 	// PPU registers from CPU memory
 	Registers *registers;
+
+	// System color palette
+	std::vector<Color> systemPalette;
 	
 	// Log PPU activities
 	Logger logger;
 
 	// CPU memory
 	Memory &memory;
+
+	// Load the system palette
+	void loadPalette(std::string path);
 };

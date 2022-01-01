@@ -90,14 +90,16 @@ void PPUDebugWindow::draw()
 			ImDrawList *drawList = ImGui::GetWindowDrawList();
 			const ImVec2 pos = ImGui::GetCursorScreenPos();
 			const float size = 32;
+			std::vector<PPU::Color> palette = ppu.getSystemPalette();
 
 			for (int r = 0; r < 4; r++)
 			{
-				for (int c = 0; c < 15; c++)
+				for (int c = 0; c < 16; c++)
 				{
 					float x = pos.x + c * size;
 					float y = pos.y + r * size;
-					ImU32 color = ImColor(255, 10, 10);
+					int index = 16 * r + c;
+					ImU32 color = ImColor(palette[index].r, palette[index].g, palette[index].b);
 					drawList->AddRectFilled(ImVec2(x, y), ImVec2(x + size, y + size), color);
 				}
 			}
