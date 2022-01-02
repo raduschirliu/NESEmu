@@ -89,7 +89,8 @@ void PPUDebugWindow::draw()
 		{
 			ImDrawList *drawList = ImGui::GetWindowDrawList();
 			const ImVec2 pos = ImGui::GetCursorScreenPos();
-			const float size = 32;
+			const float size = 64;
+			const ImU32 textColor = ImColor(255, 255, 255);
 			std::vector<PPU::Color> palette = ppu.getSystemPalette();
 
 			for (int r = 0; r < 4; r++)
@@ -101,9 +102,21 @@ void PPUDebugWindow::draw()
 					int index = 16 * r + c;
 					ImU32 color = ImColor(palette[index].r, palette[index].g, palette[index].b);
 					drawList->AddRectFilled(ImVec2(x, y), ImVec2(x + size, y + size), color);
+
+					ss << "0x" << std::hex
+						<< std::setw(2) << std::setfill('0')
+						<< index;
+					drawList->AddText(ImVec2(x, y), textColor, ss.str().c_str());
+					ss.str("");
 				}
 			}
 
+			ImGui::EndTabItem();
+		}
+
+		// Nametables
+		if (ImGui::BeginTabItem("Nametable 1"))
+		{
 			ImGui::EndTabItem();
 		}
 
