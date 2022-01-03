@@ -44,16 +44,11 @@ PPU::~PPU()
 void PPU::step()
 {
 	// TODO: Implement render cycles
-
 	if (cycles == 262 * 341)
 	{
 		// 262 scanlines per frame, 341 PPU cycles per scanline
 		cycles = 0;
-	}
-
-	if (cycles == 0)
-	{
-		registers->status |= (1 << 7);
+		registers->status |= (1 << 7); // Set vblank
 	}
 
 	cycles++;

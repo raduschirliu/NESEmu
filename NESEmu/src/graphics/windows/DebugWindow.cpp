@@ -1,12 +1,23 @@
 #include "DebugWindow.h"
 
-DebugWindow::DebugWindow(NES &nes, CPU &cpu): Window(GLFW_KEY_F1), nes(nes), cpu(cpu)
+DebugWindow::DebugWindow(NES &nes, CPU &cpu) : Window(GLFW_KEY_F1), prevTime(0), frames(0), fps(0), nes(nes), cpu(cpu)
 {
 	enable();
 }
 
 void DebugWindow::draw()
 {
+	// Measure FPS
+	double currentTime = glfwGetTime();
+	frames++;
+
+	if (currentTime - prevTime >= 1.0)
+	{
+		fps = frames;
+		frames = 0;
+		prevTime = currentTime;
+	}
+
 	// If window not enabled, don't draw it
 	if (!enabled)
 	{
@@ -62,6 +73,9 @@ void DebugWindow::draw()
 	// Step & play/pause buttons
 	{
 		ImGui::BeginGroup();
+		ImGui::Text("FPS: %u", fps);
+		ImGui::Spacing();
+
 		if (ImGui::Button("Step"))
 		{
 			nes.step();
@@ -73,6 +87,7 @@ void DebugWindow::draw()
 		{
 			nes.setRunning(!nes.getRunning());
 		}
+
 		ImGui::EndGroup();
 	}
 

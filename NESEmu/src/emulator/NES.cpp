@@ -88,9 +88,6 @@ bool NES::init()
 
 void NES::run()
 {
-    double prevTime = glfwGetTime();
-    int frames = 0;
-
     // Draw window and poll events
     while (!glfwWindowShouldClose(window) && !shouldShutdown)
     {
@@ -102,19 +99,6 @@ void NES::run()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
-        // Measure speed
-            double currentTime = glfwGetTime();
-        frames++;
-        // If a second has passed.
-        if (currentTime - prevTime >= 1.0)
-        {
-            // Display the frame count here any way you want.
-            printf("FPS: %u\n", frames);
-
-            frames = 0;
-            prevTime = currentTime;
-        }
 
         // Emulate NES components if not paused
         // TODO: Make CPU emulation run independently of rendering

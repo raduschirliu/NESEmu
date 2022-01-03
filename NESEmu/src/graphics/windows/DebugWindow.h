@@ -11,6 +11,9 @@ public:
 	void draw() override;
 
 private:
+	double prevTime;
+	uint32_t frames, fps;
+
 	NES &nes;
 	CPU &cpu;
 };
