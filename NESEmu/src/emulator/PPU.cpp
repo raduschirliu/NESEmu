@@ -11,11 +11,27 @@ PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 	paletteTables = new uint8_t[0x20]; // 32 bytes, not configurable/remapable
 	oam = new uint8_t[256];			   // 256 bytes, internal PPU memory
 
-	// Make PPU registers point to CPU memory
+	// Initialize registers
 	registers = reinterpret_cast<Registers *>(memory.get(0x2000));
+	registers->ctrl = { 0 };
+	registers->mask = 0;
+	registers->status = 0b10100000;
+	registers->oamAddr = 0;
+	registers->oamData = 0;
+	registers->scroll = 0;
+	registers->addr = 0;
+	registers->data = 0;
 
 	// Load system palette from .pal file
 	loadPalette("palette.pal");
+
+	// Set access info for PPUADDR/PPUDATA
+	accessAddress = 0;
+	accessAddressHighByte = true;
+	memory.setPpuAccessCallback([this](uint16_t address, uint8_t newValue, bool write)
+		{
+			onRegisterAccess(address, newValue, write);
+		});
 }
 
 PPU::~PPU()
@@ -28,6 +44,20 @@ PPU::~PPU()
 void PPU::step()
 {
 	// TODO: Implement render cycles
+
+	if (cycles == 262 * 341)
+	{
+		// 262 scanlines per frame, 341 PPU cycles per scanline
+		cycles = 0;
+	}
+
+	if (cycles == 0)
+	{
+		registers->status |= (1 << 7);
+	}
+
+	cycles++;
+	totalCycles++;
 }
 
 uint8_t *PPU::getMemory(uint16_t address)
@@ -113,5 +143,76 @@ void PPU::loadPalette(std::string path)
 		systemPalette.push_back(color);
 	}
 
-	printf("Loaded %u system palette colors\n", systemPalette.size());
+	printf("Loaded %zu system palette colors\n", systemPalette.size());
+}
+
+void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
+{
+	switch (address)
+	{
+	// PPUSTATUS ($2002)
+	case 0x2002:
+	{
+		// Reading status register clears bit 7
+		registers->status &= ~(1 << 7);
+		break;
+	}
+
+	// PPUADDR ($2006)
+	case 0x2006:
+	{
+		uint16_t mask = 0x00FF;
+		uint16_t val = newValue;
+
+		if (accessAddressHighByte)
+		{
+			mask = 0xFF00;
+			val <<= 8;
+		}
+
+		accessAddress &= ~mask;
+		accessAddress |= val;
+
+		registers->data = 0;
+		accessAddressHighByte = !accessAddressHighByte;
+
+		// If reading palette data, update immediately
+		if (accessAddress >= 0x3F00 && accessAddress <= 0x3FFF)
+		{
+			registers->data = readMemory(accessAddress);
+		}
+
+		printf("Set PPUADDR to %X\n", accessAddress);
+		break;
+	}
+
+	// PPUDATA ($2007)
+	case 0x2007:
+	{
+		printf("Using $2007 to access $%X\n", accessAddress);
+
+		// Update if reading before palette data
+		if (accessAddress <= 0x3EFF)
+		{
+			registers->data = readMemory(accessAddress);
+		}
+
+		// Increment
+		if (registers->ctrl.addressIncrement == 0)
+		{
+			accessAddress++;
+		}
+		else
+		{
+			accessAddress += 32;
+		}
+
+		break;
+	}
+	}
+}
+
+uint32_t PPU::getTotalCycles()
+{
+	return totalCycles;
 }

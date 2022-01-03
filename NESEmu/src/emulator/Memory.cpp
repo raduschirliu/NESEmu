@@ -35,6 +35,14 @@ uint8_t *Memory::get(uint16_t address)
 	{
 		// Get from PPU memory ($2000 - $3FFF, mirrored > $2008)
 		uint16_t target = (address - 0x2000) % 0x0009;
+
+		if (ppuCallback)
+		{
+			// TODO: Add way of determining intent to write to address
+			// TODO: Add way to access memory without triggering callbacks
+			ppuCallback(address, 0, false);
+		}
+
 		return &ppuMem[target];
 	}
 	else if (address >= 0x4000 && address <= 0x4017)
@@ -115,4 +123,9 @@ void Memory::dump(Logger &logger)
 	}
 
 	logger.write(ss.str());
+}
+
+void Memory::setPpuAccessCallback(AccessCallback callback)
+{
+	ppuCallback = callback;
 }

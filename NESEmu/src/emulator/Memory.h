@@ -1,12 +1,18 @@
 #pragma once
 
 #include "../debug/Logger.h"
+
 #include <cstdint>
+#include <functional>
 
 // Represents the 64KB of RAM that is addressable by the 6502 CPU
 class Memory
 {
 public:
+	// Callback type
+	// using AccessCallback = void(*)(uint16_t address, uint8_t newValue, bool write);
+	using AccessCallback = std::function<void(uint16_t address, uint8_t newValue, bool write)>;
+
 	// Initialize all empty memory blocks
 	Memory();
 
@@ -29,6 +35,9 @@ public:
 	// Dump entire contents of memory ($0000 - $FFFF) to given logger
 	void dump(Logger &logger);
 
+	// Set the PPU memory access callback
+	void setPpuAccessCallback(AccessCallback callback);
+
 private:
 	// Internal 2KB of CPU Memory (from $0000 - $07FFF)
 	// Mirrored 3 times from $0800 - $1FFF
@@ -46,4 +55,7 @@ private:
 
 	// Cartridge Memory: PRG ROM, PRG RAM, and mapper registers (from $4020 - $FFFF)
 	uint8_t *romMem;
+
+	// Callbacks for when regions of memory are accessed
+	AccessCallback ppuCallback;
 };

@@ -25,7 +25,7 @@ NES::NES(): cpu(memory), ppu(memory)
 void NES::load(std::string path)
 {
 	rom.load(path);
-	rom.map(memory, ppu);
+	rom.map(memory, cpu, ppu);
 
     printf("Loaded ROM: %s\n", path.c_str());
 	printf("\tMapper: %u\n", rom.getMapperID());
@@ -58,7 +58,9 @@ bool NES::init()
     }
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
+
+    // Disable Vsync
+    glfwSwapInterval(0);
 
     // Initialize GLEW
     if (glewInit() != GLEW_OK)
@@ -86,7 +88,8 @@ bool NES::init()
 
 void NES::run()
 {
-    // running = true;
+    double prevTime = glfwGetTime();
+    int frames = 0;
 
     // Draw window and poll events
     while (!glfwWindowShouldClose(window) && !shouldShutdown)
@@ -100,7 +103,21 @@ void NES::run()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        // Measure speed
+            double currentTime = glfwGetTime();
+        frames++;
+        // If a second has passed.
+        if (currentTime - prevTime >= 1.0)
+        {
+            // Display the frame count here any way you want.
+            printf("FPS: %u\n", frames);
+
+            frames = 0;
+            prevTime = currentTime;
+        }
+
         // Emulate NES components if not paused
+        // TODO: Make CPU emulation run independently of rendering
         if (running)
         {
             step();

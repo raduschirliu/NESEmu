@@ -21,19 +21,12 @@ CPU::CPU(Memory &memory) : logger("..\\logs\\cpu.log"), memory(memory)
 	a = 0x00;
 	x = 0x00;
 	y = 0x00;
-	p = 0x00;
-	pc = 0x0000;
-	sp = 0xFF;
+	p = 0x24;
+	sp = 0xFD;
 	opcode = 0x00;
 	totalCycles = 0;
 	cycles = 0;
-
-	// Find reset vector at 0xFFFC, and set initial PC
-	pc = (memory.read(0xFFFD) << 8) | memory.read(0xFFFC);
-
-	// TEST
-	p = 0x24;
-	sp = 0xFD;
+	
 
 	// Initialize instruction table
 	// Hi-nibble on vertical, Lo-nibble on horizontal

@@ -20,7 +20,7 @@ void ROM::load(std::string path)
 	mapperID = 0;
 }
 
-void ROM::map(Memory &memory, PPU &ppu)
+void ROM::map(Memory &memory, CPU &cpu, PPU &ppu)
 {
 	std::ifstream stream;
 	stream.open(path, std::ifstream::binary);
@@ -72,7 +72,12 @@ void ROM::map(Memory &memory, PPU &ppu)
 			offset++;
 		}
 
-		printf("Done, loaded %X (%d) bytes from ROM\n", offset, offset);
+		// Find reset vector at 0xFFFC, and set initial PC
+		uint16_t pc = (memory.read(0xFFFD) << 8) | memory.read(0xFFFC);
+		cpu.setPC(pc);
+
+		printf("Done, loaded $%X (%d) bytes from ROM\n", offset, offset);
+		printf("\tSet PC to $%X\n", pc);
 	}
 	else
 	{

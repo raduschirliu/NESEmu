@@ -36,19 +36,21 @@ void PPUDebugWindow::draw()
 		return;
 	}
 
-	std::stringstream ss;
-
 	if (ImGui::Button("Dump CHR ROM"))
 	{
 		Logger dump("..\\logs\\chrrom_dump.log");
 		dump.write("CHR ROM dump\n\n");
 
-		printMemory(ss, 0x0000, 0x3FFF);
+		printMemory(0x0000, 0x3FFF);
 		dump.write(ss.str().c_str());
 
 		printf("Dumped CHR ROM to logs");
 		ss.str("");
 	}
+
+	ImGui::Text("Total cycles: %u\n", ppu.getTotalCycles());
+
+	ImGui::Spacing();
 
 	if (ImGui::CollapsingHeader("PPU Registers"))
 	{
@@ -71,9 +73,9 @@ void PPUDebugWindow::draw()
 		if (ImGui::BeginTabItem("Pattern Table"))
 		{
 			PPU::Registers *registers = ppu.getRegisters();
-			uint8_t selectedHalf = (registers->ctrl & 0b00001000) >> 3;
 
-			ImGui::Text("Active table: %d\n", (int)selectedHalf);
+			ImGui::Text("Background table: %d\n", (int)registers->ctrl.bgPatternTable);
+			ImGui::Text("Sprite table: %d\n", (int)registers->ctrl.spritePatternTable);
 
 			ImGui::Spacing();
 
@@ -117,6 +119,13 @@ void PPUDebugWindow::draw()
 		// Nametables
 		if (ImGui::BeginTabItem("Nametable 1"))
 		{
+			drawNametable(0x2000);
+			ImGui::EndTabItem();
+		}
+
+		if (ImGui::BeginTabItem("Nametable 2"))
+		{
+			drawNametable(0x2400);
 			ImGui::EndTabItem();
 		}
 
@@ -126,7 +135,46 @@ void PPUDebugWindow::draw()
 	ImGui::End();
 }
 
-bool createPatternTableTexture(PPU& ppu, uint8_t tableIndex, GLuint* texture)
+void PPUDebugWindow::printMemory(uint16_t start, uint16_t end)
+{
+	// Draw 8 bytes per line from start address to end address
+	for (int base = start; base <= end; base += 8)
+	{
+		ss << std::hex
+			<< std::setw(4) << std::setfill('0')
+			<< base << ":\t";
+
+		for (int line = 0; line < 8; line++)
+		{
+			ss << std::setw(2) << std::setfill('0')
+				<< (int)ppu.readMemory(base + line) << " ";
+		}
+
+		ss << std::endl;
+	}
+}
+
+void PPUDebugWindow::drawNametable(uint16_t start)
+{
+	for (uint16_t r = 0; r < 30; r++)
+	{
+		for (uint16_t c = 0; c < 32; c++)
+		{
+			uint16_t offset = r * 32 + c;
+			ss << std::hex
+				<< std::setw(2) << std::setfill('0')
+				<< (int)ppu.readMemory(start + offset)
+				<< " ";
+		}
+
+		ss << std::endl;
+	}
+	
+	ImGui::Text(ss.str().c_str());
+	ss.str("");
+}
+
+bool createPatternTableTexture(PPU &ppu, uint8_t tableIndex, GLuint *texture)
 {
 	// Create OpenGL texture identifier
 	glGenTextures(1, texture);
@@ -137,7 +185,7 @@ bool createPatternTableTexture(PPU& ppu, uint8_t tableIndex, GLuint* texture)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	std::vector<uint8_t> pixels;
-	uint8_t colors[] = {0, 50, 100};
+	uint8_t colors[] = { 0, 50, 100 };
 	uint16_t base = (tableIndex & 0x01) << 12;
 
 	// Create pixel data
@@ -168,23 +216,4 @@ bool createPatternTableTexture(PPU& ppu, uint8_t tableIndex, GLuint* texture)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
 
 	return true;
-}
-
-void PPUDebugWindow::printMemory(std::stringstream& ss, uint16_t start, uint16_t end)
-{
-	// Draw 8 bytes per line from start address to end address
-	for (int base = start; base <= end; base += 8)
-	{
-		ss << std::hex
-			<< std::setw(4) << std::setfill('0')
-			<< base << ":\t";
-
-		for (int line = 0; line < 8; line++)
-		{
-			ss << std::setw(2) << std::setfill('0')
-				<< (int)ppu.readMemory(base + line) << " ";
-		}
-
-		ss << std::endl;
-	}
 }

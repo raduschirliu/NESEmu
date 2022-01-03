@@ -26,7 +26,15 @@ public:
 	// Represents the PPU registers (0x2000 - 0x2007)
 	struct Registers
 	{
-		uint8_t ctrl;
+		struct PpuCtrl {
+			uint8_t nmiEnable : 1;
+			uint8_t masterSlave : 1;
+			uint8_t spriteSize : 1;
+			uint8_t bgPatternTable : 1;
+			uint8_t spritePatternTable : 1;
+			uint8_t addressIncrement : 1;
+			uint8_t baseNametable : 2;
+		} ctrl;
 		uint8_t mask;
 		uint8_t status;
 		uint8_t oamAddr;
@@ -60,7 +68,14 @@ public:
 	// Returns the system palette
 	std::vector<PPU::Color> getSystemPalette();
 
+	// Return the total amount of cycles that have passed
+	uint32_t getTotalCycles();
+
 private:
+	// Cycle related stats
+	uint8_t cycles;
+	uint32_t totalCycles;
+
 	// Used for pattern tables, $0000 - $1FFF. Each pattern table being $1000 in size
 	// Mapped to cartridge using bank switching
 	uint8_t *patternTables;
@@ -86,6 +101,13 @@ private:
 	// CPU memory
 	Memory &memory;
 
+	// Control the address that the CPU can access through PPUADDR/PPUDATA
+	uint16_t accessAddress;
+	bool accessAddressHighByte;
+
 	// Load the system palette
 	void loadPalette(std::string path);
+
+	// Called when one of the PPU's memory mapped registers is accessed
+	void onRegisterAccess(uint16_t address, uint8_t newValue, bool write);
 };
