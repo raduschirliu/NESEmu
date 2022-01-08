@@ -2,19 +2,15 @@
 
 #include <stdio.h>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 
 // TODO: Handle interrupts (IRQ, NMI)
 // TODO: Use modern C++ constructs (new-style casts, smart pointers, etc)
 
-/* TODO: Better handling of operand (needed for callbacks on read/write)
-* 
-*  Use a function for reading/writing from the operand to allow using a callback.
-*  Store the address of the operand, as well as an enum for operand type { address, a, invalid }
-*/
-
 // Debugging
 static bool constexpr DEBUG_LOG = true;
+static char debug_buf[100];
 
 // Convenience macros for defining CPU instructions
 #define _I(NAME, RUN, MODE, CYCLES) { NAME, &CPU::RUN, &CPU::MODE, CYCLES }
@@ -78,9 +74,8 @@ void CPU::step()
 		// Write debug info to log
 		if (DEBUG_LOG)
 		{
-			char buf[500];
-			sprintf_s(buf, "%04X  %02X  %s\t\tA:%02X X:%02X Y:%02X P:%02X SP:%02X\tCYC:%d\n", pc, opcode, ins.instruction.c_str(), a, x, y, p, sp, totalCycles);
-			logger.write(buf);
+			snprintf(debug_buf, 100, "%04X  %02X  %s\t\tA:%02X X:%02X Y:%02X P:%02X SP:%02X\tCYC:%d\n", pc, opcode, ins.instruction.c_str(), a, x, y, p, sp, totalCycles);
+			logger.write(debug_buf);
 		}
 
 		int runExtra = (this->*ins.run)();

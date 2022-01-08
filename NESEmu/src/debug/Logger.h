@@ -14,6 +14,7 @@ public:
 
 	// Write to the file
 	void write(std::string text);
+	void write(const char *text);
 
 private:
 	std::string path;

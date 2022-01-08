@@ -1,5 +1,13 @@
 #include "Logger.h"
+
 #include <stdio.h>
+#include <vector>
+#include <sstream>
+
+// TODO: Make buffer configurable
+static int constexpr BUFFER_SIZE = 50;
+static std::stringstream ss;
+static int bufferCount = 0;
 
 Logger::Logger(std::string path)
 {
@@ -9,13 +17,34 @@ Logger::Logger(std::string path)
 
 void Logger::write(std::string text)
 {
-	file << text;
+	write(text.c_str());
+}
+
+void Logger::write(const char *text)
+{
+	if (bufferCount > BUFFER_SIZE)
+	{
+		file << ss.str();
+		ss.str("");
+		bufferCount = 0;
+	}
+	else
+	{
+		ss << text;
+		bufferCount++;
+	}
 }
 
 Logger::~Logger()
 {
 	if (file.is_open())
 	{
+		// Write any last text
+		if (bufferCount > 0)
+		{
+			file << ss.str();
+		}
+
 		file.close();
 	}
 }
