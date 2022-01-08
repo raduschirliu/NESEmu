@@ -20,13 +20,13 @@ public:
 	~Memory();
 
 	// Return pointer to a place in memory, or nullptr if out of bounds
-	uint8_t *get(uint16_t address);
+	uint8_t *get(uint16_t address, bool write, bool skipCallback = false);
 	
 	// Return value of a place in memory, or -1 if not found
-	uint8_t read(uint16_t address);
+	uint8_t read(uint16_t address, bool skipCallback = false);
 
-	// Set value in memory at address, or does nothing if out of bounds
-	void set(uint16_t address, uint8_t value);
+	// Write value in memory at address, or does nothing if out of bounds
+	void write(uint16_t address, uint8_t value, bool skipCallback = false);
 
 	// Dump entire contents of memory ($0000 - $FFFF) to given logger
 	void dump(Logger &logger);

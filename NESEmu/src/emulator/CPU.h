@@ -49,6 +49,21 @@ public:
 		std::string addressingMode = "";
 	} state;
 
+	// Type of operand
+	enum class OperandType
+	{
+		Invalid,
+		Address,
+		Accumulator
+	};
+
+	// Represents the operand of the current instruction
+	struct Operand
+	{
+		OperandType type;
+		uint16_t address;
+	};
+
 	// Initialize CPU
 	CPU(Memory &memory);
 
@@ -84,9 +99,9 @@ private:
 
 	// Used for current instruction
 	uint8_t opcode;
-	uint8_t *operand;
 	uint8_t instructionLength;
 	uint16_t jumpTarget;
+	Operand operand;
 
 	// Cycle related stats
 	uint8_t cycles;
@@ -101,6 +116,10 @@ private:
 
 	// Instruction table
 	std::vector<Instruction> instructions;
+
+	// Accesors for operand (read and write)
+	void writeOperand(uint8_t value, bool skipCallback = false);
+	uint8_t readOperand(bool skipCallback = false);
 
 	// Sets overflow flag if result is an overflow
 	void checkOverflow(int8_t target, int8_t result);

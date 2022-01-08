@@ -59,8 +59,8 @@ void ROM::map(Memory &memory, CPU &cpu, PPU &ppu)
 			if (offset >= 0 && offset < 0x4000)
 			{
 				// TEST: Write 0x4000 bytes (16KB) to memory, mirrored at 0x8000-0xBFFF and 0xC000-0xFFFF
-				memory.set(0x8000 + offset, byte);
-				memory.set(0xC000 + offset, byte);
+				memory.write(0x8000 + offset, byte);
+				memory.write(0xC000 + offset, byte);
 			}
 
 			// Copy next 8KB of CHR ROM to PPU memory

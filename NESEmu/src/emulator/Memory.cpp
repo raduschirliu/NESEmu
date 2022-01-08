@@ -23,7 +23,7 @@ Memory::~Memory()
 	delete[] romMem;
 }
 
-uint8_t *Memory::get(uint16_t address)
+uint8_t *Memory::get(uint16_t address, bool write, bool skipCallback)
 {
 	if (address >= 0x0000 && address <= 0x1FFF)
 	{
@@ -36,11 +36,11 @@ uint8_t *Memory::get(uint16_t address)
 		// Get from PPU memory ($2000 - $3FFF, mirrored > $2008)
 		uint16_t target = (address - 0x2000) % 0x0009;
 
-		if (ppuCallback)
+		if (ppuCallback && !skipCallback)
 		{
 			// TODO: Add way of determining intent to write to address
 			// TODO: Add way to access memory without triggering callbacks
-			ppuCallback(address, 0, false);
+			ppuCallback(address, 0, write);
 		}
 
 		return &ppuMem[target];
@@ -64,9 +64,9 @@ uint8_t *Memory::get(uint16_t address)
 	return nullptr;
 }
 
-uint8_t Memory::read(uint16_t address)
+uint8_t Memory::read(uint16_t address, bool skipCallback)
 {
-	uint8_t *ptr = get(address);
+	uint8_t *ptr = get(address, false, skipCallback);
 
 	if (ptr != nullptr)
 	{
@@ -76,9 +76,9 @@ uint8_t Memory::read(uint16_t address)
 	return -1;
 }
 
-void Memory::set(uint16_t address, uint8_t value)
+void Memory::write(uint16_t address, uint8_t value, bool skipCallback)
 {
-	uint8_t *ptr = get(address);
+	uint8_t *ptr = get(address, true, skipCallback);
 
 	if (ptr != nullptr)
 	{

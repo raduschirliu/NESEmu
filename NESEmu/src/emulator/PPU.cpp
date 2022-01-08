@@ -12,7 +12,7 @@ PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 	oam = new uint8_t[256];			   // 256 bytes, internal PPU memory
 
 	// Initialize registers
-	registers = reinterpret_cast<Registers *>(memory.get(0x2000));
+	registers = reinterpret_cast<Registers *>(memory.get(0x2000, false, true));
 	registers->ctrl = { 0 };
 	registers->mask = 0;
 	registers->status = 0b10100000;

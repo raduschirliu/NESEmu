@@ -5,6 +5,13 @@
 #include <sstream>
 
 // TODO: Handle interrupts (IRQ, NMI)
+// TODO: Use modern C++ constructs (new-style casts, smart pointers, etc)
+
+/* TODO: Better handling of operand (needed for callbacks on read/write)
+* 
+*  Use a function for reading/writing from the operand to allow using a callback.
+*  Store the address of the operand, as well as an enum for operand type { address, a, invalid }
+*/
 
 // Debugging
 static bool constexpr DEBUG_LOG = true;
@@ -28,7 +35,7 @@ CPU::CPU(Memory &memory) : logger("..\\logs\\cpu.log"), memory(memory)
 	opcode = 0x00;
 	totalCycles = 0;
 	cycles = 0;
-	
+	operand = { OperandType::Invalid, 0x0000 };
 
 	// Initialize instruction table
 	// Hi-nibble on vertical, Lo-nibble on horizontal
@@ -144,9 +151,42 @@ CPU::State CPU::getState() const
 	return state;
 }
 
+void CPU::writeOperand(uint8_t value, bool skipCallback)
+{
+	switch (operand.type)
+	{
+	case OperandType::Invalid:
+		printf("Tried writing to an invalid operand\n");
+		break;
+	case OperandType::Address:
+		memory.write(operand.address, value);
+		break;
+	case OperandType::Accumulator:
+		a = value;
+		break;
+	}
+}
+
+uint8_t CPU::readOperand(bool skipCallback)
+{
+	switch (operand.type)
+	{
+	case OperandType::Invalid:
+		printf("Tried reading from an invalid operand\n");
+		return 0;
+	case OperandType::Address:
+		return memory.read(operand.address);
+	case OperandType::Accumulator:
+		return a;
+	}
+
+	// This should never happen
+	return 0;
+}
+
 void CPU::checkOverflow(int8_t target, int8_t result)
 {
-	int8_t signedOperand = *operand;
+	int8_t signedOperand = readOperand();
 
 	if (target > 0 && signedOperand > 0 && result < 0)
 	{
@@ -201,7 +241,7 @@ void CPU::checkZero(uint8_t target)
 int CPU::performBranch()
 {
 	// Update the PC
-	int8_t offset = *operand;
+	int8_t offset = readOperand();
 	pc += offset;
 
 	// TODO: Check if branch occurs on same page or different page
@@ -214,7 +254,7 @@ int CPU::performBranch()
 int CPU::IMP()
 {
 	// No operand
-	operand = nullptr;
+	operand.type = OperandType::Invalid;
 	instructionLength = 1;
 
 	return 0;
@@ -224,7 +264,7 @@ int CPU::IMP()
 int CPU::ACC()
 {
 	// Operand is accumulator
-	operand = &a;
+	operand.type = OperandType::Accumulator;
 	instructionLength = 1;
 
 	return 0;
@@ -234,7 +274,7 @@ int CPU::ACC()
 int CPU::IMM()
 {
 	// Operand given in 1 byte after instruction
-	operand = memory.get(pc + 1);
+	operand = { OperandType::Address,  pc + 1u };
 	instructionLength = 2;
 
 	return 0;
@@ -245,7 +285,7 @@ int CPU::ZPG()
 {
 	// Operand is a memory address in range $0000-$00FF, in 1 byte after instruction
 	uint16_t address = memory.read(pc + 1);
-	operand = memory.get(address);
+	operand = { OperandType::Address, address };
 	instructionLength = 2;
 
 	return 0;
@@ -260,7 +300,7 @@ int CPU::ZPX()
 	// Take zero page wrap-around into account (wrap if past $00FF)
 	address %= 0x0100;
 
-	operand = memory.get(address);
+	operand = { OperandType::Address, address };
 	instructionLength = 2;
 
 	return 0;
@@ -275,7 +315,7 @@ int CPU::ZPY()
 	// Take zero page wrap-around into account (wrap if past $00FF)
 	address %= 0x0100;
 
-	operand = memory.get(address);
+	operand = { OperandType::Address, address };
 	instructionLength = 2;
 
 	return 0;
@@ -285,7 +325,7 @@ int CPU::ZPY()
 int CPU::REL()
 {
 	// Operand is a SIGNED bit after the instruction
-	operand = memory.get(pc + 1);
+	operand = { OperandType::Address, pc + 1u };
 	instructionLength = 2;
 
 	return 1;
@@ -297,7 +337,7 @@ int CPU::ABS()
 	// Operand is an address after the instruction, stored in little-endian
 	uint16_t address = memory.read(pc + 2) << 8;
 	address |= memory.read(pc + 1);
-	operand = memory.get(address);
+	operand = { OperandType::Address, address };
 
 	// Jump target is the 16-bit address after the instruction
 	jumpTarget = address;
@@ -312,7 +352,7 @@ int CPU::ABX()
 	// Operand is an address after the instruction, stored in little-endian, added to X
 	uint16_t address = memory.read(pc + 2) << 8;
 	address |= memory.read(pc + 1);
-	operand = memory.get(address + x);
+	operand = { OperandType::Address, (uint16_t)(address + x) };
 	instructionLength = 3;
 
 	// TODO: Deal with carry
@@ -326,7 +366,7 @@ int CPU::ABY()
 	// Operand is an address after the instruction, stored in little-endian, added to Y
 	uint16_t address = memory.read(pc + 2) << 8;
 	address |= memory.read(pc + 1);
-	operand = memory.get(address + y);
+	operand = { OperandType::Address, (uint16_t)(address + y) };
 	instructionLength = 3;
 
 	// TODO: Deal with carry
@@ -356,7 +396,7 @@ int CPU::IND()
 	}
 
 	// Operand unused
-	operand = nullptr;
+	operand.type = OperandType::Invalid;
 	instructionLength = 3;
 
 	return 0;
@@ -374,7 +414,7 @@ int CPU::IDX()
 	uint16_t address = memory.read((pointer + 1) & 0xFF) << 8;
 	address |= memory.read(pointer);
 
-	operand = memory.get(address);
+	operand = { OperandType::Address, address };
 	instructionLength = 2;
 
 	return 0;
@@ -392,7 +432,7 @@ int CPU::IDY()
 	address |= memory.read(pointer);
 	address += y;
 
-	operand = memory.get(address);
+	operand = { OperandType::Address, address };
 	instructionLength = 2;
 
 	return 1;
@@ -410,7 +450,7 @@ int CPU::XXX()
 // A + M + C -> A, C (NZCV); Add with carry
 int CPU::ADC()
 {
-	uint16_t result = a + *operand + hasFlag(Flag::Carry);
+	uint16_t result = a + readOperand() + hasFlag(Flag::Carry);
 
 	checkNegative(result);
 	checkZero(result);
@@ -434,7 +474,7 @@ int CPU::ADC()
 // A & M -> A (NZ); Logical AND on accumulator and memory
 int CPU::AND()
 {
-	a &= *operand;
+	a &= readOperand();
 
 	checkNegative(a);
 	checkZero(a);
@@ -446,8 +486,10 @@ int CPU::AND()
 // M << 1 -> M; (NZC); Shift left by one bit
 int CPU::ASL()
 {
+	uint8_t operandVal = readOperand();
+
 	// Shift original bit 7 into carry
-	if (!!(*operand & 0x80) == 0)
+	if (!!(operandVal & 0x80) == 0)
 	{
 		clearFlag(Flag::Carry);
 	}
@@ -457,10 +499,12 @@ int CPU::ASL()
 	}
 
 	// Shift operand left one bit
-	*operand <<= 1;
+	operandVal <<= 1;
 
-	checkNegative(*operand);
-	checkZero(*operand);
+	checkNegative(operandVal);
+	checkZero(operandVal);
+
+	writeOperand(operandVal);
 
 	return 0;
 }
@@ -501,15 +545,17 @@ int CPU::BEQ()
 // op6 -> V, op7 -> N, A and M; (NZV); Operand bits 6/7 transfered to status bits 6/7. Operand anded with accumulator
 int CPU::BIT()
 {
+	uint8_t operandVal = readOperand();
+
 	// Bits 7 and 6 transferred to the status register
-	uint8_t bit7 = !!(*operand >> 7);
+	uint8_t bit7 = !!(operandVal >> 7);
 	setStatusBit(7, bit7);
 
-	uint8_t bit6 = !!((*operand >> 6) & 0b01);
+	uint8_t bit6 = !!((operandVal >> 6) & 0b01);
 	setStatusBit(6, bit6);
 
 	// Operand and accumulator ANDed to get zero flag value
-	if ((a & *operand) == 0)
+	if ((a & operandVal) == 0)
 	{
 		setFlag(Flag::Zero);
 	}
@@ -557,9 +603,9 @@ int CPU::BPL()
 // ; (I); Force interrupt, push PC+2 and status pointer
 int CPU::BRK()
 {
-	memory.set(SP_ADDRESS, pc >> 8); // PC high byte
-	memory.set(SP_ADDRESS - 1, pc & 0x00FF); // PC low byte
-	memory.set(SP_ADDRESS - 2, p); // Status
+	memory.write(SP_ADDRESS, pc >> 8); // PC high byte
+	memory.write(SP_ADDRESS - 1, pc & 0x00FF); // PC low byte
+	memory.write(SP_ADDRESS - 2, p); // Status
 
 	setFlag(Flag::Interrupt);
 
@@ -622,14 +668,13 @@ int CPU::CLV()
 // A - M; (NZC); Compare memory with accumulator
 int CPU::CMP()
 {
-	uint8_t result = a - *operand;
-
-	//printf("A: %d\nM: %d\nR: %d\n", a, *operand, result);
+	uint8_t operandVal = readOperand();
+	uint8_t result = a - operandVal;
 
 	checkNegative(result);
 	checkZero(result);
 
-	if (a >= *operand)
+	if (a >= operandVal)
 	{
 		setFlag(Flag::Carry);
 	}
@@ -645,12 +690,13 @@ int CPU::CMP()
 // X - M; (NZC); Compare memory with X
 int CPU::CPX()
 {
-	uint8_t result = x - *operand;
+	uint8_t operandVal = readOperand();
+	uint8_t result = x - operandVal;
 
 	checkNegative(result);
 	checkZero(result);
 
-	if (x >= *operand)
+	if (x >= operandVal)
 	{
 		setFlag(Flag::Carry);
 	}
@@ -666,12 +712,13 @@ int CPU::CPX()
 // Y - M; (NZC); Comapre memory with Y
 int CPU::CPY()
 {
-	uint8_t result = y - *operand;
+	uint8_t operandVal = readOperand();
+	uint8_t result = y - operandVal;
 
 	checkNegative(result);
 	checkZero(result);
 
-	if (y >= *operand)
+	if (y >= operandVal)
 	{
 		setFlag(Flag::Carry);
 	}
@@ -687,10 +734,13 @@ int CPU::CPY()
 // M - 1 -> M; (NZ); Decrement memory by one
 int CPU::DEC()
 {
-	(*operand)--;
+	uint8_t operandVal = readOperand();
+	operandVal--;
 
-	checkNegative(*operand);
-	checkZero(*operand);
+	checkNegative(operandVal);
+	checkZero(operandVal);
+
+	writeOperand(operandVal);
 
 	return 0;
 }
@@ -720,7 +770,7 @@ int CPU::DEY()
 // A XOR M -> A; (NZ); Exclusive OR (XOR) memory with accumulator
 int CPU::EOR()
 {
-	a = a ^ *operand;
+	a = a ^ readOperand();
 
 	checkNegative(a);
 	checkZero(a);
@@ -732,10 +782,13 @@ int CPU::EOR()
 // M + 1 -> M; (NZ); Increment memory by one
 int CPU::INC()
 {
-	(*operand)++;
+	uint8_t operandVal = readOperand();
+	operandVal++;
 
-	checkNegative(*operand);
-	checkZero(*operand);
+	checkNegative(operandVal);
+	checkZero(operandVal);
+	
+	writeOperand(operandVal);
 
 	return 0;
 }
@@ -773,8 +826,8 @@ int CPU::JMP()
 int CPU::JSR()
 {
 	uint16_t returnAddress = pc + 2;
-	memory.set(SP_ADDRESS, (returnAddress & 0xFF00) >> 8);
-	memory.set(SP_ADDRESS - 1, returnAddress & 0x00FF);
+	memory.write(SP_ADDRESS, (returnAddress & 0xFF00) >> 8);
+	memory.write(SP_ADDRESS - 1, returnAddress & 0x00FF);
 
 	sp -= 2;
 	pc = jumpTarget - instructionLength;
@@ -785,7 +838,7 @@ int CPU::JSR()
 // M -> A; (NZ); Load accumulator with memory
 int CPU::LDA()
 {
-	a = *operand;
+	a = readOperand();
 
 	checkNegative(a);
 	checkZero(a);
@@ -797,7 +850,7 @@ int CPU::LDA()
 // M -> X; (NZ); Load X with memory
 int CPU::LDX()
 {
-	x = *operand;
+	x = readOperand();
 
 	checkNegative(x);
 	checkZero(x);
@@ -809,7 +862,7 @@ int CPU::LDX()
 // M -> Y; (NZ); Load Y with memory
 int CPU::LDY()
 {
-	y = *operand;
+	y = readOperand();
 
 	checkNegative(y);
 	checkZero(y);
@@ -821,9 +874,11 @@ int CPU::LDY()
 // M >> 1 -> M; (NZC); Logically right shift operand
 int CPU::LSR()
 {
+	uint8_t operandVal = readOperand();
+
 	// Original bit 0 shifted into carry
-	//setFlagValue(Flag::Carry, !!(*operand & 0x01));
-	if (!!(*operand & 0x01) == 0)
+	// setFlagValue(Flag::Carry, !!(*operand & 0x01));
+	if (!!(operandVal & 0x01) == 0)
 	{
 		clearFlag(Flag::Carry);
 	}
@@ -833,10 +888,12 @@ int CPU::LSR()
 	}
 
 	// Shift operand to right 1 bit
-	*operand >>= 1;
+	operandVal >>= 1;
 
 	clearFlag(Flag::Negative);
-	checkZero(*operand);
+	checkZero(operandVal);
+
+	writeOperand(operandVal);
 
 	return 0;
 }
@@ -850,7 +907,7 @@ int CPU::NOP()
 // A | M -> A; (NZ); OR memory and accumulator
 int CPU::ORA()
 {
-	a |= *operand;
+	a |= readOperand();
 
 	// Check flags
 	checkZero(a);
@@ -863,7 +920,7 @@ int CPU::ORA()
 // Push A; (); Push accumulator on stack
 int CPU::PHA()
 {
-	memory.set(SP_ADDRESS, a);
+	memory.write(SP_ADDRESS, a);
 	sp--;
 
 	return 0;
@@ -877,7 +934,7 @@ int CPU::PHP()
 	setFlag(Flag::Break);
 	setFlag(Flag::Unused);
 
-	memory.set(SP_ADDRESS, p);
+	memory.write(SP_ADDRESS, p);
 	sp--;
 
 	p = originalP;
@@ -918,12 +975,14 @@ int CPU::PLP()
 // M << 1 <- C -> M; (NZC); Rotate one bit left with carry from right
 int CPU::ROL()
 {
+	uint8_t operandVal = readOperand();
+
 	// Get original bit 7 for new carry
-	uint8_t bit7 = !!(*operand & 0x80);
-	*operand <<= 1;
+	uint8_t bit7 = !!(operandVal & 0x80);
+	operandVal <<= 1;
 
 	// Set old carry to bit 1
-	*operand |= hasFlag(Flag::Carry);
+	operandVal |= hasFlag(Flag::Carry);
 
 	// Set new carry to original bit 7
 	if (bit7 == 0)
@@ -936,8 +995,10 @@ int CPU::ROL()
 	}
 
 	// Other flag checks
-	checkNegative(*operand);
-	checkZero(*operand);
+	checkNegative(operandVal);
+	checkZero(operandVal);
+
+	writeOperand(operandVal);
 
 	return 0;
 }
@@ -945,12 +1006,14 @@ int CPU::ROL()
 // C -> M >> 1 -> M; (NZC); Rotate one bit right with carry from left
 int CPU::ROR()
 {
+	uint8_t operandVal = readOperand();
+
 	// Get original bit 0 for new carry
-	uint8_t bit0 = !!(*operand & 0x01);
-	*operand >>= 1;
+	uint8_t bit0 = !!(operandVal & 0x01);
+	operandVal >>= 1;
 
 	// Set old carry to bit 7
-	*operand |= (hasFlag(Flag::Carry) << 7);
+	operandVal |= (hasFlag(Flag::Carry) << 7);
 
 	// Set new carry to original bit 0
 	if (bit0 == 0)
@@ -963,8 +1026,10 @@ int CPU::ROR()
 	}
 
 	// Other flag checks
-	checkNegative(*operand);
-	checkZero(*operand);
+	checkNegative(operandVal);
+	checkZero(operandVal);
+
+	writeOperand(operandVal);
 
 	return 0;
 }
@@ -1015,11 +1080,11 @@ int CPU::RTS()
 int CPU::SBC()
 {
 	// To perform subtraction, can invert all bits of operand (giving -operand - 1) and pass to ADC
-	uint8_t normalOperand = *operand;
-	*operand = ~(*operand);
+	uint8_t originalOperand = readOperand(true);
 
+	writeOperand(~originalOperand, true);
 	int ret = ADC();
-	*operand = normalOperand;
+	writeOperand(originalOperand, true);
 
 	return ret;
 }
@@ -1048,21 +1113,21 @@ int CPU::SEI()
 // A -> M; (); Store accumulator in memory
 int CPU::STA()
 {
-	*operand = a;
+	writeOperand(a);
 	return 0;
 }
 
 // X -> M; (); Store X in memory
 int CPU::STX()
 {
-	*operand = x;
+	writeOperand(x);
 	return 0;
 }
 
 // Y -> M; (); Store Y in memory
 int CPU::STY()
 {
-	*operand = y;
+	writeOperand(y);
 	return 0;
 }
 
