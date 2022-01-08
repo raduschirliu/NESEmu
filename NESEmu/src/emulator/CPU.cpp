@@ -7,7 +7,6 @@
 // TODO: Handle interrupts (IRQ, NMI)
 
 // Debugging
-static bool constexpr DEBUG_CONSOLE = false;
 static bool constexpr DEBUG_LOG = true;
 
 // Convenience macros for defining CPU instructions
@@ -59,13 +58,6 @@ void CPU::step()
 {
 	if (cycles > 0)
 	{
-		if (DEBUG_CONSOLE)
-		{
-			printf("Stepping...\n");
-			printf("PC: %X\n", pc);
-			printf("CYCLE: %d\n\n", totalCycles);
-		}
-
 		cycles--;
 	}
 	else
@@ -76,48 +68,13 @@ void CPU::step()
 		instructionLength = 1;
 		int modeExtra = (this->*ins.addressingMode)();
 
-		// ---- Debug
-		if (DEBUG_CONSOLE)
-		{
-			printf("Pre-Execution\n");
-			printf("------------------------------\n");
-			printf("INSTR: %s\nPC: %X\nOPCODE: %X\n", ins.instruction.c_str(), pc, opcode);
-			printf("LENGTH: %d\nCYCLES: %d\n", instructionLength, ins.cycles);
-
-			if (operand == nullptr)
-			{
-				printf("OPERAND: nullptr\n");
-			}
-			else
-			{
-				printf("OPERAND: %X\n", *operand);
-			}
-
-			printf("STATUS (NO-BDIZC): ");
-
-			for (int i = 0; i < 8; i++)
-			{
-				uint8_t bit = ((p >> 7) - i) & 0b00000001;
-				printf("%d", bit);
-			}
-
-			printf(" | $%X\n", p);
-
-			printf("A: %d | $%X\n", a, a);
-			printf("X: %d | $%X\n", x, x);
-			printf("Y: %d | $%X\n", y, y);
-			printf("SP: %d | $%X\n", sp, sp);
-			printf("CYCLE: %d\n", totalCycles);
-			printf("------------------------------\n\n");
-		}
-
+		// Write debug info to log
 		if (DEBUG_LOG)
 		{
 			char buf[500];
 			sprintf_s(buf, "%04X  %02X  %s\t\tA:%02X X:%02X Y:%02X P:%02X SP:%02X\tCYC:%d\n", pc, opcode, ins.instruction.c_str(), a, x, y, p, sp, totalCycles);
 			logger.write(buf);
 		}
-		// ---- Debug
 
 		int runExtra = (this->*ins.run)();
 
