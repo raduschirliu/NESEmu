@@ -11,7 +11,7 @@ public:
 	// Allow windows to be toggled by keypress
 	virtual void update() override
 	{
-		if (key >= 0 && ImGui::IsKeyPressed(key))
+		if (ImGui::IsKeyPressed(key))
 		{
 			enabled = !enabled;
 		}

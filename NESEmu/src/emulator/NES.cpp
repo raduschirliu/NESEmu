@@ -59,7 +59,7 @@ bool NES::init()
 
     glfwMakeContextCurrent(window);
 
-    // Disable Vsync
+    // Disable VSync
     glfwSwapInterval(0);
 
     // Initialize GLEW
@@ -88,44 +88,62 @@ bool NES::init()
 
 void NES::run()
 {
+    const double targetFps = 1.0 / 60.0;
+    double lastUpdateTime = 0;  // number of seconds since the last loop
+    double lastFrameTime = 0;   // number of seconds since the last frame
+    const double cyclesPerFrame = 1790000 / 60; // Amount of CPU cycles needed per UI frame
+
+    printf("Running display at %.2lfHz, with %.2lf CPU cycles per frame\n", 1 / targetFps, cyclesPerFrame);
+
     // Draw window and poll events
     while (!glfwWindowShouldClose(window) && !shouldShutdown)
     {
+        double now = glfwGetTime();
+        double deltaTime = now - lastUpdateTime;
+
         // Poll events
         glfwPollEvents();
         glfwGetWindowSize(window, &windowWidth, &windowHeight);
 
-        // Start new ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        // Update UI at 60Hz
+        if (now - lastFrameTime >= targetFps)
+        {
+            // Start new ImGui frame
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
 
-        // Emulate NES components if not paused
-        // TODO: Make CPU emulation run independently of rendering
-        if (running)
+            // TODO: Draw PPU graphics
+
+            // Draw all drawable components
+            for (IDrawable *drawable : drawables)
+            {
+                drawable->update();
+                drawable->draw();
+            }
+
+            // Update OpenGL
+            int width, height;
+            glfwGetFramebufferSize(window, &width, &height);
+            glViewport(0, 0, width, height);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            // Render ImGui
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+            // Swap buffers and finish frame
+            glfwSwapBuffers(window);
+            lastFrameTime = now;
+        }
+
+        // Update NES components independently of UI
+        for (int i = 0; running && i < cyclesPerFrame; i++)
         {
             step();
         }
-        
-        // Draw all drawable components
-        for (IDrawable *drawable : drawables)
-        {
-            drawable->update();
-            drawable->draw();
-        }
 
-        // Update OpenGL
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // Render ImGui
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        // Swap buffers and finish frame
-        glfwSwapBuffers(window);
+        lastUpdateTime = now;
     }
 
     // Cleanup
