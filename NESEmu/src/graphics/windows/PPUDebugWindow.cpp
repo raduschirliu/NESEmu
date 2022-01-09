@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <vector>
 
+// TODO: Cleanup textures on de-init
 bool createPatternTableTexture(PPU &ppu, uint8_t tableIndex, GLuint *texture);
 static GLuint ptLeftTexture = 0;
 static GLuint ptRightTexture = 0;
@@ -21,12 +22,12 @@ void PPUDebugWindow::draw()
 		return;
 	}
 
-	// TODO: Make proper init routine
+	// TODO: Make proper init method
 	if (ptRightTexture == 0)
 	{
 		// Create pattern table textures on first run
-		IM_ASSERT(createPatternTableTexture(ppu, 0, &ptLeftTexture));
-		IM_ASSERT(createPatternTableTexture(ppu, 1, &ptRightTexture));
+		createPatternTableTexture(ppu, 0, &ptLeftTexture);
+		createPatternTableTexture(ppu, 1, &ptRightTexture);
 	}
 
 	// If collapsed, exit out early as optimization
@@ -176,6 +177,7 @@ void PPUDebugWindow::drawNametable(uint16_t start)
 
 bool createPatternTableTexture(PPU &ppu, uint8_t tableIndex, GLuint *texture)
 {
+	printf("Created texture %u\n", *texture);
 	// Create OpenGL texture identifier
 	glGenTextures(1, texture);
 	glBindTexture(GL_TEXTURE_2D, *texture);
