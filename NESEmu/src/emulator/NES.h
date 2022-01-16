@@ -39,6 +39,9 @@ public:
 	// Put the NES into debug mode. Load nestest, and put into automated test mode
 	void loadDebugMode();
 
+	// Set emulation speed
+	void setEmulationSpeed(double speed);
+
 	// Returns a copy of the NES' ROM
 	ROM& getRom();
 
@@ -51,6 +54,9 @@ private:
 
 	// Whether the emulator window should close or not
 	bool shouldShutdown;
+
+	// Emulation speed
+	double emulationSpeed;
 
 	// GLFW window handle
 	GLFWwindow *window;

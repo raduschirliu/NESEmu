@@ -66,18 +66,13 @@ void ROM::map(Memory &memory, CPU &cpu, PPU &ppu)
 			// Copy next 8KB of CHR ROM to PPU memory
 			if (offset >= 0x4000 && offset < 0x6000)
 			{
-				ppu.setMemory(offset - 0x4000, byte);
+				ppu.writeMemory(offset - 0x4000, byte);
 			}
 
 			offset++;
 		}
 
-		// Find reset vector at 0xFFFC, and set initial PC
-		uint16_t pc = (memory.read(0xFFFD) << 8) | memory.read(0xFFFC);
-		cpu.setPC(pc);
-
 		printf("Done, loaded $%X (%d) bytes from ROM\n", offset, offset);
-		printf("\tSet PC to $%X\n", pc);
 	}
 	else
 	{

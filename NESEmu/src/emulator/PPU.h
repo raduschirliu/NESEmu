@@ -27,16 +27,21 @@ public:
 	struct Registers
 	{
 		struct PpuCtrl {
-			uint8_t nmiEnable : 1;
-			uint8_t masterSlave : 1;
-			uint8_t spriteSize : 1;
-			uint8_t bgPatternTable : 1;
-			uint8_t spritePatternTable : 1;
-			uint8_t addressIncrement : 1;
 			uint8_t baseNametable : 2;
-		} ctrl;
+			uint8_t addressIncrement : 1;
+			uint8_t spritePatternTable : 1;
+			uint8_t bgPatternTable : 1;
+			uint8_t spriteSize : 1;
+			uint8_t masterSlave : 1;
+			uint8_t nmiEnable : 1;
+		} ctrl; // Top - LSB, Bottom - MSB
 		uint8_t mask;
-		uint8_t status;
+		struct PpuStatus {
+			uint8_t lastLsb : 5;
+			uint8_t spriteOverflow : 1;
+			uint8_t sprite0Hit : 1;
+			uint8_t vblank : 1;
+		} status; // Top - LSB, Bottom - MSB
 		uint8_t oamAddr;
 		uint8_t oamData;
 		uint8_t scroll;
@@ -50,6 +55,9 @@ public:
 	// Cleanup memory
 	~PPU();
 
+	// Perform PPU reset
+	void reset();
+
 	// Emulate one PPU cycle
 	void step();
 
@@ -59,8 +67,8 @@ public:
 	// Reads from memory location
 	uint8_t readMemory(uint16_t address);
 
-	// Sets value in memory location
-	void setMemory(uint16_t address, uint8_t value);
+	// Write value in memory location
+	void writeMemory(uint16_t address, uint8_t value);
 
 	// Gets current value of PPU registers
 	Registers *getRegisters();
@@ -68,13 +76,24 @@ public:
 	// Returns the system palette
 	std::vector<PPU::Color> getSystemPalette();
 
-	// Return the total amount of cycles that have passed
+	// Get the amount of cycles that have occured in the current frame
+	uint32_t getCycles();
+
+	// Get the amount of scanlines that have occured
+	uint32_t getScanlines();
+	
+	// Return the total amount of frames that have finished rendering
+	uint32_t getFrameCount();
+
+	// Get the total amount of cycles that have occured since reset
 	uint32_t getTotalCycles();
+
+	// Returns whether an NMI has occured
+	bool getNmiOccured();
 
 private:
 	// Cycle related stats
-	uint8_t cycles;
-	uint32_t totalCycles;
+	uint32_t cycles, scanlines, frames, totalCycles;
 
 	// Used for pattern tables, $0000 - $1FFF. Each pattern table being $1000 in size
 	// Mapped to cartridge using bank switching
@@ -104,6 +123,12 @@ private:
 	// Control the address that the CPU can access through PPUADDR/PPUDATA
 	uint16_t accessAddress;
 	bool accessAddressHighByte;
+
+	// Track when NMI has occured
+	bool nmiOccured;
+
+	// If the PPU is currently being reset or not
+	bool isResetting;
 
 	// Load the system palette
 	void loadPalette(std::string path);

@@ -49,21 +49,24 @@ void PPUDebugWindow::draw()
 		ss.str("");
 	}
 
-	ImGui::Text("Total cycles: %u\n", ppu.getTotalCycles());
+	ImGui::Text("Current cycle: %u", ppu.getCycles());
+	ImGui::Text("Current scanline: %u", ppu.getScanlines());
+	ImGui::Text("Current frame: %u", ppu.getFrameCount());
+	ImGui::Text("Total cycles: %u", ppu.getTotalCycles());
 
 	ImGui::Spacing();
 
 	if (ImGui::CollapsingHeader("PPU Registers"))
 	{
 		PPU::Registers* registers = ppu.getRegisters();
-		ImGui::Text("PPUCTRL ($2000): $%X\n", registers->ctrl);
-		ImGui::Text("PPUMASK ($2001): $%X\n", registers->mask);
-		ImGui::Text("PPUSTATUS ($2002): $%X\n", registers->status);
-		ImGui::Text("OAMADDR ($2003): $%X\n", registers->oamAddr);
-		ImGui::Text("OAMDATA ($2004): $%X\n", registers->oamData);
-		ImGui::Text("PPUSCROLL ($2005): $%X\n", registers->scroll);
-		ImGui::Text("PPUADDR ($2006): $%X\n", registers->addr);
-		ImGui::Text("PPUDATA ($2007): $%X\n", registers->data);;
+		ImGui::Text("PPUCTRL\t($2000): $%X", registers->ctrl);
+		ImGui::Text("PPUMASK\t($2001): $%X", registers->mask);
+		ImGui::Text("PPUSTATUS\t($2002): $%X", registers->status);
+		ImGui::Text("OAMADDR\t($2003): $%X", registers->oamAddr);
+		ImGui::Text("OAMDATA\t($2004): $%X", registers->oamData);
+		ImGui::Text("PPUSCROLL\t($2005): $%X", registers->scroll);
+		ImGui::Text("PPUADDR\t($2006): $%X", registers->addr);
+		ImGui::Text("PPUDATA\t($2007): $%X", registers->data);;
 	}
 
 	ImGui::Spacing();
@@ -75,8 +78,8 @@ void PPUDebugWindow::draw()
 		{
 			PPU::Registers *registers = ppu.getRegisters();
 
-			ImGui::Text("Background table: %d\n", (int)registers->ctrl.bgPatternTable);
-			ImGui::Text("Sprite table: %d\n", (int)registers->ctrl.spritePatternTable);
+			ImGui::Text("Background table: %d", (int)registers->ctrl.bgPatternTable);
+			ImGui::Text("Sprite table: %d", (int)registers->ctrl.spritePatternTable);
 
 			ImGui::Spacing();
 
@@ -157,8 +160,26 @@ void PPUDebugWindow::printMemory(uint16_t start, uint16_t end)
 
 void PPUDebugWindow::drawNametable(uint16_t start)
 {
+	// Header
+	ss << std::hex
+		<< std::setw(2) << std::setfill('0')
+		<< "    ";
+
+	for (uint16_t c = 0; c < 32; c++)
+	{
+		ss << std::setw(2) << std::setfill('0') << (int)c << " ";
+	}
+
+	ImGui::Text(ss.str().c_str());
+	ss.str("");
+	
+	// Nametable
 	for (uint16_t r = 0; r < 30; r++)
 	{
+		ss << std::hex
+			<< std::setw(2) << std::setfill('0')
+			<< (int)r << "  ";
+
 		for (uint16_t c = 0; c < 32; c++)
 		{
 			uint16_t offset = r * 32 + c;
@@ -170,14 +191,13 @@ void PPUDebugWindow::drawNametable(uint16_t start)
 
 		ss << std::endl;
 	}
-	
+
 	ImGui::Text(ss.str().c_str());
 	ss.str("");
 }
 
 bool createPatternTableTexture(PPU &ppu, uint8_t tableIndex, GLuint *texture)
 {
-	printf("Created texture %u\n", *texture);
 	// Create OpenGL texture identifier
 	glGenTextures(1, texture);
 	glBindTexture(GL_TEXTURE_2D, *texture);

@@ -20,7 +20,7 @@ public:
 	~Memory();
 
 	// Return pointer to a place in memory, or nullptr if out of bounds
-	uint8_t *get(uint16_t address, bool write, bool skipCallback = false);
+	uint8_t *get(uint16_t address);
 	
 	// Return value of a place in memory, or -1 if not found
 	uint8_t read(uint16_t address, bool skipCallback = false);
@@ -33,6 +33,12 @@ public:
 
 	// Set the PPU memory access callback
 	void setPpuAccessCallback(AccessCallback callback);
+
+	// Signal that the NMI should be dispatched to the CPU
+	void dispatchNmi();
+
+	// Poll for whether the NMI should be dispatched
+	bool pollNmi();
 
 private:
 	// Internal 2KB of CPU Memory (from $0000 - $07FFF)
@@ -54,4 +60,10 @@ private:
 
 	// Callbacks for when regions of memory are accessed
 	AccessCallback ppuCallback;
+
+	// Whether the NMI has already been dispatched to the CPU
+	bool shouldDispatchNmi;
+
+	// Dispatch any callbacks if needed
+	void dispatchCallbacks(uint16_t address, uint8_t value, bool write);
 };

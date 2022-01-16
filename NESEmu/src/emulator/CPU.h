@@ -67,6 +67,9 @@ public:
 	// Initialize CPU
 	CPU(Memory &memory);
 
+	// Reset CPU state
+	void reset();
+
 	// Step CPU by one single cycle
 	void step();
 
@@ -135,6 +138,9 @@ private:
 
 	// Performs a branch and checks if page boundary is crossed
 	int performBranch();
+
+	// Jump to a vector starting at given memory location
+	void jumpVector(uint16_t address);
 
 	// Addressing modes (return true if possible to need an extra cycle)
 	int IMP(), ACC(), IMM(), ZPG(), ZPX(), ZPY(), REL(),

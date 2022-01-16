@@ -20,6 +20,7 @@ NES::NES(): cpu(memory), ppu(memory)
     running = false;
     shouldShutdown = false;
     window = nullptr;
+    emulationSpeed = 1.0f;
 }
 
 void NES::load(std::string path)
@@ -31,6 +32,8 @@ void NES::load(std::string path)
 	printf("\tMapper: %u\n", rom.getMapperID());
 	printf("\tPRG ROM size: %u banks -> %u bytes\n", rom.header.prgBanks, rom.header.prgBanks * 0x4000);
     printf("\tCHR ROM size: %u banks -> %u bytes\n", rom.header.chrBanks, rom.header.chrBanks * 0x2000);
+
+    cpu.reset();
 }
 
 bool NES::init()
@@ -100,6 +103,7 @@ void NES::run()
     {
         double now = glfwGetTime();
         double deltaTime = now - lastUpdateTime;
+        double modifiedCyclesPerFrame = cyclesPerFrame * emulationSpeed;
 
         // Poll events
         glfwPollEvents();
@@ -138,7 +142,7 @@ void NES::run()
         }
 
         // Update NES components independently of UI
-        for (int i = 0; running && i < cyclesPerFrame; i++)
+        for (int i = 0; running && i < (int)modifiedCyclesPerFrame; i++)
         {
             step();
         }
@@ -186,6 +190,12 @@ void NES::loadDebugMode()
 {
     load("..\\roms\\nestest.nes");
     cpu.setPC(0xC000);
+    printf("Set PC to 0xC000 for nestest automation mode\n");
+}
+
+void NES::setEmulationSpeed(double speed)
+{
+    emulationSpeed = speed;
 }
 
 ROM& NES::getRom()

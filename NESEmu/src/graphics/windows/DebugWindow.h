@@ -11,7 +11,7 @@ public:
 	void draw() override;
 
 private:
-	double prevTime;
+	double prevTime, emulationSpeed;
 	uint32_t frames, fps;
 
 	NES &nes;

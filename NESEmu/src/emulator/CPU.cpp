@@ -9,8 +9,13 @@
 // TODO: Use modern C++ constructs (new-style casts, smart pointers, etc)
 
 // Debugging
-static bool constexpr DEBUG_LOG = false;
+static bool constexpr DEBUG_LOG = true;
 static char debug_buf[100];
+
+// Address of the low byte of various jump vectors
+static uint16_t constexpr NMI_VECTOR = 0xFFFA;
+static uint16_t constexpr RES_VECTOR = 0xFFFC;
+static uint16_t constexpr IRQ_VECTOR = 0xFFFE;
 
 // Convenience macros for defining CPU instructions
 #define _I(NAME, RUN, MODE, CYCLES) { NAME, &CPU::RUN, &CPU::MODE, CYCLES }
@@ -27,6 +32,7 @@ CPU::CPU(Memory &memory) : logger("..\\logs\\cpu.log"), memory(memory)
 	x = 0x00;
 	y = 0x00;
 	p = 0x24;
+	pc = 0x00;
 	sp = 0xFD;
 	opcode = 0x00;
 	totalCycles = 0;
@@ -57,6 +63,30 @@ CPU::CPU(Memory &memory) : logger("..\\logs\\cpu.log"), memory(memory)
 	};
 }
 
+void CPU::reset()
+{
+	// Initialize other registers
+	a = 0x00;
+	x = 0x00;
+	y = 0x00;
+	p = 0x24;
+	sp = 0xFD;
+	opcode = 0x00;
+	totalCycles = 0;
+	cycles = 0;
+	operand = { OperandType::Invalid, 0x0000 };
+
+	// Find reset vector at 0xFFFC, and set initial PC
+	jumpVector(RES_VECTOR);
+
+	printf("CPU reset\n");
+	printf("\tSet PC to $%X\n", pc);
+
+	// Reset takes 8 cycles
+	cycles += 8;
+	totalCycles += 8;
+}
+
 void CPU::step()
 {
 	if (cycles > 0)
@@ -65,6 +95,23 @@ void CPU::step()
 	}
 	else
 	{
+		// Poll for interrupts
+		if (memory.pollNmi())
+		{
+			// TODO: Make interrupt func
+			uint16_t returnAddress = pc + 2;
+			memory.write(SP_ADDRESS, returnAddress >> 8); // Return address high byte
+			memory.write(SP_ADDRESS - 1, returnAddress & 0x00FF); // Return address low byte
+			memory.write(SP_ADDRESS - 2, p); // Status
+
+			setFlag(Flag::Interrupt);
+
+			// Set SP to next empty slot
+			sp -= 3;
+
+			jumpVector(NMI_VECTOR);
+		}
+
 		// Process opcode
 		opcode = memory.read(pc);
 		Instruction ins = instructions[opcode];
@@ -241,6 +288,12 @@ int CPU::performBranch()
 
 	// TODO: Check if branch occurs on same page or different page
 	return 1;
+}
+
+void CPU::jumpVector(uint16_t address)
+{
+	// Move PC to address from memory (little endian)
+	pc = (memory.read(address + 1) << 8) | memory.read(address);
 }
 
 /* Addressing Modes */
@@ -598,14 +651,20 @@ int CPU::BPL()
 // ; (I); Force interrupt, push PC+2 and status pointer
 int CPU::BRK()
 {
-	memory.write(SP_ADDRESS, pc >> 8); // PC high byte
-	memory.write(SP_ADDRESS - 1, pc & 0x00FF); // PC low byte
+	uint16_t returnAddress = pc + 2;
+	memory.write(SP_ADDRESS, returnAddress >> 8); // Return address high byte
+	memory.write(SP_ADDRESS - 1, returnAddress & 0x00FF); // Return address low byte
 	memory.write(SP_ADDRESS - 2, p); // Status
 
+	// TODO: Not sure if I flag needs to be set here?
+	setFlag(Flag::Break);
 	setFlag(Flag::Interrupt);
 
 	// Set SP to next empty slot
 	sp -= 3;
+
+	// Move PC to IRQ vector
+	jumpVector(IRQ_VECTOR);
 
 	return 0;
 }

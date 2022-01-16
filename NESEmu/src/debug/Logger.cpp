@@ -5,7 +5,7 @@
 #include <sstream>
 
 // TODO: Make buffer configurable
-static int constexpr BUFFER_SIZE = 50;
+static int constexpr BUFFER_SIZE = 0;
 static std::stringstream ss;
 static int bufferCount = 0;
 
@@ -22,16 +22,14 @@ void Logger::write(std::string text)
 
 void Logger::write(const char *text)
 {
+	ss << text;
+	bufferCount++;
+
 	if (bufferCount > BUFFER_SIZE)
 	{
 		file << ss.str();
 		ss.str("");
 		bufferCount = 0;
-	}
-	else
-	{
-		ss << text;
-		bufferCount++;
 	}
 }
 

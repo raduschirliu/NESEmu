@@ -1,21 +1,23 @@
 #include "PPU.h"
 
 #include <fstream>
+#include <bitset>
+#include <iostream>
 
 PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 {
-	// TODO: Properly patternTable, nameTable
-	patternTables = new uint8_t[0x2000]; // TEST: Init pattern table to 16KB of memory
-	nameTables = new uint8_t[0x1000];	 // TEST: Init just to be able to dump memory (8KB of memory)
-
-	paletteTables = new uint8_t[0x20]; // 32 bytes, not configurable/remapable
-	oam = new uint8_t[256];			   // 256 bytes, internal PPU memory
+	// TODO: Convert to modern C++ arrays
+	patternTables = new uint8_t[0x2000](); // TEST: Init pattern table to 16KB of memory
+	nameTables = new uint8_t[0x1000]();	 // TEST: Init just to be able to dump memory (8KB of memory)
+	paletteTables = new uint8_t[0x20](); // 32 bytes, not configurable/remapable
+	oam = new uint8_t[256]();			   // 256 bytes, internal PPU memory
 
 	// Initialize registers
-	registers = reinterpret_cast<Registers *>(memory.get(0x2000, false, true));
+	registers = reinterpret_cast<Registers *>(memory.get(0x2000));
 	registers->ctrl = { 0 };
 	registers->mask = 0;
-	registers->status = 0b10100000;
+	registers->status = { 0 };
+	registers->status = { 0 };
 	registers->oamAddr = 0;
 	registers->oamData = 0;
 	registers->scroll = 0;
@@ -25,6 +27,11 @@ PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 	// Load system palette from .pal file
 	loadPalette("palette.pal");
 
+	// Set cycle related stats
+	cycles = 0;
+	scanlines = 0;
+	frames = 0;
+
 	// Set access info for PPUADDR/PPUDATA
 	accessAddress = 0;
 	accessAddressHighByte = true;
@@ -32,23 +39,95 @@ PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 		{
 			onRegisterAccess(address, newValue, write);
 		});
+
+	reset();
 }
 
 PPU::~PPU()
 {
 	// TODO: Cleanup nameTable and patternTable if necessary
+	delete[] patternTables;
+	delete[] nameTables;
 	delete[] paletteTables;
 	delete[] oam;
 }
 
+void PPU::reset()
+{
+	registers->ctrl = { 0 };
+	registers->mask = 0;
+	registers->scroll = 0;
+	registers->addr = 0;
+
+	accessAddress = 0;
+	accessAddressHighByte = true;
+	isResetting = true;
+}
+
 void PPU::step()
 {
-	// TODO: Implement render cycles
-	if (cycles == 262 * 341)
+	// While resetting, registers should not be able to be set
+	if (isResetting)
 	{
-		// 262 scanlines per frame, 341 PPU cycles per scanline
-		cycles = 0;
-		registers->status |= (1 << 7); // Set vblank
+		reset();
+	}
+
+	// 341 PPU cycles per scanline (0 - 340)
+	if (cycles >= 341)
+	{
+		cycles -= 341;
+		scanlines++;
+
+		// 261 scanlines per frame
+		if (scanlines > 261)
+		{
+			scanlines = 0;
+			frames++;
+		}
+	}
+
+	if (scanlines <= 239)
+	{
+		// (0 - 239) Rendering
+	}
+	else if (scanlines == 240)
+	{
+		// (240) Post-render scan line - PPU idles
+	}
+	else if (scanlines >= 241 && scanlines <= 260)
+	{
+		// (241 - 260) Vblank
+
+		if (scanlines == 241 && cycles == 1)
+		{
+			uint8_t *status = (uint8_t *)&registers->status;
+
+			// Clear resetting status
+			isResetting = false;
+
+			// Set VBlank and trigger NMI
+			registers->status.vblank = 1;
+			nmiOccured = true;
+			//printf("VBlank start <----\n");
+
+			if (registers->ctrl.nmiEnable)
+			{
+				memory.dispatchNmi();
+				//printf("VBlank dispatched\n");
+			}
+		}
+	}
+	else if (scanlines >= 261)
+	{
+		// (261) Pre-render scanline
+
+		if (cycles == 1)
+		{
+			// Clear VBlank
+			registers->status.vblank = 0;
+			nmiOccured = false;
+			//printf("VBlank end ---->\n");
+		}
 	}
 
 	cycles++;
@@ -65,7 +144,7 @@ uint8_t *PPU::getMemory(uint16_t address)
 	else if (address >= 0x2000 && address <= 0x2FFF)
 	{
 		// Name tables from 0x2000 - 0x2FFF
-		uint16_t offset = address - 0x1000;
+		uint16_t offset = address - 0x2000;
 		return &nameTables[offset];
 	}
 	else if (address >= 0x3000 && address <= 0x3EFF)
@@ -98,7 +177,7 @@ uint8_t PPU::readMemory(uint16_t address)
 	return 0;
 }
 
-void PPU::setMemory(uint16_t address, uint8_t value)
+void PPU::writeMemory(uint16_t address, uint8_t value)
 {
 	uint8_t *mem = getMemory(address);
 
@@ -116,6 +195,12 @@ PPU::Registers *PPU::getRegisters()
 std::vector<PPU::Color> PPU::getSystemPalette()
 {
 	return systemPalette;
+}
+
+bool PPU::getNmiOccured()
+{
+	// NMI only occurs during VBlank if NMI enable flag of PpuCtrl is set
+	return nmiOccured && registers->ctrl.nmiEnable;
 }
 
 void PPU::loadPalette(std::string path)
@@ -145,54 +230,77 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 {
 	switch (address)
 	{
+		// PPUCTRL ($2000)
+	case 0x2000:
+	{
+		// Setting the NMI enable flag during VBlank immediately triggers an NMI
+		if (write)
+		{
+			// TODO: Add this
+		}
+
+		break;
+	}
+
 	// PPUSTATUS ($2002)
 	case 0x2002:
 	{
 		// Reading status register clears bit 7
-		registers->status &= ~(1 << 7);
+		if (!write)
+		{
+			registers->status.vblank = 0;
+			nmiOccured = false;
+		}
+
 		break;
 	}
 
 	// PPUADDR ($2006)
 	case 0x2006:
 	{
-		uint16_t mask = 0x00FF;
-		uint16_t val = newValue;
-
-		if (accessAddressHighByte)
+		if (write)
 		{
-			mask = 0xFF00;
-			val <<= 8;
+			uint16_t mask = 0x00FF;
+			uint16_t val = newValue;
+
+			if (accessAddressHighByte)
+			{
+				mask = 0xFF00;
+				val <<= 8;
+			}
+
+			accessAddress &= ~mask;
+			accessAddress |= val;
+
+			registers->data = 0;
+			accessAddressHighByte = !accessAddressHighByte;
+
+			// If reading palette data, update immediately
+			if (accessAddress >= 0x3F00 && accessAddress <= 0x3FFF)
+			{
+				registers->data = readMemory(accessAddress);
+			}
 		}
 
-		accessAddress &= ~mask;
-		accessAddress |= val;
-
-		registers->data = 0;
-		accessAddressHighByte = !accessAddressHighByte;
-
-		// If reading palette data, update immediately
-		if (accessAddress >= 0x3F00 && accessAddress <= 0x3FFF)
-		{
-			registers->data = readMemory(accessAddress);
-		}
-
-		printf("Set PPUADDR to %X\n", accessAddress);
 		break;
 	}
 
 	// PPUDATA ($2007)
 	case 0x2007:
 	{
-		printf("Using $2007 to access $%X\n", accessAddress);
+		if (write)
+		{
+			writeMemory(accessAddress, newValue);
+			printf("Writing to %X\n", accessAddress);
+		}
 
-		// Update if reading before palette data
+		// Update value post-read if from memory before the palette data
 		if (accessAddress <= 0x3EFF)
 		{
 			registers->data = readMemory(accessAddress);
 		}
 
-		// Increment
+		// Increment after access
 		if (registers->ctrl.addressIncrement == 0)
 		{
 			accessAddress++;
@@ -205,6 +313,21 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 		break;
 	}
 	}
+}
+
+uint32_t PPU::getCycles()
+{
+	return cycles;
+}
+
+uint32_t PPU::getScanlines()
+{
+	return scanlines;
+}
+
+uint32_t PPU::getFrameCount()
+{
+	return frames;
 }
 
 uint32_t PPU::getTotalCycles()

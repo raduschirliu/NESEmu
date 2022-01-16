@@ -3,14 +3,21 @@
 #include <iomanip>
 #include <sstream>
 
+// TODO: Class should be renamed to "Bus" and be connected to PPU
+
 Memory::Memory()
 {
 	// Allocate memory arrays for all NES components
-	cpuMem = new uint8_t[2048];
-	ppuMem = new uint8_t[8];
-	apuMem = new uint8_t[24];
-	testMem = new uint8_t[8];
-	romMem = new uint8_t[49120];
+	cpuMem = new uint8_t[2048]();
+	ppuMem = new uint8_t[8]();
+	apuMem = new uint8_t[24]();
+	testMem = new uint8_t[8]();
+	romMem = new uint8_t[49120]();
+
+	// TODO: Zero initialize arrays
+	
+	// Other things needed on the bus
+	shouldDispatchNmi = false;
 }
 
 Memory::~Memory()
@@ -23,7 +30,7 @@ Memory::~Memory()
 	delete[] romMem;
 }
 
-uint8_t *Memory::get(uint16_t address, bool write, bool skipCallback)
+uint8_t *Memory::get(uint16_t address)
 {
 	if (address >= 0x0000 && address <= 0x1FFF)
 	{
@@ -33,16 +40,8 @@ uint8_t *Memory::get(uint16_t address, bool write, bool skipCallback)
 	}
 	else if (address >= 0x2000 && address <= 0x3FFF)
 	{
-		// Get from PPU memory ($2000 - $3FFF, mirrored > $2008)
-		uint16_t target = (address - 0x2000) % 0x0009;
-
-		if (ppuCallback && !skipCallback)
-		{
-			// TODO: Add way of determining intent to write to address
-			// TODO: Add way to access memory without triggering callbacks
-			ppuCallback(address, 0, write);
-		}
-
+		// Get from PPU memory ($2000 - $3FFF, mirrored > $2007)
+		uint16_t target = (address - 0x2000) % 0x0008;
 		return &ppuMem[target];
 	}
 	else if (address >= 0x4000 && address <= 0x4017)
@@ -66,11 +65,18 @@ uint8_t *Memory::get(uint16_t address, bool write, bool skipCallback)
 
 uint8_t Memory::read(uint16_t address, bool skipCallback)
 {
-	uint8_t *ptr = get(address, false, skipCallback);
+	uint8_t *ptr = get(address);
 
 	if (ptr != nullptr)
 	{
-		return *ptr;
+		uint8_t val = *ptr;
+		
+		if (!skipCallback)
+		{
+			dispatchCallbacks(address, 0, false);
+		}
+
+		return val;
 	}
 
 	return -1;
@@ -78,11 +84,16 @@ uint8_t Memory::read(uint16_t address, bool skipCallback)
 
 void Memory::write(uint16_t address, uint8_t value, bool skipCallback)
 {
-	uint8_t *ptr = get(address, true, skipCallback);
+	uint8_t *ptr = get(address);
 
 	if (ptr != nullptr)
 	{
 		*ptr = value;
+
+		if (!skipCallback)
+		{
+			dispatchCallbacks(address, value, true);
+		}
 	}
 }
 
@@ -115,4 +126,43 @@ void Memory::dump(Logger &logger)
 void Memory::setPpuAccessCallback(AccessCallback callback)
 {
 	ppuCallback = callback;
+}
+
+void Memory::dispatchNmi()
+{
+	shouldDispatchNmi = true;
+}
+
+bool Memory::pollNmi()
+{
+	if (shouldDispatchNmi)
+	{
+		shouldDispatchNmi = false;
+		return true;
+	}
+
+	return false;
+}
+
+void Memory::dispatchCallbacks(uint16_t address, uint8_t value, bool write)
+{
+	if (address >= 0x2000 && address <= 0x3FFF)
+	{
+		// Accessing PPU memory ($2000 - $3FFF, mirrored > $2007)
+		// Normalize target to non-mirrored register range ($2000 - $2007)
+		uint16_t target = (address - 0x2000) % 0x0008 + 0x2000;
+
+		if (ppuCallback)
+		{
+			ppuCallback(target, value, write);
+		}
+	}
+	else if (address == 0x4014)
+	{
+		// Accessing OAMDMA for PPU
+		if (ppuCallback)
+		{
+			ppuCallback(0x4014, value, write);
+		}
+	}
 }

@@ -1,6 +1,8 @@
 #include "DebugWindow.h"
 
-DebugWindow::DebugWindow(NES &nes, CPU &cpu) : Window(GLFW_KEY_F1), prevTime(0), frames(0), fps(0), nes(nes), cpu(cpu)
+#include <algorithm>
+
+DebugWindow::DebugWindow(NES &nes, CPU &cpu) : Window(GLFW_KEY_F1), prevTime(0), frames(0), fps(0), emulationSpeed(1.0), nes(nes), cpu(cpu)
 {
 	enable();
 }
@@ -37,7 +39,7 @@ void DebugWindow::draw()
 		CPU::State cpuState = cpu.getState();
 		ImGui::Text("Cycle: %d", cpuState.totalCycles);
 		ImGui::Text("PC: $%X", cpuState.pc);
-		ImGui::Text("Opcode: $%X", cpuState.opcode);
+		ImGui::Text("Opcode: $%X | %s (%s)", cpuState.opcode, cpuState.instruction.c_str(), cpuState.addressingMode.c_str());
 		ImGui::Text("SP: $%X", cpuState.sp);
 
 		char statusBuf[20];
@@ -86,6 +88,12 @@ void DebugWindow::draw()
 		if (ImGui::Button(nes.getRunning() ? "Pause" : "Play"))
 		{
 			nes.setRunning(!nes.getRunning());
+		}
+
+		if (ImGui::InputDouble("Emulation speed", &emulationSpeed))
+		{
+			emulationSpeed = std::max(0.0, std::min(emulationSpeed, 5.0));
+			nes.setEmulationSpeed(emulationSpeed);
 		}
 
 		ImGui::EndGroup();
