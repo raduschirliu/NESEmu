@@ -85,7 +85,7 @@ void PPUDebugWindow::draw()
 
 			ImGui::Image((void *)(intptr_t)ptLeftTexture, ImVec2(256, 256));
 			ImGui::SameLine();
-			ImGui::Image((void*)(intptr_t)ptRightTexture, ImVec2(256, 256));
+			ImGui::Image((void *)(intptr_t)ptRightTexture, ImVec2(256, 256));
 
 			ImGui::EndTabItem();
 		}
@@ -194,6 +194,34 @@ void PPUDebugWindow::drawNametable(uint16_t start)
 
 	ImGui::Text(ss.str().c_str());
 	ss.str("");
+	
+	// TEST: Drawing patterns from nametable indices
+	float imgWidth = 256;
+	float imgHeight = 240;
+
+	for (uint16_t r = 0; r < 30; r++)
+	{
+		for (uint16_t c = 0; c < 32; c++)
+		{
+			uint16_t offset = r * 32 + c;
+			uint8_t index = ppu.readMemory(start + offset);
+			float rTex = index / 32;
+			float cTex = index % 32;
+
+			float xTex = cTex * 8;
+			float yTex = rTex * 8;
+
+			ImVec2 topLeft(xTex / imgWidth, yTex / imgHeight);
+			ImVec2 botRight((xTex + 8) / imgWidth, (yTex + 8) / imgHeight);
+
+			ImGui::Image((void *)(intptr_t)ptLeftTexture, ImVec2(16, 16), topLeft, botRight);
+
+			if (c != 31)
+			{
+				ImGui::SameLine();
+			}
+		}
+	}
 }
 
 bool createPatternTableTexture(PPU &ppu, uint8_t tableIndex, GLuint *texture)
