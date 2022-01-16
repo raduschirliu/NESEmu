@@ -291,7 +291,7 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 		if (write)
 		{
 			writeMemory(accessAddress, newValue);
-			printf("Writing to %X\n", accessAddress);
+			//printf("Writing to %X\n", accessAddress);
 		}
 
 		// Update value post-read if from memory before the palette data

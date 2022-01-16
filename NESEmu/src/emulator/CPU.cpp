@@ -10,7 +10,7 @@
 
 // Debugging
 static bool constexpr DEBUG_LOG = true;
-static char debug_buf[100];
+static char debugBuf[100];
 
 // Address of the low byte of various jump vectors
 static uint16_t constexpr NMI_VECTOR = 0xFFFA;
@@ -98,8 +98,14 @@ void CPU::step()
 		// Poll for interrupts
 		if (memory.pollNmi())
 		{
+			if (DEBUG_LOG)
+			{
+				snprintf(debugBuf, 100, "\t-> NMI triggered\n");
+				logger.write(debugBuf);
+			}
+
 			// TODO: Make interrupt func
-			uint16_t returnAddress = pc + 2;
+			uint16_t returnAddress = pc;
 			memory.write(SP_ADDRESS, returnAddress >> 8); // Return address high byte
 			memory.write(SP_ADDRESS - 1, returnAddress & 0x00FF); // Return address low byte
 			memory.write(SP_ADDRESS - 2, p); // Status
@@ -121,8 +127,24 @@ void CPU::step()
 		// Write debug info to log
 		if (DEBUG_LOG)
 		{
-			snprintf(debug_buf, 100, "%04X  %02X  %s\t\tA:%02X X:%02X Y:%02X P:%02X SP:%02X\tCYC:%d\n", pc, opcode, ins.instruction.c_str(), a, x, y, p, sp, totalCycles);
-			logger.write(debug_buf);
+			// To change based on instruction
+			char opcodeBuf[11];
+
+			switch (instructionLength)
+			{
+			case 1:
+				snprintf(opcodeBuf, 9, "%02X      ", opcode);
+				break;
+			case 2:
+				snprintf(opcodeBuf, 9, "%02X %02X    ", opcode, memory.read(pc + 1, true));
+				break;
+			case 3:
+				snprintf(opcodeBuf, 9, "%02X %02X %02X", opcode, memory.read(pc + 1, true), memory.read(pc + 2, true));
+				break;
+			}
+
+			snprintf(debugBuf, 100, "%04X  %s  %s\t\tA:%02X X:%02X Y:%02X P:%02X SP:%02X\tCYC:%d\n", pc, opcodeBuf, ins.instruction.c_str(), a, x, y, p, sp, totalCycles);
+			logger.write(debugBuf);
 		}
 
 		int runExtra = (this->*ins.run)();
