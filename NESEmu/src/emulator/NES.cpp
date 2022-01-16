@@ -3,10 +3,12 @@
 #include "../graphics/windows/DebugWindow.h"
 #include "../graphics/windows/MemoryViewWindow.h"
 #include "../graphics/windows/PPUDebugWindow.h"
+#include "../graphics/Texture.h"
 
 #include <stdio.h>
 
 const char *WINDOW_TITLE = "nesemu";
+static Texture patternTable(128, 128);
 
 static void glfwErrorCallback(int error, const char *desc)
 {
@@ -20,7 +22,8 @@ NES::NES(): cpu(memory), ppu(memory)
     running = false;
     shouldShutdown = false;
     window = nullptr;
-    emulationSpeed = 1.0f;
+    renderingScale = 2.0f;
+    emulationSpeed = 1.0;
 }
 
 void NES::load(std::string path)
@@ -46,9 +49,9 @@ bool NES::init()
         return false;
     }
 
-    // Configure window to use OpenGL 3.3
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    // TODO: Configure window to use OpenGL 3.3
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
     // Create window
     window = glfwCreateWindow(windowWidth, windowHeight, WINDOW_TITLE, NULL, NULL);
@@ -78,7 +81,7 @@ bool NES::init()
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 330 core");
+    ImGui_ImplOpenGL3_Init(); // "#version 330 core"
 
     // Init drawables
     drawables.push_back(new DemoWindow());
@@ -97,6 +100,8 @@ void NES::run()
     const double cyclesPerFrame = 1790000 / 60; // Amount of CPU cycles needed per UI frame
 
     printf("Running display at %.2lfHz, with %.2lf CPU cycles per frame\n", 1 / targetFps, cyclesPerFrame);
+
+    patternTable.load(ppu, 0x1000);
 
     // Draw window and poll events
     while (!glfwWindowShouldClose(window) && !shouldShutdown)
@@ -117,7 +122,17 @@ void NES::run()
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            // TODO: Draw PPU graphics
+            // Update OpenGL
+            int width, height;
+            glfwGetFramebufferSize(window, &width, &height);
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+            glViewport(0, 0, width, height);
+            glOrtho(0, width, height, 0, -1, 1);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            // Draw graphics from PPU
+            draw();
 
             // Draw all drawable components
             for (IDrawable *drawable : drawables)
@@ -125,12 +140,6 @@ void NES::run()
                 drawable->update();
                 drawable->draw();
             }
-
-            // Update OpenGL
-            int width, height;
-            glfwGetFramebufferSize(window, &width, &height);
-            glViewport(0, 0, width, height);
-            glClear(GL_COLOR_BUFFER_BIT);
 
             // Render ImGui
             ImGui::Render();
@@ -171,6 +180,37 @@ void NES::step()
     ppu.step();
 }
 
+void NES::draw()
+{
+    glEnable(GL_TEXTURE_2D);
+
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+
+    // TEST: Drawing nametable 0 using pattern table 1
+    uint16_t start = 0x2000;
+    float tileSize = 8 * renderingScale;
+    float offsetX = (width - tileSize * 32) / 2;
+    float offsetY = (height - tileSize * 30) / 2;
+
+    for (uint16_t r = 0; r < 30; r++)
+    {
+        for (uint16_t c = 0; c < 32; c++)
+        {
+            uint16_t offset = r * 32 + c;
+            uint8_t index = ppu.readMemory(start + offset);
+            float rTex = std::floor(index / 16 * 8);
+            float cTex = std::floor(index % 16 * 8);
+
+            Vec2 pos(offsetX + c * tileSize, offsetY + r * tileSize);
+            Vec2 texPos(cTex, rTex);
+            patternTable.draw(pos, Vec2(tileSize, tileSize), texPos, texPos + Vec2(8, 8));
+        }
+    }
+
+    glDisable(GL_TEXTURE_2D);
+}
+
 void NES::shutdown()
 {
     shouldShutdown = true;
@@ -191,6 +231,11 @@ void NES::loadDebugMode()
     load("..\\roms\\nestest.nes");
     cpu.setPC(0xC000);
     printf("Set PC to 0xC000 for nestest automation mode\n");
+}
+
+void NES::setRenderingScale(float scale)
+{
+    renderingScale = scale;
 }
 
 void NES::setEmulationSpeed(double speed)

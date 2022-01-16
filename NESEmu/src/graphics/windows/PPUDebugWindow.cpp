@@ -1,13 +1,14 @@
 #include "PPUDebugWindow.h"
+#include "../Texture.h"
 
 #include <sstream>
 #include <iomanip>
 #include <vector>
 
 // TODO: Cleanup textures on de-init
-bool createPatternTableTexture(PPU &ppu, uint8_t tableIndex, GLuint *texture);
-static GLuint ptLeftTexture = 0;
-static GLuint ptRightTexture = 0;
+static bool initialized = false;
+static Texture ptLeftTexture(128, 128);
+static Texture ptRightTexture(128, 128);
 
 PPUDebugWindow::PPUDebugWindow(PPU &ppu) : Window(GLFW_KEY_F3), ppu(ppu)
 {
@@ -23,11 +24,12 @@ void PPUDebugWindow::draw()
 	}
 
 	// TODO: Make proper init method
-	if (ptRightTexture == 0)
+	if (!initialized)
 	{
 		// Create pattern table textures on first run
-		createPatternTableTexture(ppu, 0, &ptLeftTexture);
-		createPatternTableTexture(ppu, 1, &ptRightTexture);
+		ptLeftTexture.load(ppu, 0);
+		ptRightTexture.load(ppu, 0x1000);
+		initialized = true;
 	}
 
 	// If collapsed, exit out early as optimization
@@ -83,9 +85,9 @@ void PPUDebugWindow::draw()
 
 			ImGui::Spacing();
 
-			ImGui::Image((void *)(intptr_t)ptLeftTexture, ImVec2(256, 256));
+			ImGui::Image((void *)(intptr_t)ptLeftTexture.getTextureId(), ImVec2(256, 256));
 			ImGui::SameLine();
-			ImGui::Image((void *)(intptr_t)ptRightTexture, ImVec2(256, 256));
+			ImGui::Image((void *)(intptr_t)ptRightTexture.getTextureId(), ImVec2(256, 256));
 
 			ImGui::EndTabItem();
 		}
@@ -214,7 +216,7 @@ void PPUDebugWindow::drawNametable(uint16_t start)
 			ImVec2 topLeft(xTex / imgWidth, yTex / imgHeight);
 			ImVec2 botRight((xTex + 8) / imgWidth, (yTex + 8) / imgHeight);
 
-			ImGui::Image((void *)(intptr_t)ptLeftTexture, ImVec2(16, 16), topLeft, botRight);
+			ImGui::Image((void *)(intptr_t)ptLeftTexture.getTextureId(), ImVec2(16, 16), topLeft, botRight);
 
 			if (c != 31)
 			{
@@ -222,48 +224,4 @@ void PPUDebugWindow::drawNametable(uint16_t start)
 			}
 		}
 	}
-}
-
-bool createPatternTableTexture(PPU &ppu, uint8_t tableIndex, GLuint *texture)
-{
-	// Create OpenGL texture identifier
-	glGenTextures(1, texture);
-	glBindTexture(GL_TEXTURE_2D, *texture);
-
-	// Setup filtering parameters for display
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	std::vector<uint8_t> pixels;
-	uint8_t colors[] = { 0, 50, 100 };
-	uint16_t base = (tableIndex & 0x01) << 12;
-
-	// Create pixel data
-	for (uint8_t r = 0; r < 128; r++)
-	{
-		for (uint8_t c = 0; c < 128; c++)
-		{
-			uint16_t patternIndex = 16 * (r / 8) + c / 8; // Which pattern index to use
-			uint16_t byteIndex = r % 8; // Which byte of the pattern (row of pixels)
-			uint8_t bitIndex = 7 - c % 8; // The bit (pixel) to use in the current byte
-
-			uint16_t address = base | (patternIndex << 4) | byteIndex;
-			uint8_t hiByte = ppu.readMemory(address);
-			uint8_t loByte = ppu.readMemory(address + 8);
-			uint8_t mask = 1 << bitIndex;
-			uint8_t bit = ((hiByte & mask) >> (bitIndex - 1)) | ((loByte & mask) >> bitIndex);
-
-			pixels.push_back(colors[bit]);
-			pixels.push_back(colors[bit]);
-			pixels.push_back(colors[bit]);
-		}
-	}
-
-	// Upload pixels into texture
-#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-#endif
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
-
-	return true;
 }

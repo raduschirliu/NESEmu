@@ -102,18 +102,13 @@ void PPU::step()
 		{
 			uint8_t *status = (uint8_t *)&registers->status;
 
-			// Clear resetting status
-			isResetting = false;
-
 			// Set VBlank and trigger NMI
 			registers->status.vblank = 1;
 			nmiOccured = true;
-			//printf("VBlank start <----\n");
 
 			if (registers->ctrl.nmiEnable)
 			{
 				memory.dispatchNmi();
-				//printf("VBlank dispatched\n");
 			}
 		}
 	}
@@ -126,7 +121,13 @@ void PPU::step()
 			// Clear VBlank
 			registers->status.vblank = 0;
 			nmiOccured = false;
-			//printf("VBlank end ---->\n");
+
+			// Clear sprite flags
+			registers->status.sprite0Hit = 0;
+			registers->status.spriteOverflow = 0;
+
+			// Clear resetting status
+			isResetting = false;
 		}
 	}
 

@@ -2,7 +2,8 @@
 
 #include <algorithm>
 
-DebugWindow::DebugWindow(NES &nes, CPU &cpu) : Window(GLFW_KEY_F1), prevTime(0), frames(0), fps(0), emulationSpeed(1.0), nes(nes), cpu(cpu)
+DebugWindow::DebugWindow(NES &nes, CPU &cpu)
+	: Window(GLFW_KEY_F1), prevTime(0), frames(0), fps(0), emulationSpeed(1.0), renderingScale(1), nes(nes), cpu(cpu)
 {
 	enable();
 }
@@ -72,7 +73,7 @@ void DebugWindow::draw()
 
 	ImGui::Spacing();
 
-	// Step & play/pause buttons
+	// Emulator controls
 	{
 		ImGui::BeginGroup();
 		ImGui::Text("FPS: %u", fps);
@@ -94,6 +95,29 @@ void DebugWindow::draw()
 		{
 			emulationSpeed = std::max(0.0, std::min(emulationSpeed, 5.0));
 			nes.setEmulationSpeed(emulationSpeed);
+		}
+
+		const char *comboLabels[] = { "1x", "2x", "4x", "8x" };
+		if (ImGui::BeginCombo("Rendering scale", comboLabels[renderingScale]))
+		{
+			for (int n = 0; n < IM_ARRAYSIZE(comboLabels); n++)
+			{
+				const bool isSelected = (renderingScale == n);
+				if (ImGui::Selectable(comboLabels[n], isSelected))
+				{
+					renderingScale = n;
+					float scale = std::powf(2, renderingScale);
+					nes.setRenderingScale(scale);
+				}
+
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if (isSelected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+
+			ImGui::EndCombo();
 		}
 
 		ImGui::EndGroup();

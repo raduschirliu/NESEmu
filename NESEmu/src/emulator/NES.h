@@ -27,6 +27,9 @@ public:
 	// Emulate one single NES cycle step
 	void step();
 
+	// Draw current frame
+	void draw();
+
 	// Close window on next loop
 	void shutdown();
 
@@ -38,6 +41,9 @@ public:
 
 	// Put the NES into debug mode. Load nestest, and put into automated test mode
 	void loadDebugMode();
+
+	// Set rendering scale
+	void setRenderingScale(float scale);
 
 	// Set emulation speed
 	void setEmulationSpeed(double speed);
@@ -54,6 +60,9 @@ private:
 
 	// Whether the emulator window should close or not
 	bool shouldShutdown;
+
+	// The scale to apply when rendering the graphics
+	float renderingScale;
 
 	// Emulation speed
 	double emulationSpeed;

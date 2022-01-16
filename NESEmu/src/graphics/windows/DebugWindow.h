@@ -12,6 +12,7 @@ public:
 
 private:
 	double prevTime, emulationSpeed;
+	int renderingScale;
 	uint32_t frames, fps;
 
 	NES &nes;
