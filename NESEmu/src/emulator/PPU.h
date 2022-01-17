@@ -73,8 +73,11 @@ public:
 	// Gets current value of PPU registers
 	Registers *getRegisters();
 
+	// Gets the color palette starting at the given address
+	std::vector<Color> getPalette(uint16_t address);
+
 	// Returns the system palette
-	std::vector<PPU::Color> getSystemPalette();
+	std::vector<Color> getSystemPalette();
 
 	// Get the amount of cycles that have occured in the current frame
 	uint32_t getCycles();

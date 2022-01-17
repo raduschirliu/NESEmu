@@ -14,6 +14,7 @@ public:
 
 private:
 	void printMemory(uint16_t start, uint16_t end);
+	void drawPalette(std::string label, std::vector<PPU::Color> palette);
 	void drawNametable(uint16_t start);
 
 	PPU &ppu;

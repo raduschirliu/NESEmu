@@ -61,14 +61,14 @@ void PPUDebugWindow::draw()
 	if (ImGui::CollapsingHeader("PPU Registers"))
 	{
 		PPU::Registers* registers = ppu.getRegisters();
-		ImGui::Text("PPUCTRL\t($2000): $%X", registers->ctrl);
-		ImGui::Text("PPUMASK\t($2001): $%X", registers->mask);
+		ImGui::Text("PPUCTRL  \t($2000): $%X", registers->ctrl);
+		ImGui::Text("PPUMASK  \t($2001): $%X", registers->mask);
 		ImGui::Text("PPUSTATUS\t($2002): $%X", registers->status);
-		ImGui::Text("OAMADDR\t($2003): $%X", registers->oamAddr);
-		ImGui::Text("OAMDATA\t($2004): $%X", registers->oamData);
+		ImGui::Text("OAMADDR  \t($2003): $%X", registers->oamAddr);
+		ImGui::Text("OAMDATA  \t($2004): $%X", registers->oamData);
 		ImGui::Text("PPUSCROLL\t($2005): $%X", registers->scroll);
-		ImGui::Text("PPUADDR\t($2006): $%X", registers->addr);
-		ImGui::Text("PPUDATA\t($2007): $%X", registers->data);;
+		ImGui::Text("PPUADDR  \t($2006): $%X", registers->addr);
+		ImGui::Text("PPUDATA  \t($2007): $%X", registers->data);;
 	}
 
 	ImGui::Spacing();
@@ -95,29 +95,27 @@ void PPUDebugWindow::draw()
 		// Palette table
 		if (ImGui::BeginTabItem("Palette Table"))
 		{
-			ImDrawList *drawList = ImGui::GetWindowDrawList();
-			const ImVec2 pos = ImGui::GetCursorScreenPos();
-			const float size = 64;
-			const ImU32 textColor = ImColor(255, 255, 255);
-			std::vector<PPU::Color> palette = ppu.getSystemPalette();
+			drawPalette("System table", ppu.getSystemPalette());
+			ImGui::Spacing();
 
-			for (int r = 0; r < 4; r++)
-			{
-				for (int c = 0; c < 16; c++)
-				{
-					float x = pos.x + c * size;
-					float y = pos.y + r * size;
-					int index = 16 * r + c;
-					ImU32 color = ImColor(palette[index].r, palette[index].g, palette[index].b);
-					drawList->AddRectFilled(ImVec2(x, y), ImVec2(x + size, y + size), color);
+			drawPalette("Universal background", ppu.getPalette(0x3F00)); // Background color
+			ImGui::Spacing();
 
-					ss << "0x" << std::hex
-						<< std::setw(2) << std::setfill('0')
-						<< index;
-					drawList->AddText(ImVec2(x, y), textColor, ss.str().c_str());
-					ss.str("");
-				}
-			}
+			drawPalette("Background 0", ppu.getPalette(0x3F01)); // Background 0
+			ImGui::SameLine();
+			drawPalette("Background 1", ppu.getPalette(0x3F05)); // Background 1
+			ImGui::SameLine();
+			drawPalette("Background 2", ppu.getPalette(0x3F09)); // Background 2
+			ImGui::SameLine();
+			drawPalette("Background 3", ppu.getPalette(0x3F0D)); // Background 3
+
+			drawPalette("Sprite 0", ppu.getPalette(0x3F11)); // Sprite 0
+			ImGui::SameLine();
+			drawPalette("Sprite 1", ppu.getPalette(0x3F15)); // Sprite 1
+			ImGui::SameLine();
+			drawPalette("Sprite 2", ppu.getPalette(0x3F19)); // Sprite 2
+			ImGui::SameLine();
+			drawPalette("Sprite 3", ppu.getPalette(0x3F1D)); // Sprite 3
 
 			ImGui::EndTabItem();
 		}
@@ -158,6 +156,53 @@ void PPUDebugWindow::printMemory(uint16_t start, uint16_t end)
 
 		ss << std::endl;
 	}
+}
+
+void PPUDebugWindow::drawPalette(std::string label, std::vector<PPU::Color> palette)
+{
+	ImGui::BeginGroup();
+	ImGui::Text(label.c_str());
+
+	ImDrawList *drawList = ImGui::GetWindowDrawList();
+	ImVec2 pos = ImGui::GetCursorScreenPos();
+	int cols = 0;
+	int rows = 1;
+	int maxCols = 0;
+	int index = 0;
+	const float size = 64;
+	const ImU32 textColor = ImColor(255, 255, 255);
+	const float xStart = pos.x;
+	ImVec2 totalSize;
+
+	for (PPU::Color color : palette)
+	{
+		if (cols >= 16)
+		{
+			cols = 0;
+			rows++;
+			pos.x = xStart;
+			pos.y += size;
+		}
+
+		ImU32 imColor = ImColor(color.r, color.g, color.b);
+		drawList->AddRectFilled(ImVec2(pos.x, pos.y), ImVec2(pos.x + size, pos.y + size), imColor);
+
+		ss << "0x" << std::hex
+			<< std::setw(2) << std::setfill('0')
+			<< index;
+		drawList->AddText(ImVec2(pos.x, pos.y), textColor, ss.str().c_str());
+		ss.str("");
+
+		cols++;
+		maxCols = std::max(cols, maxCols);
+		pos.x += size;
+		index++;
+	}
+
+	totalSize.x = maxCols * size + 10;
+	totalSize.y = rows * size + 10;
+	ImGui::Dummy(totalSize);
+	ImGui::EndGroup();
 }
 
 void PPUDebugWindow::drawNametable(uint16_t start)

@@ -23,5 +23,8 @@ private:
 	GLuint textureId;
 	int width, height;
 
+	// TODO: Implement grayscale texture
+	bool grayscale;
+
 	std::vector<uint8_t> getPixelData(PPU &ppu, uint16_t baseAddress);
 };
