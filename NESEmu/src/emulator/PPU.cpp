@@ -197,13 +197,11 @@ std::vector<PPU::Color> PPU::getPalette(uint16_t address)
 {
 	std::vector<Color> palette;
 
-	if (address == 0x3F00)
-	{
-		// Background color
-		uint8_t colorIndex = readMemory(address);
-		palette.push_back(systemPalette[colorIndex]);
-	}
-	else if (address >= 0x3F01 && address <= 0x3F1F)
+	// Universal background color
+	uint8_t bgIndex = readMemory(0x3F00);
+	palette.push_back(systemPalette[bgIndex]);
+	
+	if (address >= 0x3F01 && address <= 0x3F1F)
 	{
 		// Background and sprite palettes
 		for (uint16_t i = 0; i < 3; i++)

@@ -98,9 +98,6 @@ void PPUDebugWindow::draw()
 			drawPalette("System table", ppu.getSystemPalette());
 			ImGui::Spacing();
 
-			drawPalette("Universal background", ppu.getPalette(0x3F00)); // Background color
-			ImGui::Spacing();
-
 			drawPalette("Background 0", ppu.getPalette(0x3F01)); // Background 0
 			ImGui::SameLine();
 			drawPalette("Background 1", ppu.getPalette(0x3F05)); // Background 1

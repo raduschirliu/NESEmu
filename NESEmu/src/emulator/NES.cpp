@@ -4,11 +4,21 @@
 #include "../graphics/windows/MemoryViewWindow.h"
 #include "../graphics/windows/PPUDebugWindow.h"
 #include "../graphics/Texture.h"
+#include "../graphics/Shader.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
+
+#include <iostream>
 #include <stdio.h>
 
 const char *WINDOW_TITLE = "nesemu";
 static Texture patternTable(128, 128);
+
+static GLuint program;
+static Shader fragment, vertex;
 
 static void glfwErrorCallback(int error, const char *desc)
 {
@@ -50,8 +60,8 @@ bool NES::init()
     }
 
     // TODO: Configure window to use OpenGL 3.3
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
     // Create window
     window = glfwCreateWindow(windowWidth, windowHeight, WINDOW_TITLE, NULL, NULL);
@@ -81,7 +91,15 @@ bool NES::init()
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(); // "#version 330 core"
+    ImGui_ImplOpenGL3_Init("#version 330 core");
+
+    program = glCreateProgram();
+    fragment.load(GL_FRAGMENT_SHADER, "shader.frag");
+    vertex.load(GL_VERTEX_SHADER, "shader.vert");
+
+    glAttachShader(program, fragment.getId());
+    glAttachShader(program, vertex.getId());
+    glLinkProgram(program);
 
     // Init drawables
     drawables.push_back(new DemoWindow());
@@ -128,7 +146,6 @@ void NES::run()
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
             glViewport(0, 0, width, height);
-            glOrtho(0, width, height, 0, -1, 1);
             glClear(GL_COLOR_BUFFER_BIT);
 
             // Draw graphics from PPU
@@ -180,14 +197,27 @@ void NES::step()
     ppu.step();
 }
 
+// TODO: temp
+std::vector<float> normalizePalette(std::vector<PPU::Color> palette)
+{
+    std::vector<float> normalized;
+
+    for (auto color : palette)
+    {
+        normalized.push_back(color.r / 255.0f);
+        normalized.push_back(color.g / 255.0f);
+        normalized.push_back(color.b / 255.0f);
+    }
+
+    return normalized;
+}
+
 void NES::draw()
 {
-    glEnable(GL_TEXTURE_2D);
-
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
 
-    // TEST: Drawing nametable 0 using pattern table 1
+    // TODO: Determine the correct nametable to be drawing
     uint16_t start = 0x2000;
     float tileSize = 8 * renderingScale;
     float offsetX = (width - tileSize * 32) / 2;
@@ -204,11 +234,49 @@ void NES::draw()
 
             Vec2 pos(offsetX + c * tileSize, offsetY + r * tileSize);
             Vec2 texPos(cTex, rTex);
+            
+            glUseProgram(program);
+
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(pos.x, pos.y, 0.0f));
+            model = glm::scale(model, glm::vec3(tileSize, tileSize, 1.0f));
+            glm::mat4 projection = glm::ortho<float>(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);
+
+            uint16_t attCol = c / 4;
+            uint16_t attRow = r / 4;
+            uint16_t attTableAddress = 0x23C0 + attRow * 8 + attCol;
+            uint8_t attByte = ppu.readMemory(attTableAddress);
+            uint8_t shift = 0;
+
+            if (c % 4 >= 2)
+            {
+                // Right
+                shift += 2;
+            }
+
+            if (r % 4 >= 2)
+            {
+                // Bottom
+                shift += 4;
+            }
+
+            // TODO: Attribute table may have issues with edge cases? Donkey Kong's body has white lines
+            uint8_t attBits = (attByte & (0b11 << shift)) >> shift;
+            uint16_t addresses[] = { 0x3F01, 0x3F05, 0x3F09, 0x3F0D };
+            uint16_t paletteAddress = addresses[attBits];
+            auto ppuPalette = ppu.getPalette(paletteAddress);
+
+            std::vector<float> palette = normalizePalette(ppuPalette);
+
+            glUniform3fv(glGetUniformLocation(program, "palette"), 4, &palette[0]);
+            glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
             patternTable.draw(pos, Vec2(tileSize, tileSize), texPos, texPos + Vec2(8, 8));
+            glUseProgram(0);
+            
         }
     }
-
-    glDisable(GL_TEXTURE_2D);
 }
 
 void NES::shutdown()

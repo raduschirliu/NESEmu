@@ -15,16 +15,15 @@ public:
 
 	void load(PPU& ppu, uint16_t baseAddress);
 	void update(PPU &ppu, uint16_t baseAddress);
+	void draw(Vec2 pos, Vec2 size);
 	void draw(Vec2 pos, Vec2 size, Vec2 uvTopLeft, Vec2 uvBottomRight);
 
 	GLuint getTextureId();
 
 private:
 	GLuint textureId;
+	GLuint vaoId, vboId, eboId;
 	int width, height;
-
-	// TODO: Implement grayscale texture
-	bool grayscale;
 
 	std::vector<uint8_t> getPixelData(PPU &ppu, uint16_t baseAddress);
 };
