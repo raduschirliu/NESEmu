@@ -167,6 +167,8 @@ GLuint Texture::getTextureId()
 vector<uint8_t> Texture::getPixelData(PPU &ppu, uint16_t baseAddress)
 {
 	vector<uint8_t> pixels;
+	pixels.reserve(128 * 128 * 3);
+
 	uint8_t colors[] = { 0, 51, 102, 153 }; // { 0.0, 0.2, 0.4, 0.6 } * 255
 
 	for (uint8_t r = 0; r < 128; r++)
@@ -181,7 +183,13 @@ vector<uint8_t> Texture::getPixelData(PPU &ppu, uint16_t baseAddress)
 			uint8_t loByte = ppu.readMemory(address);
 			uint8_t hiByte = ppu.readMemory(address + 8);
 			uint8_t mask = 1 << bitIndex;
-			uint8_t bit = ((hiByte & mask) >> (bitIndex - 1)) | ((loByte & mask) >> bitIndex);
+
+			// Account for the edge case where bitIndex == 0, and the high bit needs to be shifted
+			// 1 to the left so that it doesn't occupy the same place as the low bit
+			uint8_t hiBit = bitIndex == 0 ?
+							((hiByte & mask) << 1) :
+							((hiByte & mask) >> (bitIndex - 1));
+			uint8_t bit = hiBit | ((loByte & mask) >> bitIndex);
 
 			pixels.push_back(colors[bit]);
 			pixels.push_back(colors[bit]);
