@@ -12,7 +12,7 @@
 #include <iostream>
 #include <stdio.h>
 
-const char *WINDOW_TITLE = "nesemu";
+static const char *WINDOW_TITLE = "nesemu";
 
 static void glfwErrorCallback(int error, const char *desc)
 {
@@ -220,13 +220,13 @@ void NES::draw()
     glfwGetFramebufferSize(window, &width, &height);
 
     // TODO: Determine the correct nametable to be drawing
-    uint16_t start = 0x2000;
+    uint16_t start = ppu.getActiveNametableAddress();
     float tileSize = 8 * renderingScale;
     float offsetX = (width - tileSize * 32) / 2;
     float offsetY = (height - tileSize * 30) / 2;
 
-    Texture *leftPatternTable = ResourceManager::getTexture("pattern_left");
-    Texture *rightPatternTable = ResourceManager::getTexture("pattern_right");
+    Texture *patternTable = ResourceManager::getTexture(
+        ppu.getActiveBgPatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
 
     for (uint16_t r = 0; r < 30; r++)
     {
@@ -248,23 +248,22 @@ void NES::draw()
 
             if (c % 4 >= 2)
             {
-                // Right
+                // Right half of block
                 shift += 2;
             }
 
             if (r % 4 >= 2)
             {
-                // Bottom
+                // Bottom half of block
                 shift += 4;
             }
 
-            // TODO: Attribute table may have issues with edge cases? Donkey Kong's body has white lines
             uint8_t attBits = (attByte & (0b11 << shift)) >> shift;
             uint16_t addresses[] = { 0x3F01, 0x3F05, 0x3F09, 0x3F0D };
             uint16_t paletteAddress = addresses[attBits];
 
             auto palette = ppu.getPalette(paletteAddress);
-            rightPatternTable->draw(pos, glm::vec2(tileSize, tileSize), texPos, texPos + glm::vec2(8, 8), palette);
+            patternTable->draw(pos, glm::vec2(tileSize, tileSize), texPos, texPos + glm::vec2(8, 8), palette);
         }
     }
 }

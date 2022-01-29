@@ -73,6 +73,15 @@ public:
 	// Gets current value of PPU registers
 	Registers *getRegisters();
 
+	// Gets the address of the active nametable
+	uint16_t getActiveNametableAddress();
+
+	// Gets the address of the background pattern table
+	uint16_t getActiveBgPatternTableAddress();
+
+	// Gets the address of the sprite pattern table
+	uint16_t getActiveSpritePatternTableAddress();
+
 	// Gets the color palette starting at the given address
 	std::vector<Color> getPalette(uint16_t address);
 

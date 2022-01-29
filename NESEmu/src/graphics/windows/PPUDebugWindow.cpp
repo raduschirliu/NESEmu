@@ -68,8 +68,8 @@ void PPUDebugWindow::draw()
 		{
 			PPU::Registers *registers = ppu.getRegisters();
 
-			ImGui::Text("Background table: %d", (int)registers->ctrl.bgPatternTable);
-			ImGui::Text("Sprite table: %d", (int)registers->ctrl.spritePatternTable);
+			ImGui::Text("Background table:\t%u ($%X)", registers->ctrl.bgPatternTable, ppu.getActiveBgPatternTableAddress());
+			ImGui::Text("Sprite table:\t\t%u ($%X)", registers->ctrl.spritePatternTable, ppu.getActiveSpritePatternTableAddress());
 
 			ImGui::Spacing();
 
@@ -108,12 +108,14 @@ void PPUDebugWindow::draw()
 		// Nametables
 		if (ImGui::BeginTabItem("Nametable 1"))
 		{
+			ImGui::Text("Active nametable: %u ($%X)", ppu.getRegisters()->ctrl.baseNametable, ppu.getActiveNametableAddress());
 			drawNametable(0x2000);
 			ImGui::EndTabItem();
 		}
 
 		if (ImGui::BeginTabItem("Nametable 2"))
 		{
+			ImGui::Text("Active nametable: %u ($%X)", ppu.getRegisters()->ctrl.baseNametable, ppu.getActiveNametableAddress());
 			drawNametable(0x2400);
 			ImGui::EndTabItem();
 		}

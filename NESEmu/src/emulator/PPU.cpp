@@ -193,6 +193,24 @@ PPU::Registers *PPU::getRegisters()
 	return registers;
 }
 
+uint16_t PPU::getActiveNametableAddress()
+{
+	// One of: 0x2000, 0x2400, 0x2800, 0x2C00
+	return 0x2000 | (registers->ctrl.baseNametable << 10);
+}
+
+uint16_t PPU::getActiveBgPatternTableAddress()
+{
+	// One of: 0x0000, 0x1000
+	return registers->ctrl.bgPatternTable * 0x1000;
+}
+
+uint16_t PPU::getActiveSpritePatternTableAddress()
+{
+	// One of: 0x0000, 0x1000
+	return registers->ctrl.spritePatternTable * 0x1000;
+}
+
 std::vector<PPU::Color> PPU::getPalette(uint16_t address)
 {
 	std::vector<Color> palette;
