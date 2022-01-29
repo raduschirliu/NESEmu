@@ -1,9 +1,38 @@
 #include "Texture.h"
-#include <iostream>
 
-Texture::Texture(int width, int height) : textureId(0), vaoId(0), vboId(0), eboId(0), width(width), height(height)
+#include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+using std::vector;
+
+static vector<float> normalizePalette(vector<PPU::Color> palette);
+
+vector<float> normalizePalette(vector<PPU::Color> palette)
+{
+	vector<float> normalized;
+
+	for (auto color : palette)
+	{
+		normalized.push_back(color.r / 255.0f);
+		normalized.push_back(color.g / 255.0f);
+		normalized.push_back(color.b / 255.0f);
+	}
+
+	return normalized;
+}
+
+Texture::Texture(Shader *shader, int width, int height) : 
+	shader(shader), textureId(0), vaoId(0), vboId(0), eboId(0), width(width), height(height)
 {
 
+}
+
+Texture::Texture(const Texture &other) :
+	shader(other.shader), textureId(other.textureId), vaoId(other.vaoId),
+	vboId(other.vboId), eboId(other.eboId), width(other.width), height(other.height)
+{
+	
 }
 
 Texture::~Texture()
@@ -24,12 +53,19 @@ void Texture::load(PPU &ppu, uint16_t baseAddress)
 	glGenBuffers(1, &eboId);
 	glGenVertexArrays(1, &vaoId);
 
+	assert(vboId != 0);
+	assert(eboId != 0);
+	assert(vaoId != 0);
+	GL_ERROR_CHECK();
+
 	glBindVertexArray(vaoId);
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
 	glBindVertexArray(0);
 
-	std::vector<uint8_t> pixels = getPixelData(ppu, baseAddress);
+	GL_ERROR_CHECK();
+
+	vector<uint8_t> pixels = getPixelData(ppu, baseAddress);
 
 	// Create OpenGL texture identifier
 	glGenTextures(1, &textureId);
@@ -46,11 +82,13 @@ void Texture::load(PPU &ppu, uint16_t baseAddress)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	GL_ERROR_CHECK();
 }
 
 void Texture::update(PPU &ppu, uint16_t baseAddress)
 {
-	std::vector<uint8_t> pixels = getPixelData(ppu, baseAddress);
+	vector<uint8_t> pixels = getPixelData(ppu, baseAddress);
 
 	glBindTexture(GL_TEXTURE_2D, textureId);
 	// Upload pixels into texture
@@ -59,15 +97,32 @@ void Texture::update(PPU &ppu, uint16_t baseAddress)
 #endif
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	GL_ERROR_CHECK();
 }
 
-void Texture::draw(Vec2 pos, Vec2 size)
+void Texture::draw(glm::vec2 pos, glm::vec2 size)
 {
-	draw(pos, size, Vec2(0, 0), Vec2(width, height));
+	vector<PPU::Color> palette(4);
+	draw(pos, size, glm::vec2(0, 0), glm::vec2(width, height), palette);
 }
 
-void Texture::draw(Vec2 pos, Vec2 size, Vec2 uvTopLeft, Vec2 uvBottomRight)
+void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, vector<PPU::Color> palette)
 {
+	shader->use();
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(pos.x, pos.y, 0.0f));
+	model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
+	// TODO: Update projection matrix when window is changed
+	glm::mat4 projection = glm::ortho<float>(0.0f, 1280.0f, 720.0f, 0.0f, -1.0f, 1.0f);
+
+	// TODO: Cache normalized float palette
+	vector<float> normalizedPalette = normalizePalette(palette);
+	shader->setVector3f("palette", 4, &normalizedPalette[0]);
+	shader->setMatrix4f("model", model);
+	shader->setMatrix4f("projection", projection);
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, textureId);
 	glBindVertexArray(vaoId);
@@ -98,6 +153,10 @@ void Texture::draw(Vec2 pos, Vec2 size, Vec2 uvTopLeft, Vec2 uvBottomRight)
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	shader->abandon();
+
+	GL_ERROR_CHECK();
 }
 
 GLuint Texture::getTextureId()
@@ -105,9 +164,9 @@ GLuint Texture::getTextureId()
 	return textureId;
 }
 
-std::vector<uint8_t> Texture::getPixelData(PPU &ppu, uint16_t baseAddress)
+vector<uint8_t> Texture::getPixelData(PPU &ppu, uint16_t baseAddress)
 {
-	std::vector<uint8_t> pixels;
+	vector<uint8_t> pixels;
 	uint8_t colors[] = { 0, 51, 102, 153 }; // { 0.0, 0.2, 0.4, 0.6 } * 255
 
 	for (uint8_t r = 0; r < 128; r++)

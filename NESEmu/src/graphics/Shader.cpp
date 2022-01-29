@@ -1,21 +1,102 @@
 #include "Shader.h"
 
 #include <fstream>
+#include <glm/gtc/type_ptr.hpp>
+#include <assert.h>
 
-Shader::Shader() : id(0)
+using std::string;
+
+void Shader::abandon()
 {
-
+	glUseProgram(0);
 }
 
-void Shader::load(GLenum type, std::string path)
+Shader::Shader() : program(0)
 {
-	id = glCreateShader(type);
+	
+}
+
+Shader::~Shader()
+{
+	glDeleteProgram(program);
+}
+
+void Shader::load(string fragmentPath, string vertexPath)
+{
+	program = glCreateProgram();
+	GLuint fragment = compile(GL_FRAGMENT_SHADER, fragmentPath);
+	GLuint vertex = compile(GL_VERTEX_SHADER, vertexPath);
+
+	assert(program != 0);
+	assert(fragment != 0);
+	assert(vertex != 0);
+
+	glAttachShader(program, fragment);
+	glAttachShader(program, vertex);
+	glLinkProgram(program);
+
+	int success;
+	glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+	if (!success)
+	{
+		char infoLog[1024];
+		glGetProgramInfoLog(program, 1024, NULL, infoLog);
+		printf("Shader program link error: %s\n", infoLog);
+	}
+
+	glDeleteShader(fragment);
+	glDeleteShader(vertex);
+
+	GL_ERROR_CHECK();
+}
+
+void Shader::use()
+{
+	glUseProgram(program);
+}
+
+GLuint Shader::getId()
+{
+	return program;
+}
+
+GLint Shader::getUniformLocation(string name)
+{
+	GLint location = glGetUniformLocation(program, name.c_str());
+	
+	assert(location >= 0);
+	GL_ERROR_CHECK();
+	
+	return location;
+}
+
+void Shader::setVector3f(string name, const glm::vec3 &vector)
+{
+	glUniform3f(getUniformLocation(name), vector.x, vector.y, vector.z);
+	GL_ERROR_CHECK();
+}
+
+void Shader::setVector3f(string name, GLsizei count, const GLfloat *arr)
+{
+	glUniform3fv(getUniformLocation(name), count, arr);
+	GL_ERROR_CHECK();
+}
+
+void Shader::setMatrix4f(string name, const glm::mat4 &matrix)
+{
+	glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(matrix));
+	GL_ERROR_CHECK();
+}
+
+GLuint Shader::compile(GLuint type, string path)
+{
+	GLuint id = glCreateShader(type);
 	std::ifstream file(path);
 
 	if (file.is_open())
 	{
-		std::string str;
-		std::string line;
+		string str, line;
 
 		while (!file.eof())
 		{
@@ -31,11 +112,7 @@ void Shader::load(GLenum type, std::string path)
 		int success;
 		glGetShaderiv(id, GL_COMPILE_STATUS, &success);
 
-		if (success)
-		{
-			printf("Loaded shader: %s\n", path.c_str());
-		}
-		else
+		if (!success)
 		{
 			char info[512];
 			glGetShaderInfoLog(id, 512, NULL, info);
@@ -43,10 +120,8 @@ void Shader::load(GLenum type, std::string path)
 		}
 	}
 
-	file.close();
-}
+	GL_ERROR_CHECK();
 
-GLuint Shader::getId()
-{
+	file.close();
 	return id;
 }

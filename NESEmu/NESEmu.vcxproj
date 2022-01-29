@@ -157,6 +157,8 @@
     <ClCompile Include="src\emulator\CPU.cpp" />
     <ClCompile Include="src\debug\Logger.cpp" />
     <ClCompile Include="src\emulator\NES.cpp" />
+    <ClCompile Include="src\graphics\Graphics.cpp" />
+    <ClCompile Include="src\graphics\ResourceManager.cpp" />
     <ClCompile Include="src\graphics\Shader.cpp" />
     <ClCompile Include="src\graphics\Texture.cpp" />
     <ClCompile Include="src\graphics\windows\DebugWindow.cpp" />
@@ -180,9 +182,9 @@
     <ClInclude Include="src\emulator\CPU.h" />
     <ClInclude Include="src\debug\Logger.h" />
     <ClInclude Include="src\emulator\Mapper.h" />
+    <ClInclude Include="src\graphics\ResourceManager.h" />
     <ClInclude Include="src\graphics\Shader.h" />
     <ClInclude Include="src\graphics\Texture.h" />
-    <ClInclude Include="src\graphics\Vec2.h" />
     <ClInclude Include="src\graphics\windows\DebugWindow.h" />
     <ClInclude Include="src\emulator\NES.h" />
     <ClInclude Include="src\graphics\Graphics.h" />

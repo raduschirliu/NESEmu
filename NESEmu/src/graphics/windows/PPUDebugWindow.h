@@ -2,6 +2,7 @@
 
 #include "../Window.h"
 #include "../../emulator/PPU.h"
+#include "../Texture.h"
 
 #include <sstream>
 
@@ -18,5 +19,7 @@ private:
 	void drawNametable(uint16_t start);
 
 	PPU &ppu;
+	Texture *patternTableLeft;
+	Texture *patternTableRight;
 	std::stringstream ss;
 };

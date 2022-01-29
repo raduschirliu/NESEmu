@@ -1,26 +1,29 @@
 #pragma once
 
 #include "Graphics.h"
-#include "Vec2.h"
+#include "Shader.h"
 #include "../emulator/PPU.h"
 
 #include <cstdint>
 #include <vector>
+#include <glm/glm.hpp>
 
 class Texture
 {
 public:
-	Texture(int width, int height);
+	Texture(Shader *shader, int width, int height);
+	Texture(const Texture &other);
 	~Texture();
 
 	void load(PPU& ppu, uint16_t baseAddress);
 	void update(PPU &ppu, uint16_t baseAddress);
-	void draw(Vec2 pos, Vec2 size);
-	void draw(Vec2 pos, Vec2 size, Vec2 uvTopLeft, Vec2 uvBottomRight);
+	void draw(glm::vec2 pos, glm::vec2 size);
+	void draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, std::vector<PPU::Color> palette);
 
 	GLuint getTextureId();
 
 private:
+	Shader *shader;
 	GLuint textureId;
 	GLuint vaoId, vboId, eboId;
 	int width, height;

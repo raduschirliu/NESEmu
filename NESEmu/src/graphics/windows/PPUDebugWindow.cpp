@@ -1,18 +1,15 @@
 #include "PPUDebugWindow.h"
 #include "../Texture.h"
+#include "../ResourceManager.h"
 
 #include <sstream>
 #include <iomanip>
 #include <vector>
 
-// TODO: Cleanup textures on de-init
-static bool initialized = false;
-static Texture ptLeftTexture(128, 128);
-static Texture ptRightTexture(128, 128);
-
 PPUDebugWindow::PPUDebugWindow(PPU &ppu) : Window(GLFW_KEY_F3), ppu(ppu)
 {
-
+	patternTableLeft = ResourceManager::getTexture("pattern_left");
+	patternTableRight = ResourceManager::getTexture("pattern_right");
 }
 
 void PPUDebugWindow::draw()
@@ -21,15 +18,6 @@ void PPUDebugWindow::draw()
 	if (!enabled)
 	{
 		return;
-	}
-
-	// TODO: Make proper init method
-	if (!initialized)
-	{
-		// Create pattern table textures on first run
-		ptLeftTexture.load(ppu, 0);
-		ptRightTexture.load(ppu, 0x1000);
-		initialized = true;
 	}
 
 	// If collapsed, exit out early as optimization
@@ -85,9 +73,9 @@ void PPUDebugWindow::draw()
 
 			ImGui::Spacing();
 
-			ImGui::Image((void *)(intptr_t)ptLeftTexture.getTextureId(), ImVec2(256, 256));
+			ImGui::Image((void *)(intptr_t)patternTableLeft->getTextureId(), ImVec2(256, 256));
 			ImGui::SameLine();
-			ImGui::Image((void *)(intptr_t)ptRightTexture.getTextureId(), ImVec2(256, 256));
+			ImGui::Image((void *)(intptr_t)patternTableRight->getTextureId(), ImVec2(256, 256));
 
 			ImGui::EndTabItem();
 		}
@@ -258,7 +246,7 @@ void PPUDebugWindow::drawNametable(uint16_t start)
 			ImVec2 topLeft(xTex / imgWidth, yTex / imgHeight);
 			ImVec2 botRight((xTex + 8) / imgWidth, (yTex + 8) / imgHeight);
 
-			ImGui::Image((void *)(intptr_t)ptLeftTexture.getTextureId(), ImVec2(16, 16), topLeft, botRight);
+			ImGui::Image((void *)(intptr_t)patternTableRight->getTextureId(), ImVec2(16, 16), topLeft, botRight);
 
 			if (c != 31)
 			{
