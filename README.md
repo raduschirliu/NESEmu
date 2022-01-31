@@ -14,19 +14,25 @@ _Note: Nesemu is still very much WIP_
     - [x] Registers and memory map
     - [x] All addressing modes
     - [x] All official opcodes
+- [ ] Input mapping
 - [ ] Mappers
     - [ ] NROM (#000)
     - [ ] MMC1 (#001)
 - [ ] PPU
-    - [ ] Rendering context (likely using SDL)
-    - [ ] Memory mapped registers
-    - [ ] Rendering loop
+    - [x] Rendering context
+    - [x] Memory mapped registers
+    - [x] Rendering background (nametable)
+    - [x] Rendering foreground (OAM sprites)
+    - [ ] Scrolling
+    - [ ] Accurate simulation of data fetches during rendering
 - [ ] Debugger
     - [x] Memory viewer
     - [x] Stepping through CPU instructions
     - [ ] Stack viewer
-    - [ ] Palette viewer
-    - [ ] Pattern table viewer
+    - [x] Palette viewer
+    - [x] Pattern table viewer
+    - [x] Nametable viewer
+    - [x] Oam viewer
 
 #### Extra features
 

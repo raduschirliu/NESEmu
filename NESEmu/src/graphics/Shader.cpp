@@ -72,21 +72,21 @@ GLint Shader::getUniformLocation(string name)
 	return location;
 }
 
-void Shader::setVector3f(string name, const glm::vec3 &vector)
+void Shader::setVector3f(string name, const glm::vec3 &vec)
 {
-	glUniform3f(getUniformLocation(name), vector.x, vector.y, vector.z);
+	glUniform3f(getUniformLocation(name), vec.x, vec.y, vec.z);
 	GL_ERROR_CHECK();
 }
 
-void Shader::setVector3f(string name, vector<GLfloat> arr)
+void Shader::setVector3f(string name, vector<GLfloat> &vec)
 {
-	glUniform3fv(getUniformLocation(name), arr.size(), &arr[0]);
+	glUniform3fv(getUniformLocation(name), vec.size(), &vec[0]);
 	GL_ERROR_CHECK();
 }
 
-void Shader::setVector4f(string name, vector<GLfloat> arr)
+void Shader::setVector4f(string name, vector<GLfloat> &vec)
 {
-	glUniform4fv(getUniformLocation(name), arr.size(), &arr[0]);
+	glUniform4fv(getUniformLocation(name), vec.size(), &vec[0]);
 	GL_ERROR_CHECK();
 }
 

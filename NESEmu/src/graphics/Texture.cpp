@@ -195,12 +195,22 @@ void Texture::drawGui(ImVec2 size, ImVec2 texPosTopLeft, ImVec2 texPosBottomRigh
 	ImVec2 uvStart(texPosTopLeft.x / width, texPosTopLeft.y / height);
 	ImVec2 uvEnd(texPosBottomRight.x / width, texPosBottomRight.y / height);
 
-	ImGui::Image((void *)(intptr_t)getTextureId(), size, uvStart, uvEnd);
+	ImGui::Image((void *)(intptr_t)textureId, size, uvStart, uvEnd);
 }
 
-GLuint Texture::getTextureId()
+GLuint Texture::getId()
 {
 	return textureId;
+}
+
+int Texture::getWidth()
+{
+	return width;
+}
+
+int Texture::getHeight()
+{
+	return height;
 }
 
 vector<uint8_t> Texture::getPixelData(PPU &ppu, uint16_t baseAddress)

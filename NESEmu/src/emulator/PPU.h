@@ -12,6 +12,9 @@ public:
 	static constexpr uint16_t NAMETABLE_ADDRESSES[] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 	static constexpr uint16_t NAMETABLE_ROWS = 30;
 	static constexpr uint16_t NAMETABLE_COLS = 32;
+
+	// Pattern table is 16 x 16 tiles
+	static constexpr uint16_t PATTERN_TABLE_SIZE = 16;
 	static constexpr uint16_t TILE_SIZE = 8;
 
 	// Each attribute table is offset 960 ($3C0) bytes from the start of a nametable

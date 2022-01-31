@@ -36,21 +36,31 @@ public:
 	// Gets whether the NES is running or paused
 	bool getRunning() const;
 
-	// Put the NES into debug mode. Load nestest, and put into automated test mode
+	// Put the NES into debug mode: load nestest, and put into automated test mode
 	void loadDebugMode();
 
 	// Set rendering scale
 	void setRenderingScale(float scale);
+	
+	// Gets the current rendering scale
+	float getRenderingScale();
 
 	// Set emulation speed
 	void setEmulationSpeed(double speed);
 
-	// Returns a copy of the NES' ROM
+	// Returns the NES' current ROM
 	ROM& getRom();
 
+	// Gets the current tile size with the applied rendering scale
+	float getTileSize();
+	
+	// Gets the offset of the NES output
+	glm::vec2 getGraphicsOffset();
+
 private:
-	// Window dimensions
+	// Window and viewport dimensions
 	int windowWidth, windowHeight;
+	int viewportWidth, viewportHeight;
 	
 	// Whether the emulation is running or paused
 	bool running;

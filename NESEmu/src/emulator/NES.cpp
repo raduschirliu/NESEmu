@@ -7,10 +7,10 @@
 #include "../graphics/Shader.h"
 #include "../graphics/ResourceManager.h"
 
-#include <glm/glm.hpp>
-
 #include <iostream>
 #include <stdio.h>
+
+using std::floor;
 
 static const char *WINDOW_TITLE = "nesemu";
 
@@ -27,8 +27,11 @@ static void glfwErrorCallback(int error, const char *desc)
 
 NES::NES(): cpu(memory), ppu(memory)
 {
+    // TODO: Use initializer list
     windowWidth = 1280;
     windowHeight = 720;
+    viewportWidth = 0;
+    viewportHeight = 0;
     running = false;
     shouldShutdown = false;
     window = nullptr;
@@ -114,9 +117,10 @@ bool NES::init()
 
     GL_ERROR_CHECK();
 
+    int patternTableSize = PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE;
     ResourceManager::loadShader("pattern_shader", "shader.frag", "shader.vert");
-    ResourceManager::loadTexture("pattern_left", "pattern_shader", 128, 128);
-    ResourceManager::loadTexture("pattern_right", "pattern_shader", 128, 128);
+    ResourceManager::loadTexture("pattern_left", "pattern_shader", patternTableSize, patternTableSize);
+    ResourceManager::loadTexture("pattern_right", "pattern_shader", patternTableSize, patternTableSize);
 
     GL_ERROR_CHECK();
 
@@ -124,7 +128,7 @@ bool NES::init()
     drawables.push_back(new DemoWindow());
     drawables.push_back(new DebugWindow(*this, cpu));
     drawables.push_back(new MemoryViewWindow(memory));
-    drawables.push_back(new PPUDebugWindow(ppu));
+    drawables.push_back(new PPUDebugWindow(*this, ppu));
 
     GL_ERROR_CHECK();
 
@@ -140,7 +144,7 @@ void NES::run()
 
     printf("Running display at %.2lfHz, with %.2lf CPU cycles per frame\n", 1 / targetFps, cyclesPerFrame);
 
-    // TODO: Create a PPU callback for loading pattern tables
+    // TODO: Create a PPU callback for loading/updating pattern tables
     Texture *leftPatternTable = ResourceManager::getTexture("pattern_left");
     Texture *rightPatternTable = ResourceManager::getTexture("pattern_right");
     leftPatternTable->load(ppu, 0x0000);
@@ -166,9 +170,8 @@ void NES::run()
             ImGui::NewFrame();
 
             // Update OpenGL
-            int width, height;
-            glfwGetFramebufferSize(window, &width, &height);
-            glViewport(0, 0, width, height);
+            glfwGetFramebufferSize(window, &viewportWidth, &viewportHeight);
+            glViewport(0, 0, viewportWidth, viewportHeight);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // Draw graphics from PPU
@@ -248,6 +251,11 @@ void NES::setRenderingScale(float scale)
     renderingScale = scale;
 }
 
+float NES::getRenderingScale()
+{
+    return renderingScale;
+}
+
 void NES::setEmulationSpeed(double speed)
 {
     emulationSpeed = speed;
@@ -258,15 +266,26 @@ ROM& NES::getRom()
     return rom;
 }
 
+float NES::getTileSize()
+{
+    return PPU::TILE_SIZE * renderingScale;
+}
+
+glm::vec2 NES::getGraphicsOffset()
+{
+    float tileSize = getTileSize();
+
+    return glm::vec2(
+        (viewportWidth - tileSize * PPU::NAMETABLE_COLS) / 2,
+        (viewportHeight - tileSize * PPU::NAMETABLE_ROWS) / 2
+    );
+}
+
 void NES::drawBackground()
 {
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-
     uint16_t start = ppu.getActiveNametableAddress();
-    float tileSize = 8 * renderingScale;
-    float offsetX = (width - tileSize * 32) / 2;
-    float offsetY = (height - tileSize * 30) / 2;
+    float tileSize = getTileSize();
+    glm::vec2 offset = getGraphicsOffset();
 
     uint8_t nametable = ppu.getRegisters()->ctrl.baseNametable;
     Texture *patternTable = ResourceManager::getTexture(
@@ -276,15 +295,16 @@ void NES::drawBackground()
 
     // Solid background color
     {
-        glm::vec3 pos(offsetX, offsetY, BACKGROUND_COLOR_DEPTH);
+        glm::vec3 pos(offset.x, offset.y, BACKGROUND_COLOR_DEPTH);
         glm::vec2 size(PPU::NAMETABLE_COLS * tileSize, PPU::NAMETABLE_ROWS * tileSize);
         glm::vec2 texPos(0.0f, 0.0f);
+        glm::vec2 texEndPos(patternTable->getWidth(), patternTable->getHeight());
 
         // TODO: Draw this without needlessly using texture
         PPU::Color bgColor = ppu.getPalette(bgColorAddress)[0];
         std::vector<PPU::Color> palette(4, bgColor);
 
-        patternTable->draw(pos, size, texPos, texPos + glm::vec2(128.0f, 128.0f), palette);
+        patternTable->draw(pos, size, texPos, texEndPos, palette);
     }
 
     // Nametable background tiles
@@ -292,37 +312,34 @@ void NES::drawBackground()
     {
         for (uint32_t c = 0; c < PPU::NAMETABLE_COLS; c++)
         {
-            uint16_t offset = r * PPU::NAMETABLE_COLS + c;
-            uint8_t index = ppu.readMemory(start + offset);
-            float cTex = std::floor(index % 16 * 8);
-            float rTex = std::floor(index / 16 * 8);
+            uint16_t nametableIndex = r * PPU::NAMETABLE_COLS + c;
+            uint8_t patternIndex = ppu.readMemory(start + nametableIndex);
+            float cTex = floor(patternIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
+            float rTex = floor(patternIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
 
-            glm::vec3 pos(offsetX + c * tileSize, offsetY + r * tileSize, BACKGROUND_TILE_DEPTH);
+            glm::vec3 pos(offset.x + c * tileSize, offset.y + r * tileSize, BACKGROUND_TILE_DEPTH);
             glm::vec2 size(tileSize, tileSize);
             glm::vec2 texPos(cTex, rTex);
+            glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);
 
-            uint8_t paletteTableIndex = ppu.getNametableEntryPalette(nametable, offset);
+            uint8_t paletteTableIndex = ppu.getNametableEntryPalette(nametable, nametableIndex);
             uint16_t paletteAddress = bgPaletteAddresses[paletteTableIndex];
             auto palette = ppu.getPalette(paletteAddress);
-            patternTable->draw(pos, size, texPos, texPos + glm::vec2(8, 8), palette);
+            patternTable->draw(pos, size, texPos, texPosEnd, palette);
         }
     }
 }
 
 void NES::drawSprites()
 {
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-
-    float tileSize = 8 * renderingScale;
-    float offsetX = (width - tileSize * 32) / 2;
-    float offsetY = (height - tileSize * 30) / 2;
+    float tileSize = getTileSize();
+    glm::vec2 offset = getGraphicsOffset();
     Texture *patternTable = ResourceManager::getTexture(
         ppu.getActiveSpritePatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
 
     uint16_t paletteAddresses[] = { 0x3F11, 0x3F15, 0x3F19, 0x3F1D };
-    uint16_t nesWidth = PPU::NAMETABLE_COLS * 8;
-    uint16_t nesHeight = PPU::NAMETABLE_ROWS * 8;
+    uint16_t nesWidth = PPU::NAMETABLE_COLS * PPU::TILE_SIZE;
+    uint16_t nesHeight = PPU::NAMETABLE_ROWS * PPU::TILE_SIZE;
 
     // 64 sprites in Oam to draw. Sprites with lower address are drawn on top
     for (int i = PPU::OAM_SIZE - 1; i >= 0; i--)
@@ -338,28 +355,28 @@ void NES::drawSprites()
 
         // Screen coordinates
         glm::vec3 pos(
-            offsetX + sprite->xPos * renderingScale,
-            offsetY + sprite->yPos * renderingScale,
+            offset.x + sprite->xPos * renderingScale,
+            offset.y + sprite->yPos * renderingScale,
             sprite->attributes.priority == 0 ? FOREGROUND_SPRITE_DEPTH : BACKGROUND_SPRITE_DEPTH
         );
         glm::vec2 size(tileSize, tileSize);
 
         // Texture coordinates
-        float cTex = std::floor(sprite->tileIndex % 16 * 8);
-        float rTex = std::floor(sprite->tileIndex / 16 * 8);
+        float cTex = floor(sprite->tileIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
+        float rTex = floor(sprite->tileIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
         glm::vec2 texPos(cTex, rTex);
-        glm::vec2 texPosEnd(cTex + 8, rTex + 8);
+        glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);
 
         // Flip sprites
         if (sprite->attributes.flipHorizontal)
         {
-            texPos.x = cTex + 8;
+            texPos.x = cTex + PPU::TILE_SIZE;
             texPosEnd.x = cTex;
         }
 
         if (sprite->attributes.flipVertical)
         {
-            texPos.y = rTex + 8;
+            texPos.y = rTex + PPU::TILE_SIZE;
             texPosEnd.y = rTex;
         }
 

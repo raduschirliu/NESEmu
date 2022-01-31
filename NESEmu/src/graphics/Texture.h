@@ -24,7 +24,9 @@ public:
 	void drawGui(ImVec2 size);
 	void drawGui(ImVec2 size, ImVec2 texPosTopLeft, ImVec2 texPosBottomRight);
 
-	GLuint getTextureId();
+	GLuint getId();
+	int getWidth();
+	int getHeight();
 
 private:
 	Shader *shader;
