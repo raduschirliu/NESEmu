@@ -19,6 +19,7 @@ public:
 	void update(PPU &ppu, uint16_t baseAddress);
 	void draw(glm::vec2 pos, glm::vec2 size);
 	void draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, std::vector<PPU::Color> palette);
+	void draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, std::vector<PPU::Color> palette);
 
 	void drawGui(ImVec2 size);
 	void drawGui(ImVec2 size, ImVec2 texPosTopLeft, ImVec2 texPosBottomRight);

@@ -108,16 +108,21 @@ void Texture::draw(glm::vec2 pos, glm::vec2 size)
 	draw(pos, size, glm::vec2(0, 0), glm::vec2(width, height), palette);
 }
 
-void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, vector<PPU::Color> palette)
+void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, std::vector<PPU::Color> palette)
+{
+	draw(glm::vec3(pos.x, pos.y, 0.0f), size, uvTopLeft, uvBottomRight, palette);
+}
+
+void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, vector<PPU::Color> palette)
 {
 	// Enable shader and set uniforms
 	shader->use();
 
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(pos.x, pos.y, 0.0f));
+	model = glm::translate(model, pos);
 	model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
 	// TODO: Update projection matrix when window is changed
-	glm::mat4 projection = glm::ortho<float>(0.0f, 1280.0f, 720.0f, 0.0f, -1.0f, 1.0f);
+	glm::mat4 projection = glm::ortho<float>(0.0f, 1280.0f, 720.0f, 0.0f, -10.0f, 10.0f);
 
 	// TODO: Cache normalized float palette
 	vector<float> normalizedPalette = normalizePalette(palette);
@@ -125,7 +130,8 @@ void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 	shader->setMatrix4f("model", model);
 	shader->setMatrix4f("projection", projection);
 
-	// Enable texture alpha
+	// Enable texture alpha, depth test
+	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -167,6 +173,7 @@ void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
 
 	shader->abandon();
 

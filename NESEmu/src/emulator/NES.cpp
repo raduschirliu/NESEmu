@@ -14,6 +14,12 @@
 
 static const char *WINDOW_TITLE = "nesemu";
 
+// Depths of various rendering layers
+static constexpr float BACKGROUND_COLOR_DEPTH = -5.0f;
+static constexpr float BACKGROUND_SPRITE_DEPTH = -1.0f;
+static constexpr float BACKGROUND_TILE_DEPTH = 0.0f;
+static constexpr float FOREGROUND_SPRITE_DEPTH = 1.0f;
+
 static void glfwErrorCallback(int error, const char *desc)
 {
     printf("GLFW error: %i %s\n", error, desc);
@@ -163,7 +169,7 @@ void NES::run()
             int width, height;
             glfwGetFramebufferSize(window, &width, &height);
             glViewport(0, 0, width, height);
-            glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // Draw graphics from PPU
             drawBackground();
@@ -254,8 +260,6 @@ ROM& NES::getRom()
 
 void NES::drawBackground()
 {
-    // TODO: Draw background color separately to allow sprites to appear behind background
-
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
 
@@ -267,18 +271,33 @@ void NES::drawBackground()
     uint8_t nametable = ppu.getRegisters()->ctrl.baseNametable;
     Texture *patternTable = ResourceManager::getTexture(
         ppu.getActiveBgPatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
+    uint16_t bgColorAddress = 0x3F00;
     uint16_t bgPaletteAddresses[] = { 0x3F01, 0x3F05, 0x3F09, 0x3F0D };
 
-    for (uint32_t r = 0; r < 30; r++)
+    // Solid background color
     {
-        for (uint32_t c = 0; c < 32; c++)
+        glm::vec3 pos(offsetX, offsetY, BACKGROUND_COLOR_DEPTH);
+        glm::vec2 size(PPU::NAMETABLE_COLS * tileSize, PPU::NAMETABLE_ROWS * tileSize);
+        glm::vec2 texPos(0.0f, 0.0f);
+
+        // TODO: Draw this without needlessly using texture
+        PPU::Color bgColor = ppu.getPalette(bgColorAddress)[0];
+        std::vector<PPU::Color> palette(4, bgColor);
+
+        patternTable->draw(pos, size, texPos, texPos + glm::vec2(128.0f, 128.0f), palette);
+    }
+
+    // Nametable background tiles
+    for (uint32_t r = 0; r < PPU::NAMETABLE_ROWS; r++)
+    {
+        for (uint32_t c = 0; c < PPU::NAMETABLE_COLS; c++)
         {
-            uint16_t offset = r * 32 + c;
+            uint16_t offset = r * PPU::NAMETABLE_COLS + c;
             uint8_t index = ppu.readMemory(start + offset);
             float cTex = std::floor(index % 16 * 8);
             float rTex = std::floor(index / 16 * 8);
 
-            glm::vec2 pos(offsetX + c * tileSize, offsetY + r * tileSize);
+            glm::vec3 pos(offsetX + c * tileSize, offsetY + r * tileSize, BACKGROUND_TILE_DEPTH);
             glm::vec2 size(tileSize, tileSize);
             glm::vec2 texPos(cTex, rTex);
 
@@ -304,7 +323,7 @@ void NES::drawSprites()
     uint16_t paletteAddresses[] = { 0x3F11, 0x3F15, 0x3F19, 0x3F1D };
 
     // 64 sprites in Oam to draw. Sprites with lower address are drawn on top
-    for (int i = 63; i >= 0; i--)
+    for (int i = PPU::OAM_SIZE - 1; i >= 0; i--)
     {
         PPU::OamSprite *sprite = ppu.getOamSprite(i * sizeof(PPU::OamSprite));
         uint16_t paletteAddress = paletteAddresses[sprite->attributes.palette];
@@ -316,13 +335,11 @@ void NES::drawSprites()
             continue;
         }
 
-        // Only draw sprites that are supposed to be in front of the background
-        if (sprite->attributes.priority != 0)
-        {
-            continue;
-        }
-
-        glm::vec2 pos(offsetX + sprite->xPos * renderingScale, offsetY + sprite->yPos * renderingScale);
+        glm::vec3 pos(
+            offsetX + sprite->xPos * renderingScale,
+            offsetY + sprite->yPos * renderingScale,
+            sprite->attributes.priority == 0 ? FOREGROUND_SPRITE_DEPTH : BACKGROUND_SPRITE_DEPTH
+        );
         glm::vec2 size(tileSize, tileSize);
 
         float cTex = std::floor(sprite->tileIndex % 16 * 8);
