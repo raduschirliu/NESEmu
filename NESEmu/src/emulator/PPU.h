@@ -12,6 +12,7 @@ public:
 	static constexpr uint16_t NAMETABLE_ADDRESSES[] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 	static constexpr uint16_t NAMETABLE_ROWS = 30;
 	static constexpr uint16_t NAMETABLE_COLS = 32;
+	static constexpr uint16_t TILE_SIZE = 8;
 
 	// Each attribute table is offset 960 ($3C0) bytes from the start of a nametable
 	static constexpr uint16_t ATTRIBUTE_TABLE_OFFSET = 0x3C0;
@@ -35,7 +36,7 @@ public:
 	// Represents a 4 byte sprite stored in the Object Attribute Memory (OAM)
 	struct OamSprite
 	{
-		int8_t yPos;
+		uint8_t yPos;
 		uint8_t tileIndex;
 		struct OamSpriteAttributes {
 			uint8_t palette : 2;
@@ -44,7 +45,7 @@ public:
 			uint8_t flipHorizontal : 1;
 			uint8_t flipVertical : 1;
 		} attributes; // Top - LSB, Bottom - MSB
-		int8_t xPos;
+		uint8_t xPos;
 	};
 
 	// Represents the PPU registers (0x2000 - 0x2007)

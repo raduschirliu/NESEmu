@@ -115,6 +115,8 @@ void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 
 void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, vector<PPU::Color> palette)
 {
+	assert(palette.size() == 4);
+
 	// Enable shader and set uniforms
 	shader->use();
 
@@ -126,6 +128,8 @@ void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 
 	// TODO: Cache normalized float palette
 	vector<float> normalizedPalette = normalizePalette(palette);
+	assert(normalizedPalette.size() == palette.size() * 4);
+
 	shader->setVector4f("palette", normalizedPalette);
 	shader->setMatrix4f("model", model);
 	shader->setMatrix4f("projection", projection);

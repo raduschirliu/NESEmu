@@ -147,11 +147,12 @@ void PPUDebugWindow::draw()
 				if (ImGui::IsItemHovered())
 				{
 					// TODO: make these not hardcoded
-					uint8_t tileSize = 16;
+					uint8_t renderingScale = 2;
+					uint8_t tileSize = 8 * renderingScale;
 					float offsetX = (1280 - tileSize * 32) / 2;
 					float offsetY = (720 - tileSize * 30) / 2;
-					float screenX = static_cast<float>(offsetX + sprite->xPos * tileSize);
-					float screenY = static_cast<float>(offsetY + sprite->yPos * tileSize);
+					float screenX = static_cast<float>(offsetX + sprite->xPos * renderingScale);
+					float screenY = static_cast<float>(offsetY + sprite->yPos * renderingScale);
 
 					// TODO: Display attributes in more readable format
 					ImGui::BeginTooltip();

@@ -321,6 +321,8 @@ void NES::drawSprites()
         ppu.getActiveSpritePatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
 
     uint16_t paletteAddresses[] = { 0x3F11, 0x3F15, 0x3F19, 0x3F1D };
+    uint16_t nesWidth = PPU::NAMETABLE_COLS * 8;
+    uint16_t nesHeight = PPU::NAMETABLE_ROWS * 8;
 
     // 64 sprites in Oam to draw. Sprites with lower address are drawn on top
     for (int i = PPU::OAM_SIZE - 1; i >= 0; i--)
@@ -329,12 +331,12 @@ void NES::drawSprites()
         uint16_t paletteAddress = paletteAddresses[sprite->attributes.palette];
         auto palette = ppu.getPalette(paletteAddress);
 
-        // TODO: This may be incorrect, Mario doesn't display in DK
-        if (sprite->xPos < 0 || sprite->yPos < 0)
+        if (sprite->xPos > nesWidth || sprite->yPos > nesHeight)
         {
             continue;
         }
 
+        // Screen coordinates
         glm::vec3 pos(
             offsetX + sprite->xPos * renderingScale,
             offsetY + sprite->yPos * renderingScale,
@@ -342,10 +344,25 @@ void NES::drawSprites()
         );
         glm::vec2 size(tileSize, tileSize);
 
+        // Texture coordinates
         float cTex = std::floor(sprite->tileIndex % 16 * 8);
         float rTex = std::floor(sprite->tileIndex / 16 * 8);
         glm::vec2 texPos(cTex, rTex);
+        glm::vec2 texPosEnd(cTex + 8, rTex + 8);
 
-        patternTable->draw(pos, size, texPos, texPos + glm::vec2(8, 8), palette);
+        // Flip sprites
+        if (sprite->attributes.flipHorizontal)
+        {
+            texPos.x = cTex + 8;
+            texPosEnd.x = cTex;
+        }
+
+        if (sprite->attributes.flipVertical)
+        {
+            texPos.y = rTex + 8;
+            texPosEnd.y = rTex;
+        }
+
+        patternTable->draw(pos, size, texPos, texPosEnd, palette);
     }
 }
