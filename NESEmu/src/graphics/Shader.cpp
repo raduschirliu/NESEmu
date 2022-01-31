@@ -5,6 +5,7 @@
 #include <assert.h>
 
 using std::string;
+using std::vector;
 
 void Shader::abandon()
 {
@@ -77,9 +78,15 @@ void Shader::setVector3f(string name, const glm::vec3 &vector)
 	GL_ERROR_CHECK();
 }
 
-void Shader::setVector3f(string name, GLsizei count, const GLfloat *arr)
+void Shader::setVector3f(string name, vector<GLfloat> arr)
 {
-	glUniform3fv(getUniformLocation(name), count, arr);
+	glUniform3fv(getUniformLocation(name), arr.size(), &arr[0]);
+	GL_ERROR_CHECK();
+}
+
+void Shader::setVector4f(string name, vector<GLfloat> arr)
+{
+	glUniform4fv(getUniformLocation(name), arr.size(), &arr[0]);
 	GL_ERROR_CHECK();
 }
 

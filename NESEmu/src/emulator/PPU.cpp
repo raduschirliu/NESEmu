@@ -282,12 +282,18 @@ std::vector<PPU::Color> PPU::getPalette(uint16_t address)
 {
 	std::vector<Color> palette;
 
-	// Universal background color
-	uint8_t bgIndex = readMemory(0x3F00);
-	palette.push_back(systemPalette[bgIndex]);
-	
-	if (address >= 0x3F01 && address <= 0x3F1F)
+	if (address == 0x3F00)
 	{
+		// If only requesting background, return correct color
+		uint8_t bgIndex = readMemory(0x3F00);
+		palette.push_back(systemPalette[bgIndex]);
+	}
+	else if (address >= 0x3F01 && address <= 0x3F1F)
+	{
+		// For other palettes, return transparent color as background
+		Color transparent = { 0, 0, 0, 0 };
+		palette.push_back(transparent);
+
 		// Background and sprite palettes
 		for (uint16_t i = 0; i < 3; i++)
 		{
@@ -326,7 +332,9 @@ void PPU::loadPalette(std::string path)
 		return;
 	}
 
-	Color color;
+	// NES colors have no alpha value, so set to max
+	Color color = { 0 };
+	color.a = 255;
 
 	// Read first 64 palette color entries
 	while (!stream.eof() && systemPalette.size() < 64)

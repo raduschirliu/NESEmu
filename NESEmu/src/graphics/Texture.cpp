@@ -17,6 +17,7 @@ vector<float> normalizePalette(vector<PPU::Color> palette)
 		normalized.push_back(color.r / 255.0f);
 		normalized.push_back(color.g / 255.0f);
 		normalized.push_back(color.b / 255.0f);
+		normalized.push_back(color.a / 255.0f);
 	}
 
 	return normalized;
@@ -109,6 +110,7 @@ void Texture::draw(glm::vec2 pos, glm::vec2 size)
 
 void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, vector<PPU::Color> palette)
 {
+	// Enable shader and set uniforms
 	shader->use();
 
 	glm::mat4 model = glm::mat4(1.0f);
@@ -119,14 +121,20 @@ void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 
 	// TODO: Cache normalized float palette
 	vector<float> normalizedPalette = normalizePalette(palette);
-	shader->setVector3f("palette", 4, &normalizedPalette[0]);
+	shader->setVector4f("palette", normalizedPalette);
 	shader->setMatrix4f("model", model);
 	shader->setMatrix4f("projection", projection);
 
+	// Enable texture alpha
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// Bind texture
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, textureId);
 	glBindVertexArray(vaoId);
 
+	// Update VAO
 	// For UVs: bottom left = (0, 0), top right = (1.0, 1.0)
 	float vertices[] =
 	{
@@ -143,6 +151,7 @@ void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
+	// Update EBO
 	unsigned int indices[] =
 	{
 		0, 1, 3, // First triangle
@@ -151,9 +160,13 @@ void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+	// Draw vertices
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+	// Unbind, disable, and cleanup
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_BLEND);
 
 	shader->abandon();
 

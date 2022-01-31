@@ -29,7 +29,7 @@ public:
 	// Represents a system palette color
 	struct Color
 	{
-		uint8_t r, g, b;
+		uint8_t r, g, b, a;
 	};
 
 	// Represents a 4 byte sprite stored in the Object Attribute Memory (OAM)

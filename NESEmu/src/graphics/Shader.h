@@ -3,6 +3,7 @@
 #include "Graphics.h"
 
 #include <string>
+#include <vector>
 #include <glm/glm.hpp>
 
 class Shader
@@ -19,7 +20,8 @@ public:
 	GLint getUniformLocation(std::string name);
 
 	void setVector3f(std::string name, const glm::vec3 &vector);
-	void setVector3f(std::string name, GLsizei count, const GLfloat *arr);
+	void setVector3f(std::string name, std::vector<GLfloat> vec);
+	void setVector4f(std::string name, std::vector<GLfloat> vec);
 	void setMatrix4f(std::string name, const glm::mat4 &matrix);
 
 private:

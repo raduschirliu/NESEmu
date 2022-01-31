@@ -282,30 +282,6 @@ void NES::drawBackground()
             glm::vec2 size(tileSize, tileSize);
             glm::vec2 texPos(cTex, rTex);
 
-            /*
-            uint16_t attCol = c / 4;
-            uint16_t attRow = r / 4;
-            uint16_t attTableAddress = 0x23C0 + attRow * 8 + attCol;
-            uint8_t attByte = ppu.readMemory(attTableAddress);
-            uint8_t shift = 0;
-
-            if (c % 4 >= 2)
-            {
-                // Right half of block
-                shift += 2;
-            }
-
-            if (r % 4 >= 2)
-            {
-                // Bottom half of block
-                shift += 4;
-            }
-
-            uint8_t attBits = (attByte & (0b11 << shift)) >> shift;
-            
-            uint16_t paletteAddress = addresses[attBits];
-            */
-
             uint8_t paletteTableIndex = ppu.getNametableEntryPalette(nametable, offset);
             uint16_t paletteAddress = bgPaletteAddresses[paletteTableIndex];
             auto palette = ppu.getPalette(paletteAddress);
@@ -334,8 +310,14 @@ void NES::drawSprites()
         uint16_t paletteAddress = paletteAddresses[sprite->attributes.palette];
         auto palette = ppu.getPalette(paletteAddress);
 
-        // TODO: Sprites are in the wrong position when game is not 1x scale. Mario is also not there?
+        // TODO: This may be incorrect, Mario doesn't display in DK
         if (sprite->xPos < 0 || sprite->yPos < 0)
+        {
+            continue;
+        }
+
+        // Only draw sprites that are supposed to be in front of the background
+        if (sprite->attributes.priority != 0)
         {
             continue;
         }
