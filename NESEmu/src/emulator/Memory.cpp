@@ -5,6 +5,9 @@
 
 // TODO: Class should be renamed to "Bus" and be connected to PPU
 
+// PPU register locations
+static uint16_t constexpr PPU_OAMDATA = 0x4014;
+
 Memory::Memory()
 {
 	// Allocate memory arrays for all NES components
@@ -13,11 +16,10 @@ Memory::Memory()
 	apuMem = new uint8_t[24]();
 	testMem = new uint8_t[8]();
 	romMem = new uint8_t[49120]();
-
-	// TODO: Zero initialize arrays
 	
 	// Other things needed on the bus
 	shouldDispatchNmi = false;
+	shouldDispatchOamTransfer = false;
 }
 
 Memory::~Memory()
@@ -79,7 +81,8 @@ uint8_t Memory::read(uint16_t address, bool skipCallback)
 		return val;
 	}
 
-	return -1;
+	// TODO: Return an error value?
+	return 0;
 }
 
 void Memory::write(uint16_t address, uint8_t value, bool skipCallback)
@@ -125,12 +128,30 @@ void Memory::dump(Logger &logger)
 
 void Memory::setPpuAccessCallback(AccessCallback callback)
 {
-	ppuCallback = callback;
+	ppuMemoryAccessCallback = callback;
+}
+
+void Memory::setPpuOamTransferCallback(OamTransferCallback callback)
+{
+	ppuOamTransferCallback = callback;
 }
 
 void Memory::dispatchNmi()
 {
 	shouldDispatchNmi = true;
+}
+
+void Memory::dispatchOamTransfer()
+{
+	if (ppuOamTransferCallback)
+	{
+		// Will read from CPU memory $XX00 - $XXFF
+		uint16_t address = read(PPU_OAMDATA) << 8;
+		uint8_t *data = get(address);
+		ppuOamTransferCallback(data);
+	}
+
+	shouldDispatchOamTransfer = false;
 }
 
 bool Memory::pollNmi()
@@ -144,6 +165,11 @@ bool Memory::pollNmi()
 	return false;
 }
 
+bool Memory::pollOamTransfer()
+{
+	return shouldDispatchOamTransfer;
+}
+
 void Memory::dispatchCallbacks(uint16_t address, uint8_t value, bool write)
 {
 	if (address >= 0x2000 && address <= 0x3FFF)
@@ -152,17 +178,22 @@ void Memory::dispatchCallbacks(uint16_t address, uint8_t value, bool write)
 		// Normalize target to non-mirrored register range ($2000 - $2007)
 		uint16_t target = (address - 0x2000) % 0x0008 + 0x2000;
 
-		if (ppuCallback)
+		if (ppuMemoryAccessCallback)
 		{
-			ppuCallback(target, value, write);
+			ppuMemoryAccessCallback(target, value, write);
 		}
 	}
 	else if (address == 0x4014)
 	{
 		// Accessing OAMDMA for PPU
-		if (ppuCallback)
+		if (ppuMemoryAccessCallback)
 		{
-			ppuCallback(0x4014, value, write);
+			ppuMemoryAccessCallback(0x4014, value, write);
+			
+			if (write)
+			{
+				shouldDispatchOamTransfer = true;
+			}
 		}
 	}
 }

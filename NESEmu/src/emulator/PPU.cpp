@@ -4,6 +4,7 @@
 #include <bitset>
 #include <iostream>
 
+
 PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 {
 	// TODO: Convert to modern C++ arrays
@@ -13,7 +14,7 @@ PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 	oam = new uint8_t[256]();			   // 256 bytes, internal PPU memory
 
 	// Initialize registers
-	registers = reinterpret_cast<Registers *>(memory.get(0x2000));
+	registers = reinterpret_cast<Registers *>(memory.get(REGISTER_START_ADDRESS));
 	registers->ctrl = { 0 };
 	registers->mask = 0;
 	registers->status = { 0 };
@@ -32,12 +33,20 @@ PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 	scanlines = 0;
 	frames = 0;
 
-	// Set access info for PPUADDR/PPUDATA
+	// Set access info for PPUADDR/PPUDATA/OAMDMA
 	accessAddress = 0;
 	accessAddressHighByte = true;
+	oamTransferRequested = false;
+
+	// Callbacks
 	memory.setPpuAccessCallback([this](uint16_t address, uint8_t newValue, bool write)
 		{
 			onRegisterAccess(address, newValue, write);
+		});
+
+	memory.setPpuOamTransferCallback([this](uint8_t *data)
+		{
+			writeOamData(data);
 		});
 
 	reset();
@@ -193,10 +202,68 @@ PPU::Registers *PPU::getRegisters()
 	return registers;
 }
 
+void PPU::writeOamData(uint8_t *data)
+{
+	int spriteByte = 0;
+
+	for (int i = 0; i < 256; i++)
+	{
+		oam[i] = data[i];
+
+		// Always set unused bytes of sprite to 0
+		if (spriteByte == 2)
+		{
+			oam[i] &= 0b11100011;
+		}
+
+		spriteByte++;
+
+		if (spriteByte >= 4)
+		{
+			spriteByte = 0;
+		}
+	}
+
+	oamTransferRequested = false;
+}
+
+PPU::OamSprite *PPU::getOamSprite(uint8_t address)
+{
+	// Sprite unused attributes always set to 0
+	OamSprite *sprite = reinterpret_cast<OamSprite *>(&oam[address]);
+	sprite->attributes.unused = 0;
+	return sprite;
+}
+
+uint8_t PPU::getNametableEntryPalette(uint8_t nametable, uint16_t index)
+{
+	uint16_t nametableCol = index % NAMETABLE_COLS; 
+	uint16_t nametableRow = index / NAMETABLE_COLS;
+	uint16_t attCol = nametableCol / ATTRIBUTE_TABLE_BLOCK_SIZE;
+	uint16_t attRow = nametableRow / ATTRIBUTE_TABLE_BLOCK_SIZE;
+	uint16_t attOffset = attRow * ATTRIBUTE_TABLE_COLS + attCol;
+	uint16_t address = NAMETABLE_ADDRESSES[nametable] + ATTRIBUTE_TABLE_OFFSET + attOffset;
+	uint8_t byte = readMemory(address);
+	uint8_t shift = 0;
+
+	if (nametableCol % 4 >= 2)
+	{
+		// Right half of block
+		shift += 2;
+	}
+
+	if (nametableRow % 4 >= 2)
+	{
+		// Bottom half of block
+		shift += 4;
+	}
+
+	return (byte & (0b11 << shift)) >> shift;
+}
+
 uint16_t PPU::getActiveNametableAddress()
 {
-	// One of: 0x2000, 0x2400, 0x2800, 0x2C00
-	return 0x2000 | (registers->ctrl.baseNametable << 10);
+	return NAMETABLE_ADDRESSES[registers->ctrl.baseNametable];
 }
 
 uint16_t PPU::getActiveBgPatternTableAddress()
@@ -241,6 +308,11 @@ bool PPU::getNmiOccured()
 {
 	// NMI only occurs during VBlank if NMI enable flag of PpuCtrl is set
 	return nmiOccured && registers->ctrl.nmiEnable;
+}
+
+bool PPU::isOamTransferRequested()
+{
+	return oamTransferRequested;
 }
 
 void PPU::loadPalette(std::string path)
@@ -292,6 +364,12 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 			nmiOccured = false;
 		}
 
+		break;
+	}
+
+	// OAMDATA ($2004)
+	case 0x2004:
+	{
 		break;
 	}
 

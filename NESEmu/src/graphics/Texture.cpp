@@ -127,6 +127,7 @@ void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 	glBindTexture(GL_TEXTURE_2D, textureId);
 	glBindVertexArray(vaoId);
 
+	// For UVs: bottom left = (0, 0), top right = (1.0, 1.0)
 	float vertices[] =
 	{
 		// Position				// Texture coords
@@ -157,6 +158,20 @@ void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 	shader->abandon();
 
 	GL_ERROR_CHECK();
+}
+
+void Texture::drawGui(ImVec2 size)
+{
+	drawGui(size, ImVec2(0.0f, 0.0f), ImVec2(width, height));
+}
+
+void Texture::drawGui(ImVec2 size, ImVec2 texPosTopLeft, ImVec2 texPosBottomRight)
+{
+	// For ImGui: Top left = (0.0, 0.0), bottom right = (1.0, 1.0)
+	ImVec2 uvStart(texPosTopLeft.x / width, texPosTopLeft.y / height);
+	ImVec2 uvEnd(texPosBottomRight.x / width, texPosBottomRight.y / height);
+
+	ImGui::Image((void *)(intptr_t)getTextureId(), size, uvStart, uvEnd);
 }
 
 GLuint Texture::getTextureId()

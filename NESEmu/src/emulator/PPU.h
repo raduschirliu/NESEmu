@@ -8,6 +8,24 @@
 class PPU
 {
 public:
+	// The start address of each nametable. Each is 960 ($3C0) bytes long
+	static constexpr uint16_t NAMETABLE_ADDRESSES[] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
+	static constexpr uint16_t NAMETABLE_ROWS = 30;
+	static constexpr uint16_t NAMETABLE_COLS = 32;
+
+	// Each attribute table is offset 960 ($3C0) bytes from the start of a nametable
+	static constexpr uint16_t ATTRIBUTE_TABLE_OFFSET = 0x3C0;
+
+	// Each attribute table "block" controls 4 tiles in the nametable
+	static constexpr uint16_t ATTRIBUTE_TABLE_BLOCK_SIZE = 4;
+	static constexpr uint16_t ATTRIBUTE_TABLE_COLS = 8;
+
+	// Amount of entries in OAM
+	static constexpr uint16_t OAM_SIZE = 64;
+
+	// Location of registers on CPU memory bus
+	static constexpr uint16_t REGISTER_START_ADDRESS = 0x2000;
+
 	// Represents a system palette color
 	struct Color
 	{
@@ -17,10 +35,16 @@ public:
 	// Represents a 4 byte sprite stored in the Object Attribute Memory (OAM)
 	struct OamSprite
 	{
-		uint8_t yPos;
+		int8_t yPos;
 		uint8_t tileIndex;
-		uint8_t attributes;
-		uint8_t xPos;
+		struct OamSpriteAttributes {
+			uint8_t palette : 2;
+			uint8_t unused : 3;
+			uint8_t priority : 1;
+			uint8_t flipHorizontal : 1;
+			uint8_t flipVertical : 1;
+		} attributes; // Top - LSB, Bottom - MSB
+		int8_t xPos;
 	};
 
 	// Represents the PPU registers (0x2000 - 0x2007)
@@ -73,6 +97,15 @@ public:
 	// Gets current value of PPU registers
 	Registers *getRegisters();
 
+	// Returns the OAM sprite at given address ($0 - $255)
+	OamSprite *getOamSprite(uint8_t address);
+
+	// Write 256 bytes to Oam
+	void writeOamData(uint8_t *data);
+
+	// Lookup the palette index of a nametable entry in the attribute table
+	uint8_t getNametableEntryPalette(uint8_t nametable, uint16_t index);
+
 	// Gets the address of the active nametable
 	uint16_t getActiveNametableAddress();
 
@@ -102,6 +135,9 @@ public:
 
 	// Returns whether an NMI has occured
 	bool getNmiOccured();
+
+	// Returns whether an OAM transfer is requested from the CPU
+	bool isOamTransferRequested();
 
 private:
 	// Cycle related stats
@@ -138,6 +174,9 @@ private:
 
 	// Track when NMI has occured
 	bool nmiOccured;
+
+	// Track whether the CPU should transfer data to OAM
+	bool oamTransferRequested;
 
 	// If the PPU is currently being reset or not
 	bool isResetting;

@@ -13,9 +13,9 @@ static bool constexpr DEBUG_LOG = true;
 static char debugBuf[100];
 
 // Address of the low byte of various jump vectors
-static uint16_t constexpr NMI_VECTOR = 0xFFFA;
-static uint16_t constexpr RES_VECTOR = 0xFFFC;
-static uint16_t constexpr IRQ_VECTOR = 0xFFFE;
+static constexpr uint16_t NMI_VECTOR = 0xFFFA;
+static constexpr uint16_t RES_VECTOR = 0xFFFC;
+static constexpr uint16_t IRQ_VECTOR = 0xFFFE;
 
 // Convenience macros for defining CPU instructions
 #define _I(NAME, RUN, MODE, CYCLES) { NAME, &CPU::RUN, &CPU::MODE, CYCLES }
@@ -95,15 +95,26 @@ void CPU::step()
 	}
 	else
 	{
-		// Poll for interrupts
-		if (memory.pollNmi())
+		// Poll for OAM data transfer request
+		if (memory.pollOamTransfer())
 		{
-			if (DEBUG_LOG)
+			memory.dispatchOamTransfer();
+
+			// OAM data transfer takes 513 (+1) cycles
+			cycles = 513;
+
+			// +1 cycle if on odd CPU cycle
+			if (totalCycles % 2 != 0)
 			{
-				snprintf(debugBuf, 100, "\t-> NMI triggered\n");
-				logger.write(debugBuf);
+				cycles++;
 			}
 
+			return;
+		}
+
+		// Poll for NMI interrupts
+		if (memory.pollNmi())
+		{
 			// TODO: Make interrupt func
 			uint16_t returnAddress = pc;
 			memory.write(SP_ADDRESS, returnAddress >> 8); // Return address high byte
@@ -127,7 +138,6 @@ void CPU::step()
 		// Write debug info to log
 		if (DEBUG_LOG)
 		{
-			// To change based on instruction
 			char opcodeBuf[11];
 
 			switch (instructionLength)

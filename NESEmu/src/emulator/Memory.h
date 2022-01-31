@@ -10,8 +10,8 @@ class Memory
 {
 public:
 	// Callback type
-	// using AccessCallback = void(*)(uint16_t address, uint8_t newValue, bool write);
 	using AccessCallback = std::function<void(uint16_t address, uint8_t newValue, bool write)>;
+	using OamTransferCallback = std::function<void(uint8_t *data)>;
 
 	// Initialize all empty memory blocks
 	Memory();
@@ -34,11 +34,20 @@ public:
 	// Set the PPU memory access callback
 	void setPpuAccessCallback(AccessCallback callback);
 
+	// Set the PPU Oam transfer callback
+	void setPpuOamTransferCallback(OamTransferCallback callback);
+
 	// Signal that the NMI should be dispatched to the CPU
 	void dispatchNmi();
 
+	// Signal to the PPU that the OAM data transfer should begin
+	void dispatchOamTransfer();
+
 	// Poll for whether the NMI should be dispatched
 	bool pollNmi();
+
+	// Poll for whether an OAM data transfer is requested
+	bool pollOamTransfer();
 
 private:
 	// Internal 2KB of CPU Memory (from $0000 - $07FFF)
@@ -58,11 +67,15 @@ private:
 	// Cartridge Memory: PRG ROM, PRG RAM, and mapper registers (from $4020 - $FFFF)
 	uint8_t *romMem;
 
-	// Callbacks for when regions of memory are accessed
-	AccessCallback ppuCallback;
+	// Callbacks for the PPU
+	AccessCallback ppuMemoryAccessCallback;
+	OamTransferCallback ppuOamTransferCallback;
 
 	// Whether the NMI has already been dispatched to the CPU
 	bool shouldDispatchNmi;
+
+	// Whether an OAM transfer is needed
+	bool shouldDispatchOamTransfer;
 
 	// Dispatch any callbacks if needed
 	void dispatchCallbacks(uint16_t address, uint8_t value, bool write);

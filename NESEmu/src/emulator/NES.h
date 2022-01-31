@@ -27,9 +27,6 @@ public:
 	// Emulate one single NES cycle step
 	void step();
 
-	// Draw current frame
-	void draw();
-
 	// Close window on next loop
 	void shutdown();
 
@@ -78,4 +75,10 @@ private:
 	ROM rom;
 	CPU cpu;
 	PPU ppu;
+
+	// Draw PPU background
+	void drawBackground();
+
+	// Draw PPU sprites
+	void drawSprites();
 };

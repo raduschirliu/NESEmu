@@ -73,9 +73,9 @@ void PPUDebugWindow::draw()
 
 			ImGui::Spacing();
 
-			ImGui::Image((void *)(intptr_t)patternTableLeft->getTextureId(), ImVec2(256, 256));
+			patternTableLeft->drawGui(ImVec2(256, 256));
 			ImGui::SameLine();
-			ImGui::Image((void *)(intptr_t)patternTableRight->getTextureId(), ImVec2(256, 256));
+			patternTableRight->drawGui(ImVec2(256, 256));
 
 			ImGui::EndTabItem();
 		}
@@ -106,17 +106,69 @@ void PPUDebugWindow::draw()
 		}
 
 		// Nametables
-		if (ImGui::BeginTabItem("Nametable 1"))
+		if (ImGui::BeginTabItem("Nametables"))
 		{
 			ImGui::Text("Active nametable: %u ($%X)", ppu.getRegisters()->ctrl.baseNametable, ppu.getActiveNametableAddress());
-			drawNametable(0x2000);
+			ImGui::Spacing();
+
+			static int debugNametable = 0;
+			ImGui::Text("Display nametable: ");
+			ImGui::RadioButton("1", &debugNametable, 0); ImGui::SameLine();
+			ImGui::RadioButton("2", &debugNametable, 1); ImGui::SameLine();
+			ImGui::RadioButton("3", &debugNametable, 2); ImGui::SameLine();
+			ImGui::RadioButton("4", &debugNametable, 3);
+			ImGui::Spacing();
+
+			drawNametable(debugNametable);
 			ImGui::EndTabItem();
 		}
 
-		if (ImGui::BeginTabItem("Nametable 2"))
+		// OAM
+		if (ImGui::BeginTabItem("OAM"))
 		{
-			ImGui::Text("Active nametable: %u ($%X)", ppu.getRegisters()->ctrl.baseNametable, ppu.getActiveNametableAddress());
-			drawNametable(0x2400);
+			PPU::Registers *registers = ppu.getRegisters();
+			ImGui::Text("Sprite table: %u ($%X)", registers->ctrl.spritePatternTable, ppu.getActiveSpritePatternTableAddress());
+			ImGui::Spacing();
+
+			for (int i = 0; i < 64; i++)
+			{
+				PPU::OamSprite *sprite = ppu.getOamSprite(i * sizeof(PPU::OamSprite));
+				uint8_t *attributeByte = reinterpret_cast<uint8_t*>(&sprite->attributes);
+				Texture *spriteTable = registers->ctrl.spritePatternTable == 0 ? patternTableLeft : patternTableRight;
+				
+				ImVec2 uvStart(
+					std::floor(sprite->tileIndex % 16 * 8),
+					std::floor(sprite->tileIndex / 16 * 8)
+				);
+				ImVec2 uvEnd(uvStart.x + 8, uvStart.y + 8);
+				
+				spriteTable->drawGui(ImVec2(32, 32), uvStart, uvEnd);
+
+				if (ImGui::IsItemHovered())
+				{
+					// TODO: make these not hardcoded
+					uint8_t tileSize = 16;
+					float offsetX = (1280 - tileSize * 32) / 2;
+					float offsetY = (720 - tileSize * 30) / 2;
+					float screenX = static_cast<float>(offsetX + sprite->xPos * tileSize);
+					float screenY = static_cast<float>(offsetY + sprite->yPos * tileSize);
+
+					// TODO: Display attributes in more readable format
+					ImGui::BeginTooltip();
+					ImGui::Text("OAM Index:  %u", i);
+					ImGui::Text("Pos:        %d, %d ($%X, $%X)", sprite->xPos, sprite->yPos, sprite->xPos, sprite->yPos);
+					ImGui::Text("Pattern:    $%X", sprite->tileIndex);
+					ImGui::Text("Attributes: $%X", *attributeByte);
+					ImGui::Text("Screen Pos: %.2f, %.2f", screenX, screenY);
+					ImGui::EndTooltip();
+				}
+
+				if ((i + 1) % 8 != 0)
+				{
+					ImGui::SameLine();
+				}
+			}
+
 			ImGui::EndTabItem();
 		}
 
@@ -192,63 +244,36 @@ void PPUDebugWindow::drawPalette(std::string label, std::vector<PPU::Color> pale
 	ImGui::EndGroup();
 }
 
-void PPUDebugWindow::drawNametable(uint16_t start)
+void PPUDebugWindow::drawNametable(uint8_t nametable)
 {
-	// Header
-	ss << std::hex
-		<< std::setw(2) << std::setfill('0')
-		<< "    ";
-
-	for (uint16_t c = 0; c < 32; c++)
-	{
-		ss << std::setw(2) << std::setfill('0') << (int)c << " ";
-	}
-
-	ImGui::Text(ss.str().c_str());
-	ss.str("");
-	
-	// Nametable
-	for (uint16_t r = 0; r < 30; r++)
-	{
-		ss << std::hex
-			<< std::setw(2) << std::setfill('0')
-			<< (int)r << "  ";
-
-		for (uint16_t c = 0; c < 32; c++)
-		{
-			uint16_t offset = r * 32 + c;
-			ss << std::hex
-				<< std::setw(2) << std::setfill('0')
-				<< (int)ppu.readMemory(start + offset)
-				<< " ";
-		}
-
-		ss << std::endl;
-	}
-
-	ImGui::Text(ss.str().c_str());
-	ss.str("");
-	
-	// TEST: Drawing patterns from nametable indices
-	float imgWidth = 256;
-	float imgHeight = 240;
+	uint16_t address = PPU::NAMETABLE_ADDRESSES[nametable];
+	ImVec2 tileSize(16, 16);
+	PPU::Registers *registers = ppu.getRegisters();
+	Texture *bgTable = registers->ctrl.bgPatternTable == 0 ? patternTableLeft : patternTableRight;
 
 	for (uint16_t r = 0; r < 30; r++)
 	{
 		for (uint16_t c = 0; c < 32; c++)
 		{
 			uint16_t offset = r * 32 + c;
-			uint8_t index = ppu.readMemory(start + offset);
-			float rTex = index / 32;
-			float cTex = index % 32;
+			uint8_t index = ppu.readMemory(address + offset);
+			uint8_t paletteIndex = ppu.getNametableEntryPalette(nametable, offset);
+			float cTex = index % 16;
+			float rTex = index / 16;
 
-			float xTex = cTex * 8;
-			float yTex = rTex * 8;
+			ImVec2 posTopLeft(cTex * 8, rTex * 8);
+			ImVec2 posBottomRight(posTopLeft.x + 8, posTopLeft.y + 8);
+			bgTable->drawGui(tileSize, posTopLeft, posBottomRight);
 
-			ImVec2 topLeft(xTex / imgWidth, yTex / imgHeight);
-			ImVec2 botRight((xTex + 8) / imgWidth, (yTex + 8) / imgHeight);
-
-			ImGui::Image((void *)(intptr_t)patternTableRight->getTextureId(), ImVec2(16, 16), topLeft, botRight);
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::BeginTooltip();
+				ImGui::Text("Pos:             %d, %d ($%X, $%X)", r, c, r, c);
+				ImGui::Text("Nametable Index: %u ($X)", offset, offset);
+				ImGui::Text("Pattern Index:   %u ($X)", index, index);
+				ImGui::Text("Palette Index:   %u", paletteIndex);
+				ImGui::EndTooltip();
+			}
 
 			if (c != 31)
 			{

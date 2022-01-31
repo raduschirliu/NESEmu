@@ -166,7 +166,8 @@ void NES::run()
             glClear(GL_COLOR_BUFFER_BIT);
 
             // Draw graphics from PPU
-            draw();
+            drawBackground();
+            drawSprites();
 
             // Draw all drawable components
             for (IDrawable *drawable : drawables)
@@ -214,60 +215,6 @@ void NES::step()
     ppu.step();
 }
 
-void NES::draw()
-{
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-
-    // TODO: Determine the correct nametable to be drawing
-    uint16_t start = ppu.getActiveNametableAddress();
-    float tileSize = 8 * renderingScale;
-    float offsetX = (width - tileSize * 32) / 2;
-    float offsetY = (height - tileSize * 30) / 2;
-
-    Texture *patternTable = ResourceManager::getTexture(
-        ppu.getActiveBgPatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
-
-    for (uint16_t r = 0; r < 30; r++)
-    {
-        for (uint16_t c = 0; c < 32; c++)
-        {
-            uint16_t offset = r * 32 + c;
-            uint8_t index = ppu.readMemory(start + offset);
-            float rTex = std::floor(index / 16 * 8);
-            float cTex = std::floor(index % 16 * 8);
-
-            glm::vec2 pos(offsetX + c * tileSize, offsetY + r * tileSize);
-            glm::vec2 texPos(cTex, rTex);
-
-            uint16_t attCol = c / 4;
-            uint16_t attRow = r / 4;
-            uint16_t attTableAddress = 0x23C0 + attRow * 8 + attCol;
-            uint8_t attByte = ppu.readMemory(attTableAddress);
-            uint8_t shift = 0;
-
-            if (c % 4 >= 2)
-            {
-                // Right half of block
-                shift += 2;
-            }
-
-            if (r % 4 >= 2)
-            {
-                // Bottom half of block
-                shift += 4;
-            }
-
-            uint8_t attBits = (attByte & (0b11 << shift)) >> shift;
-            uint16_t addresses[] = { 0x3F01, 0x3F05, 0x3F09, 0x3F0D };
-            uint16_t paletteAddress = addresses[attBits];
-
-            auto palette = ppu.getPalette(paletteAddress);
-            patternTable->draw(pos, glm::vec2(tileSize, tileSize), texPos, texPos + glm::vec2(8, 8), palette);
-        }
-    }
-}
-
 void NES::shutdown()
 {
     shouldShutdown = true;
@@ -303,4 +250,103 @@ void NES::setEmulationSpeed(double speed)
 ROM& NES::getRom()
 {
     return rom;
+}
+
+void NES::drawBackground()
+{
+    // TODO: Draw background color separately to allow sprites to appear behind background
+
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+
+    uint16_t start = ppu.getActiveNametableAddress();
+    float tileSize = 8 * renderingScale;
+    float offsetX = (width - tileSize * 32) / 2;
+    float offsetY = (height - tileSize * 30) / 2;
+
+    uint8_t nametable = ppu.getRegisters()->ctrl.baseNametable;
+    Texture *patternTable = ResourceManager::getTexture(
+        ppu.getActiveBgPatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
+    uint16_t bgPaletteAddresses[] = { 0x3F01, 0x3F05, 0x3F09, 0x3F0D };
+
+    for (uint32_t r = 0; r < 30; r++)
+    {
+        for (uint32_t c = 0; c < 32; c++)
+        {
+            uint16_t offset = r * 32 + c;
+            uint8_t index = ppu.readMemory(start + offset);
+            float cTex = std::floor(index % 16 * 8);
+            float rTex = std::floor(index / 16 * 8);
+
+            glm::vec2 pos(offsetX + c * tileSize, offsetY + r * tileSize);
+            glm::vec2 size(tileSize, tileSize);
+            glm::vec2 texPos(cTex, rTex);
+
+            /*
+            uint16_t attCol = c / 4;
+            uint16_t attRow = r / 4;
+            uint16_t attTableAddress = 0x23C0 + attRow * 8 + attCol;
+            uint8_t attByte = ppu.readMemory(attTableAddress);
+            uint8_t shift = 0;
+
+            if (c % 4 >= 2)
+            {
+                // Right half of block
+                shift += 2;
+            }
+
+            if (r % 4 >= 2)
+            {
+                // Bottom half of block
+                shift += 4;
+            }
+
+            uint8_t attBits = (attByte & (0b11 << shift)) >> shift;
+            
+            uint16_t paletteAddress = addresses[attBits];
+            */
+
+            uint8_t paletteTableIndex = ppu.getNametableEntryPalette(nametable, offset);
+            uint16_t paletteAddress = bgPaletteAddresses[paletteTableIndex];
+            auto palette = ppu.getPalette(paletteAddress);
+            patternTable->draw(pos, size, texPos, texPos + glm::vec2(8, 8), palette);
+        }
+    }
+}
+
+void NES::drawSprites()
+{
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+
+    float tileSize = 8 * renderingScale;
+    float offsetX = (width - tileSize * 32) / 2;
+    float offsetY = (height - tileSize * 30) / 2;
+    Texture *patternTable = ResourceManager::getTexture(
+        ppu.getActiveSpritePatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
+
+    uint16_t paletteAddresses[] = { 0x3F11, 0x3F15, 0x3F19, 0x3F1D };
+
+    // 64 sprites in Oam to draw. Sprites with lower address are drawn on top
+    for (int i = 63; i >= 0; i--)
+    {
+        PPU::OamSprite *sprite = ppu.getOamSprite(i * sizeof(PPU::OamSprite));
+        uint16_t paletteAddress = paletteAddresses[sprite->attributes.palette];
+        auto palette = ppu.getPalette(paletteAddress);
+
+        // TODO: Sprites are in the wrong position when game is not 1x scale. Mario is also not there?
+        if (sprite->xPos < 0 || sprite->yPos < 0)
+        {
+            continue;
+        }
+
+        glm::vec2 pos(offsetX + sprite->xPos * renderingScale, offsetY + sprite->yPos * renderingScale);
+        glm::vec2 size(tileSize, tileSize);
+
+        float cTex = std::floor(sprite->tileIndex % 16 * 8);
+        float rTex = std::floor(sprite->tileIndex / 16 * 8);
+        glm::vec2 texPos(cTex, rTex);
+
+        patternTable->draw(pos, size, texPos, texPos + glm::vec2(8, 8), palette);
+    }
 }
