@@ -97,7 +97,12 @@ void PPU::step()
 
 	if (scanlines <= 239)
 	{
-		// (0 - 239) Rendering
+		// (0 - 239) Rendering, visible scanlines
+
+		if (cycles >= 257 && cycles <= 320)
+		{
+			registers->oamAddr = 0;
+		}
 	}
 	else if (scanlines == 240)
 	{
@@ -109,8 +114,6 @@ void PPU::step()
 
 		if (scanlines == 241 && cycles == 1)
 		{
-			uint8_t *status = (uint8_t *)&registers->status;
-
 			// Set VBlank and trigger NMI
 			registers->status.vblank = 1;
 			nmiOccured = true;
@@ -138,6 +141,11 @@ void PPU::step()
 			// Clear resetting status
 			isResetting = false;
 		}
+
+		if (cycles >= 257 && cycles <= 320)
+		{
+			registers->oamAddr = 0;
+		}
 	}
 
 	cycles++;
@@ -153,7 +161,7 @@ uint8_t *PPU::getMemory(uint16_t address)
 	}
 	else if (address >= 0x2000 && address <= 0x2FFF)
 	{
-		// Name tables from 0x2000 - 0x2FFF
+		// Nametables from 0x2000 - 0x2FFF
 		uint16_t offset = address - 0x2000;
 		return &nameTables[offset];
 	}
@@ -224,6 +232,7 @@ void PPU::writeOamData(uint8_t *data)
 		}
 	}
 
+	registers->oamData = oam[registers->oamAddr];
 	oamTransferRequested = false;
 }
 
@@ -378,6 +387,13 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 	// OAMDATA ($2004)
 	case 0x2004:
 	{
+		if (write)
+		{
+			oam[registers->oamAddr] = newValue;
+			registers->oamAddr++;
+			registers->oamData = oam[registers->oamAddr];
+		}
+
 		break;
 	}
 
