@@ -18,6 +18,7 @@ private:
 	void printMemory(uint16_t start, uint16_t end);
 	void drawPalette(std::string label, std::vector<PPU::Color> palette);
 	void drawNametable(uint8_t nametable);
+	void drawOam();
 
 	NES &nes;
 	PPU &ppu;

@@ -121,8 +121,8 @@ GLuint Shader::compile(GLuint type, string path)
 
 		if (!success)
 		{
-			char info[512];
-			glGetShaderInfoLog(id, 512, NULL, info);
+			char info[1024];
+			glGetShaderInfoLog(id, 1024, NULL, info);
 			printf("Shader compilation error for '%s': %s\n\n", path.c_str(), info);
 		}
 	}

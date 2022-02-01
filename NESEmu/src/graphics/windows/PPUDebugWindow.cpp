@@ -125,50 +125,7 @@ void PPUDebugWindow::draw()
 		// OAM
 		if (ImGui::BeginTabItem("OAM"))
 		{
-			PPU::Registers *registers = ppu.getRegisters();
-			ImGui::Text("Sprite table: %u ($%X)", registers->ctrl.spritePatternTable, ppu.getActiveSpritePatternTableAddress());
-			ImGui::Spacing();
-
-			for (int i = 0; i < PPU::OAM_SIZE; i++)
-			{
-				PPU::OamSprite *sprite = ppu.getOamSprite(i * sizeof(PPU::OamSprite));
-				uint8_t *attributeByte = reinterpret_cast<uint8_t*>(&sprite->attributes);
-				Texture *spriteTable = registers->ctrl.spritePatternTable == 0 ? patternTableLeft : patternTableRight;
-				
-				ImVec2 uvStart(
-					std::floor(sprite->tileIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE),
-					std::floor(sprite->tileIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE)
-				);
-				ImVec2 uvEnd(uvStart.x + PPU::TILE_SIZE, uvStart.y + PPU::TILE_SIZE);
-				
-				spriteTable->drawGui(ImVec2(32, 32), uvStart, uvEnd);
-
-				if (ImGui::IsItemHovered())
-				{
-					float renderingScale = nes.getRenderingScale();
-					float tileSize = nes.getTileSize();
-					glm::vec2 offset = nes.getGraphicsOffset();
-					glm::vec2 screenPos = glm::vec2(
-						offset.x + sprite->xPos * renderingScale,
-						offset.y + sprite->yPos * renderingScale
-					);
-
-					// TODO: Display attributes in more readable format
-					ImGui::BeginTooltip();
-					ImGui::Text("OAM Index:  %u", i);
-					ImGui::Text("Pos:        %d, %d ($%X, $%X)", sprite->xPos, sprite->yPos, sprite->xPos, sprite->yPos);
-					ImGui::Text("Pattern:    $%X", sprite->tileIndex);
-					ImGui::Text("Attributes: $%X", *attributeByte);
-					ImGui::Text("Screen Pos: %.2f, %.2f", screenPos.x, screenPos.y);
-					ImGui::EndTooltip();
-				}
-
-				if ((i + 1) % 8 != 0)
-				{
-					ImGui::SameLine();
-				}
-			}
-
+			drawOam();
 			ImGui::EndTabItem();
 		}
 
@@ -279,6 +236,53 @@ void PPUDebugWindow::drawNametable(uint8_t nametable)
 			{
 				ImGui::SameLine();
 			}
+		}
+	}
+}
+
+void PPUDebugWindow::drawOam()
+{
+	PPU::Registers *registers = ppu.getRegisters();
+	ImGui::Text("Sprite table: %u ($%X)", registers->ctrl.spritePatternTable, ppu.getActiveSpritePatternTableAddress());
+	ImGui::Spacing();
+
+	for (int i = 0; i < PPU::OAM_SIZE; i++)
+	{
+		PPU::OamSprite *sprite = ppu.getOamSprite(i * sizeof(PPU::OamSprite));
+		uint8_t *attributeByte = reinterpret_cast<uint8_t *>(&sprite->attributes);
+		Texture *spriteTable = registers->ctrl.spritePatternTable == 0 ? patternTableLeft : patternTableRight;
+
+		ImVec2 uvStart(
+			std::floor(sprite->tileIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE),
+			std::floor(sprite->tileIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE)
+		);
+		ImVec2 uvEnd(uvStart.x + PPU::TILE_SIZE, uvStart.y + PPU::TILE_SIZE);
+
+		spriteTable->drawGui(ImVec2(32, 32), uvStart, uvEnd);
+
+		if (ImGui::IsItemHovered())
+		{
+			float renderingScale = nes.getRenderingScale();
+			float tileSize = nes.getTileSize();
+			glm::vec2 offset = nes.getGraphicsOffset();
+			glm::vec2 screenPos = glm::vec2(
+				offset.x + sprite->xPos * renderingScale,
+				offset.y + sprite->yPos * renderingScale
+			);
+
+			// TODO: Display attributes in more readable format
+			ImGui::BeginTooltip();
+			ImGui::Text("OAM Index:  %u", i);
+			ImGui::Text("Pos:        %d, %d ($%X, $%X)", sprite->xPos, sprite->yPos, sprite->xPos, sprite->yPos);
+			ImGui::Text("Pattern:    $%X", sprite->tileIndex);
+			ImGui::Text("Attributes: $%X", *attributeByte);
+			ImGui::Text("Screen Pos: %.2f, %.2f", screenPos.x, screenPos.y);
+			ImGui::EndTooltip();
+		}
+
+		if ((i + 1) % 8 != 0)
+		{
+			ImGui::SameLine();
 		}
 	}
 }

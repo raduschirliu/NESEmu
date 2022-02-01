@@ -1,9 +1,7 @@
 #include "Bus.h"
-#include <stdio.h>
+
 #include <iomanip>
 #include <sstream>
-
-// TODO: Class should be renamed to "Bus" and be connected to PPU
 
 // PPU register locations
 static uint16_t constexpr PPU_OAMDATA = 0x4014;
