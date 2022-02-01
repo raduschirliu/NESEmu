@@ -5,19 +5,19 @@
 #include <cstdint>
 #include <functional>
 
-// Represents the 64KB of RAM that is addressable by the 6502 CPU
-class Memory
+// Contains the 64KB of RAM that is addressable by the 6502 CPU
+class Bus
 {
 public:
-	// Callback type
+	// Callback types
 	using AccessCallback = std::function<void(uint16_t address, uint8_t newValue, bool write)>;
 	using OamTransferCallback = std::function<void(uint8_t *data)>;
 
 	// Initialize all empty memory blocks
-	Memory();
+	Bus();
 
 	// Deallocate all memory
-	~Memory();
+	~Bus();
 
 	// Return pointer to a place in memory, or nullptr if out of bounds
 	uint8_t *get(uint16_t address);

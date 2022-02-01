@@ -81,7 +81,7 @@ private:
 	std::vector<IDrawable*> drawables;
 
 	// NES Components
-	Memory memory;
+	Bus bus;
 	ROM rom;
 	CPU cpu;
 	PPU ppu;

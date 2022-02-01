@@ -25,7 +25,7 @@ static void glfwErrorCallback(int error, const char *desc)
     printf("GLFW error: %i %s\n", error, desc);
 }
 
-NES::NES(): cpu(memory), ppu(memory)
+NES::NES(): cpu(bus), ppu(bus)
 {
     // TODO: Use initializer list
     windowWidth = 1280;
@@ -42,7 +42,7 @@ NES::NES(): cpu(memory), ppu(memory)
 void NES::load(std::string path)
 {
 	rom.load(path);
-	rom.map(memory, cpu, ppu);
+	rom.map(bus, cpu, ppu);
 
     printf("Loaded ROM: %s\n", path.c_str());
 	printf("\tMapper: %u\n", rom.getMapperID());
@@ -127,7 +127,7 @@ bool NES::init()
     // Init drawables
     drawables.push_back(new DemoWindow());
     drawables.push_back(new DebugWindow(*this, cpu));
-    drawables.push_back(new MemoryViewWindow(memory));
+    drawables.push_back(new MemoryViewWindow(bus));
     drawables.push_back(new PPUDebugWindow(*this, ppu));
 
     GL_ERROR_CHECK();

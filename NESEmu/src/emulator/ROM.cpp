@@ -20,64 +20,63 @@ void ROM::load(std::string path)
 	mapperID = 0;
 }
 
-void ROM::map(Memory &memory, CPU &cpu, PPU &ppu)
+void ROM::map(Bus &bus, CPU &cpu, PPU &ppu)
 {
 	std::ifstream stream;
 	stream.open(path, std::ifstream::binary);
 
-	if (stream.is_open())
-	{
-		// Read header
-		stream.get((char *)&header, sizeof(Header));
-
-		// Check if trainer is present
-		if (header.mapperFlags1 & 0b100)
-		{
-			// Skip trainer if it is present (512 bytes)
-			stream.seekg(512, std::ios_base::cur);
-		}
-
-		// Set mapper ID
-		mapperID = header.mapperFlags2 & 0xF;
-		mapperID |= (header.mapperFlags1 & 0xF) >> 4;
-
-		// Set mirroring
-		mirroring = (Mirroring)(header.mapperFlags1 & 0x1);
-
-		// TODO: Implement mappers
-		// Equivalent to using mapper 0 (NROM)
-		uint16_t offset = 0;
-		uint8_t byte;
-
-		stream.seekg(1, std::ios_base::cur);
-
-		while (!stream.eof())
-		{
-			stream.read((char *)&byte, 1);
-			
-			// Copy first 16KB of PRG ROM to CPU memory
-			if (offset >= 0 && offset < 0x4000)
-			{
-				// TEST: Write 0x4000 bytes (16KB) to memory, mirrored at 0x8000-0xBFFF and 0xC000-0xFFFF
-				memory.write(0x8000 + offset, byte);
-				memory.write(0xC000 + offset, byte);
-			}
-
-			// Copy next 8KB of CHR ROM to PPU memory
-			if (offset >= 0x4000 && offset < 0x6000)
-			{
-				ppu.writeMemory(offset - 0x4000, byte);
-			}
-
-			offset++;
-		}
-
-		printf("Done, loaded $%X (%d) bytes from ROM\n", offset, offset);
-	}
-	else
+	if (!stream.is_open())
 	{
 		printf("Failed to open file\n");
+		return;
 	}
+
+	// Read header
+	stream.get((char *)&header, sizeof(Header));
+
+	// Check if trainer is present
+	if (header.mapperFlags1 & 0b100)
+	{
+		// Skip trainer if it is present (512 bytes)
+		stream.seekg(512, std::ios_base::cur);
+	}
+
+	// Set mapper ID
+	mapperID = header.mapperFlags2 & 0xF;
+	mapperID |= (header.mapperFlags1 & 0xF) >> 4;
+
+	// Set mirroring
+	mirroring = (Mirroring)(header.mapperFlags1 & 0x1);
+
+	// TODO: Implement mappers
+	// Equivalent to using mapper 0 (NROM)
+	uint16_t offset = 0;
+	uint8_t byte;
+
+	stream.seekg(1, std::ios_base::cur);
+
+	while (!stream.eof())
+	{
+		stream.read((char *)&byte, 1);
+			
+		// Copy first 16KB of PRG ROM to CPU memory
+		if (offset >= 0 && offset < 0x4000)
+		{
+			// TEST: Write 0x4000 bytes (16KB) to memory, mirrored at 0x8000-0xBFFF and 0xC000-0xFFFF
+			bus.write(0x8000 + offset, byte);
+			bus.write(0xC000 + offset, byte);
+		}
+
+		// Copy next 8KB of CHR ROM to PPU memory
+		if (offset >= 0x4000 && offset < 0x6000)
+		{
+			ppu.writeMemory(offset - 0x4000, byte);
+		}
+
+		offset++;
+	}
+
+	printf("Done, loaded $%X (%d) bytes from ROM\n", offset, offset);
 }
 
 uint8_t ROM::getMapperID() const

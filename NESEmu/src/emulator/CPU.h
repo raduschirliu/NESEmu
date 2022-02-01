@@ -65,7 +65,7 @@ public:
 	};
 
 	// Initialize CPU
-	CPU(Memory &memory);
+	CPU(Bus &bus);
 
 	// Reset CPU state
 	void reset();
@@ -110,9 +110,8 @@ private:
 	uint8_t cycles;
 	uint32_t totalCycles;
 
-	// Other NES components, external to the CPU
-	// ROM &rom;
-	Memory &memory;
+	// CPU bus
+	Bus &bus;
 
 	// Logger for debugging
 	Logger logger;

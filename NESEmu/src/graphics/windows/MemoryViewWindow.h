@@ -8,7 +8,7 @@
 class MemoryViewWindow : public Window
 {
 public:
-	MemoryViewWindow(Memory &memory);
+	MemoryViewWindow(Bus &bus);
 
 	void draw() override;
 
@@ -19,6 +19,6 @@ private:
 	const int pageSize = 0x00FF;
 
 	int currentPage;
-	Memory &memory;
+	Bus &bus;
 	std::stringstream ss;
 };

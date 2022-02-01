@@ -8,7 +8,7 @@
 // PPU register locations
 static uint16_t constexpr PPU_OAMDATA = 0x4014;
 
-Memory::Memory()
+Bus::Bus()
 {
 	// Allocate memory arrays for all NES components
 	cpuMem = new uint8_t[2048]();
@@ -22,7 +22,7 @@ Memory::Memory()
 	shouldDispatchOamTransfer = false;
 }
 
-Memory::~Memory()
+Bus::~Bus()
 {
 	// Deallocate all memory arrays
 	delete[] cpuMem;
@@ -32,7 +32,7 @@ Memory::~Memory()
 	delete[] romMem;
 }
 
-uint8_t *Memory::get(uint16_t address)
+uint8_t *Bus::get(uint16_t address)
 {
 	if (address >= 0x0000 && address <= 0x1FFF)
 	{
@@ -65,7 +65,7 @@ uint8_t *Memory::get(uint16_t address)
 	return nullptr;
 }
 
-uint8_t Memory::read(uint16_t address, bool skipCallback)
+uint8_t Bus::read(uint16_t address, bool skipCallback)
 {
 	uint8_t *ptr = get(address);
 
@@ -85,7 +85,7 @@ uint8_t Memory::read(uint16_t address, bool skipCallback)
 	return 0;
 }
 
-void Memory::write(uint16_t address, uint8_t value, bool skipCallback)
+void Bus::write(uint16_t address, uint8_t value, bool skipCallback)
 {
 	uint8_t *ptr = get(address);
 
@@ -100,7 +100,7 @@ void Memory::write(uint16_t address, uint8_t value, bool skipCallback)
 	}
 }
 
-void Memory::dump(Logger &logger)
+void Bus::dump(Logger &logger)
 {
 	std::stringstream ss;
 
@@ -126,22 +126,22 @@ void Memory::dump(Logger &logger)
 	logger.write(ss.str());
 }
 
-void Memory::setPpuAccessCallback(AccessCallback callback)
+void Bus::setPpuAccessCallback(AccessCallback callback)
 {
 	ppuMemoryAccessCallback = callback;
 }
 
-void Memory::setPpuOamTransferCallback(OamTransferCallback callback)
+void Bus::setPpuOamTransferCallback(OamTransferCallback callback)
 {
 	ppuOamTransferCallback = callback;
 }
 
-void Memory::dispatchNmi()
+void Bus::dispatchNmi()
 {
 	shouldDispatchNmi = true;
 }
 
-void Memory::dispatchOamTransfer()
+void Bus::dispatchOamTransfer()
 {
 	if (ppuOamTransferCallback)
 	{
@@ -154,7 +154,7 @@ void Memory::dispatchOamTransfer()
 	shouldDispatchOamTransfer = false;
 }
 
-bool Memory::pollNmi()
+bool Bus::pollNmi()
 {
 	if (shouldDispatchNmi)
 	{
@@ -165,12 +165,12 @@ bool Memory::pollNmi()
 	return false;
 }
 
-bool Memory::pollOamTransfer()
+bool Bus::pollOamTransfer()
 {
 	return shouldDispatchOamTransfer;
 }
 
-void Memory::dispatchCallbacks(uint16_t address, uint8_t value, bool write)
+void Bus::dispatchCallbacks(uint16_t address, uint8_t value, bool write)
 {
 	if (address >= 0x2000 && address <= 0x3FFF)
 	{

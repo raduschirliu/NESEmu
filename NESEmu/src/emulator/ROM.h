@@ -45,7 +45,7 @@ public:
 	void load(std::string path);
 
 	// Reads ROM from file path and maps it into memory based on mapper configuration
-	void map(Memory &memory, CPU &cpu, PPU &ppu);
+	void map(Bus &bus, CPU &cpu, PPU &ppu);
 
 	// Returns the mapper ID associated with the ROM
 	uint8_t getMapperID() const;

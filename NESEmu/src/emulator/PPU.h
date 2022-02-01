@@ -78,7 +78,7 @@ public:
 	};
 
 	// Initialize memory
-	PPU(Memory &memory);
+	PPU(Bus &bus);
 	
 	// Cleanup memory
 	~PPU();
@@ -169,8 +169,8 @@ private:
 	// Log PPU activities
 	Logger logger;
 
-	// CPU memory
-	Memory &memory;
+	// CPU memory bus
+	Bus &bus;
 
 	// Control the address that the CPU can access through PPUADDR/PPUDATA
 	uint16_t accessAddress;

@@ -5,7 +5,7 @@
 #include <iostream>
 
 
-PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
+PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus)
 {
 	// TODO: Convert to modern C++ arrays
 	patternTables = new uint8_t[0x2000](); // TEST: Init pattern table to 16KB of memory
@@ -14,7 +14,7 @@ PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 	oam = new uint8_t[256]();			   // 256 bytes, internal PPU memory
 
 	// Initialize registers
-	registers = reinterpret_cast<Registers *>(memory.get(REGISTER_START_ADDRESS));
+	registers = reinterpret_cast<Registers *>(bus.get(REGISTER_START_ADDRESS));
 	registers->ctrl = { 0 };
 	registers->mask = 0;
 	registers->status = { 0 };
@@ -39,12 +39,12 @@ PPU::PPU(Memory &memory) : logger("..\\logs\\ppu.log"), memory(memory)
 	oamTransferRequested = false;
 
 	// Callbacks
-	memory.setPpuAccessCallback([this](uint16_t address, uint8_t newValue, bool write)
+	bus.setPpuAccessCallback([this](uint16_t address, uint8_t newValue, bool write)
 		{
 			onRegisterAccess(address, newValue, write);
 		});
 
-	memory.setPpuOamTransferCallback([this](uint8_t *data)
+	bus.setPpuOamTransferCallback([this](uint8_t *data)
 		{
 			writeOamData(data);
 		});
@@ -120,7 +120,7 @@ void PPU::step()
 
 			if (registers->ctrl.nmiEnable)
 			{
-				memory.dispatchNmi();
+				bus.dispatchNmi();
 			}
 		}
 	}

@@ -8,12 +8,12 @@
 
 void testEmulator()
 {
-    Memory memory;
-    PPU ppu(memory);
-    CPU cpu(memory);
+    Bus bus;
+    PPU ppu(bus);
+    CPU cpu(bus);
 
     ROM rom("..\\roms\\nestest.nes");
-    rom.map(memory, cpu, ppu);
+    rom.map(bus, cpu, ppu);
 
     // Set PC to 0xC000 to put NESTest rom into "automation" mode
     cpu.setPC(0xC000);
@@ -28,12 +28,12 @@ void testEmulator()
 
     // Read NESTest test result codes
     printf("Test results:\n");
-    printf("\t0x02: %02X\n", memory.read(0x02));
-    printf("\t0x03: %02X\n", memory.read(0x03));
+    printf("\t0x02: %02X\n", bus.read(0x02));
+    printf("\t0x03: %02X\n", bus.read(0x03));
 
     // Dump memory post-run
     Logger memlog("..\\logs\\post-run-memory.log");
-    memory.dump(memlog);
+    bus.dump(memlog);
     printf("Memory dumped post-run");
 }
 

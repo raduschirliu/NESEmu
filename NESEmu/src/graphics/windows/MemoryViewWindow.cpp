@@ -3,7 +3,7 @@
 
 #include <iomanip>
 
-MemoryViewWindow::MemoryViewWindow(Memory &memory) : Window(GLFW_KEY_F2), currentPage(0), memory(memory)
+MemoryViewWindow::MemoryViewWindow(Bus &bus) : Window(GLFW_KEY_F2), currentPage(0), bus(bus)
 {
 
 }
@@ -127,7 +127,7 @@ void MemoryViewWindow::printMemory(uint16_t start, uint16_t end)
 		for (int line = 0; line < 8; line++)
 		{
 			ss << std::setw(2) << std::setfill('0')
-				<< (int)memory.read(base + line) << " ";
+				<< (int)bus.read(base + line) << " ";
 		}
 
 		ss << std::endl;
