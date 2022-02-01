@@ -155,7 +155,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\emulator\CPU.cpp" />
-    <ClCompile Include="src\debug\Logger.cpp" />
     <ClCompile Include="src\emulator\NES.cpp" />
     <ClCompile Include="src\graphics\Graphics.cpp" />
     <ClCompile Include="src\graphics\ResourceManager.cpp" />
@@ -177,10 +176,10 @@
     <ClCompile Include="src\emulator\Bus.cpp" />
     <ClCompile Include="src\emulator\PPU.cpp" />
     <ClCompile Include="src\emulator\ROM.cpp" />
+    <ClCompile Include="src\util\Logger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\emulator\CPU.h" />
-    <ClInclude Include="src\debug\Logger.h" />
     <ClInclude Include="src\emulator\Mapper.h" />
     <ClInclude Include="src\graphics\ResourceManager.h" />
     <ClInclude Include="src\graphics\Shader.h" />
@@ -205,6 +204,7 @@
     <ClInclude Include="src\emulator\Bus.h" />
     <ClInclude Include="src\emulator\PPU.h" />
     <ClInclude Include="src\emulator\ROM.h" />
+    <ClInclude Include="src\util\Logger.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,5 +1,5 @@
 #include "MemoryViewWindow.h"
-#include "../../debug/Logger.h"
+#include "../../util/Logger.h"
 
 #include <iomanip>
 

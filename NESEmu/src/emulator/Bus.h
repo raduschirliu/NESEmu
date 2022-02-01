@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../debug/Logger.h"
+#include "../util/Logger.h"
 
 #include <cstdint>
 #include <functional>

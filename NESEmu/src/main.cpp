@@ -1,6 +1,6 @@
 #include "emulator/CPU.h"
 #include "emulator/PPU.h"
-#include "debug/Logger.h"
+#include "util/Logger.h"
 #include "emulator/NES.h"
 
 #include <iostream>

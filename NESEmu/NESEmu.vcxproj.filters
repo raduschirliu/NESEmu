@@ -21,9 +21,6 @@
     <ClCompile Include="src\mappers\Mapper0.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\debug\Logger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\emulator\CPU.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -84,12 +81,12 @@
     <ClCompile Include="src\emulator\Bus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\util\Logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\mappers\Mapper0.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\debug\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\emulator\CPU.h">
@@ -162,6 +159,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\emulator\Bus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

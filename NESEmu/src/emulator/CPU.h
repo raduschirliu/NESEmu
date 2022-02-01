@@ -2,7 +2,7 @@
 
 #include "ROM.h"
 #include "Bus.h"
-#include "../debug/Logger.h"
+#include "../util/Logger.h"
 
 #include <cstdint>
 #include <string>
