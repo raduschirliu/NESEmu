@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ROM.h"
-#include "Memory.h"
+#include "Bus.h"
 #include "../debug/Logger.h"
 
 #include <cstdint>

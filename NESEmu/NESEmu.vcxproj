@@ -174,7 +174,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\emulator\Mapper.cpp" />
     <ClCompile Include="src\mappers\Mapper0.cpp" />
-    <ClCompile Include="src\emulator\Memory.cpp" />
+    <ClCompile Include="src\emulator\Bus.cpp" />
     <ClCompile Include="src\emulator\PPU.cpp" />
     <ClCompile Include="src\emulator\ROM.cpp" />
   </ItemGroup>
@@ -202,7 +202,7 @@
     <ClInclude Include="src\graphics\windows\MemoryViewWindow.h" />
     <ClInclude Include="src\graphics\windows\PPUDebugWindow.h" />
     <ClInclude Include="src\mappers\Mapper0.h" />
-    <ClInclude Include="src\emulator\Memory.h" />
+    <ClInclude Include="src\emulator\Bus.h" />
     <ClInclude Include="src\emulator\PPU.h" />
     <ClInclude Include="src\emulator\ROM.h" />
   </ItemGroup>

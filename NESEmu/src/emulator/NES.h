@@ -4,7 +4,7 @@
 
 #include "CPU.h"
 #include "PPU.h"
-#include "Memory.h"
+#include "Bus.h"
 #include "ROM.h"
 #include "../graphics/Graphics.h"
 #include "../graphics/IDrawable.h"

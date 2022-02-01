@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Window.h"
-#include "../../emulator/Memory.h"
+#include "../../emulator/Bus.h"
 
 #include <sstream>
 

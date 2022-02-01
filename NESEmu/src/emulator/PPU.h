@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../debug/Logger.h"
-#include "Memory.h"
+#include "Bus.h"
 
 #include <vector>
 

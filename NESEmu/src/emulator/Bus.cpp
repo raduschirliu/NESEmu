@@ -1,4 +1,4 @@
-#include "Memory.h"
+#include "Bus.h"
 #include <stdio.h>
 #include <iomanip>
 #include <sstream>

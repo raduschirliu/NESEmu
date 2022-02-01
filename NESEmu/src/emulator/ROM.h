@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Mapper.h"
-#include "Memory.h"
+#include "Bus.h"
 #include "PPU.h"
 #include "CPU.h"
 
