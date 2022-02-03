@@ -1,10 +1,66 @@
 #include "PPUDebugWindow.h"
 #include "../Texture.h"
 #include "../ResourceManager.h"
+#include "../../util/Utils.h"
 
 #include <sstream>
 #include <iomanip>
 #include <vector>
+
+using std::string;
+
+// PPU Register help texts from NES wiki:
+// https://wiki.nesdev.org/w/index.php/PPU_registers
+
+static const char *CTRL_HELP_TEXT = R"(
+7  bit  0
+---- ----
+VPHB SINN
+|||| ||||
+|||| ||++- Base nametable address
+|||| ||    (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
+|||| |+--- VRAM address increment per CPU read/write of PPUDATA
+|||| |     (0: add 1, going across; 1: add 32, going down)
+|||| +---- Sprite pattern table address for 8x8 sprites
+||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
+|||+------ Background pattern table address (0: $0000; 1: $1000)
+||+------- Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
+|+-------- PPU master/slave select
+|          (0: read backdrop from EXT pins; 1: output color on EXT pins)
++--------- Generate an NMI at the start of the
+           vertical blanking interval (0: off; 1: on)
+)";
+
+static const char *MASK_HELP_TEXT = R"(
+7  bit  0
+---- ----
+BGRs bMmG
+|||| ||||
+|||| |||+- Greyscale (0: normal color, 1: produce a greyscale display)
+|||| ||+-- 1: Show background in leftmost 8 pixels of screen, 0: Hide
+|||| |+--- 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
+|||| +---- 1: Show background
+|||+------ 1: Show sprites
+||+------- Emphasize red (green on PAL/Dendy)
+|+-------- Emphasize green (red on PAL/Dendy)
++--------- Emphasize blue
+)";
+
+static const char *STATUS_HELP_TEXT = R"(
+7  bit  0
+---- ----
+VSO. ....
+|||| ||||
+|||+-++++- Least significant bits previously written into a PPU register
+|||        (due to register not being updated for this address)
+||+------- Sprite overflow. The intent was for this flag to be set whenever more than eight sprites appear on a scanline, but a
+||         hardware bug causes the actual behavior to be more complicated and generate false positives as well as false negatives; see
+||         PPU sprite evaluation. This flag is set during sprite evaluation and cleared at dot 1 (the second dot) of the pre-render line.
+|+-------- Sprite 0 Hit.  Set when a nonzero pixel of sprite 0 overlaps a nonzero background pixel; cleared at dot 1 of the pre-render
+|          line.  Used for raster timing.
++--------- Vertical blank has started (0: not in vblank; 1: in vblank). Set at dot 1 of line 241 (the line *after* the post-render
+           line); cleared after reading $2002 and at dot 1 of the pre-render line.
+)";
 
 PPUDebugWindow::PPUDebugWindow(NES &nes, PPU &ppu) : Window(GLFW_KEY_F3), nes(nes), ppu(ppu), debugViewNametable(0)
 {
@@ -49,14 +105,15 @@ void PPUDebugWindow::draw()
 	if (ImGui::CollapsingHeader("PPU Registers"))
 	{
 		PPU::Registers* registers = ppu.getRegisters();
-		ImGui::Text("PPUCTRL  \t($2000): $%X", registers->ctrl);
-		ImGui::Text("PPUMASK  \t($2001): $%X", registers->mask);
-		ImGui::Text("PPUSTATUS\t($2002): $%X", registers->status);
-		ImGui::Text("OAMADDR  \t($2003): $%X", registers->oamAddr);
-		ImGui::Text("OAMDATA  \t($2004): $%X", registers->oamData);
-		ImGui::Text("PPUSCROLL\t($2005): $%X", registers->scroll);
-		ImGui::Text("PPUADDR  \t($2006): $%X", registers->addr);
-		ImGui::Text("PPUDATA  \t($2007): $%X", registers->data);;
+
+		drawRegister("PPUCTRL  ", 0x2000, &registers->ctrl, CTRL_HELP_TEXT);
+		drawRegister("PPUMASK  ", 0x2001, &registers->mask, MASK_HELP_TEXT);
+		drawRegister("PPUSTATUS", 0x2002, &registers->status, STATUS_HELP_TEXT);
+		drawRegister("OAMADDR  ", 0x2003, &registers->oamAddr, nullptr);
+		drawRegister("OAMDATA  ", 0x2004, &registers->oamData, nullptr);
+		drawRegister("PPUSCROLL", 0x2005, &registers->scroll, nullptr);
+		drawRegister("PPUADDR  ", 0x2006, &registers->addr, nullptr);
+		drawRegister("PPUDATA  ", 0x2007, &registers->data, nullptr);
 	}
 
 	ImGui::Spacing();
@@ -135,6 +192,25 @@ void PPUDebugWindow::draw()
 	ImGui::End();
 }
 
+void PPUDebugWindow::drawRegister(string name, uint16_t address, const void* reg, const char* helpText)
+{
+	ImGui::Text(name.c_str());
+	ImGui::SameLine();
+	ImGui::Text(" ($%X):", address);
+	ImGui::SameLine();
+
+	const uint8_t *val = reinterpret_cast<const uint8_t*>(reg);
+	ImGui::Text("  %s ($%X)", utils::toBitString(*val).c_str(), *val);
+
+	if (helpText && ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("%s ($%X)", name.c_str(), address);
+		ImGui::Text(CTRL_HELP_TEXT);
+		ImGui::EndTooltip();
+	}
+}
+
 void PPUDebugWindow::printMemory(uint16_t start, uint16_t end)
 {
 	// Draw 8 bytes per line from start address to end address
@@ -154,7 +230,7 @@ void PPUDebugWindow::printMemory(uint16_t start, uint16_t end)
 	}
 }
 
-void PPUDebugWindow::drawPalette(std::string label, std::vector<PPU::Color> palette)
+void PPUDebugWindow::drawPalette(string label, std::vector<PPU::Color> palette)
 {
 	ImGui::BeginGroup();
 	ImGui::Text(label.c_str());

@@ -20,7 +20,7 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus)
 	// Initialize registers
 	registers = reinterpret_cast<Registers *>(bus.get(REGISTER_START_ADDRESS));
 	registers->ctrl = { 0 };
-	registers->mask = 0;
+	registers->mask = { 0 };
 	registers->status = { 0 };
 	registers->status = { 0 };
 	registers->oamAddr = 0;
@@ -61,7 +61,7 @@ PPU::~PPU()
 void PPU::reset()
 {
 	registers->ctrl = { 0 };
-	registers->mask = 0;
+	registers->mask = { 0 };
 	registers->scroll = 0;
 	registers->addr = 0;
 

@@ -16,6 +16,7 @@ public:
 
 private:
 	void printMemory(uint16_t start, uint16_t end);
+	void drawRegister(std::string name, uint16_t address, const void* reg, const char* helpText);
 	void drawPalette(std::string label, std::vector<PPU::Color> palette);
 	void drawNametable(uint8_t nametable);
 	void drawOam();

@@ -319,7 +319,8 @@ void NES::drawBackground()
     Texture *patternTable = ResourceManager::getTexture(
         ppu.getActiveBgPatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
     uint16_t bgColorAddress = 0x3F00;
-    uint16_t bgPaletteAddresses[] = { 0x3F01, 0x3F05, 0x3F09, 0x3F0D };
+	uint16_t bgPaletteAddresses[] = { 0x3F01, 0x3F05, 0x3F09, 0x3F0D };
+    std::vector<PPU::Color> grayscalePalette = { { 0, 0, 0, 0 }, { 50, 50, 50, 255 }, { 100, 100, 100, 255 }, { 200, 200, 200, 255 } };
 
     // Solid background color
     {
@@ -336,30 +337,49 @@ void NES::drawBackground()
     }
 
     // Nametable background tiles
-    for (uint32_t r = 0; r < PPU::NAMETABLE_ROWS; r++)
+    if (ppu.getRegisters()->mask.showBg)
     {
-        for (uint32_t c = 0; c < PPU::NAMETABLE_COLS; c++)
+        for (uint32_t r = 0; r < PPU::NAMETABLE_ROWS; r++)
         {
-            uint16_t nametableIndex = r * PPU::NAMETABLE_COLS + c;
-            uint8_t patternIndex = ppu.readMemory(start + nametableIndex);
-            float cTex = floor(patternIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
-            float rTex = floor(patternIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
+            if (!ppu.getRegisters()->mask.showLeftmostBg)
+            {
+                continue;
+            }
 
-            glm::vec3 pos(offset.x + c * tileSize, offset.y + r * tileSize, BACKGROUND_TILE_DEPTH);
-            glm::vec2 size(tileSize, tileSize);
-            glm::vec2 texPos(cTex, rTex);
-            glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);
+            for (uint32_t c = 0; c < PPU::NAMETABLE_COLS; c++)
+            {
+                uint16_t nametableIndex = r * PPU::NAMETABLE_COLS + c;
+                uint8_t patternIndex = ppu.readMemory(start + nametableIndex);
+                float cTex = floor(patternIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
+                float rTex = floor(patternIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
 
-            uint8_t paletteTableIndex = ppu.getNametableEntryPalette(nametable, nametableIndex);
-            uint16_t paletteAddress = bgPaletteAddresses[paletteTableIndex];
-            auto palette = ppu.getPalette(paletteAddress);
-            patternTable->draw(pos, size, texPos, texPosEnd, palette);
+                glm::vec3 pos(offset.x + c * tileSize, offset.y + r * tileSize, BACKGROUND_TILE_DEPTH);
+                glm::vec2 size(tileSize, tileSize);
+                glm::vec2 texPos(cTex, rTex);
+                glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);
+
+                uint8_t paletteTableIndex = ppu.getNametableEntryPalette(nametable, nametableIndex);
+                uint16_t paletteAddress = bgPaletteAddresses[paletteTableIndex];
+                auto palette = ppu.getPalette(paletteAddress);
+
+                if (ppu.getRegisters()->mask.grayscale)
+                {
+                    palette = grayscalePalette;
+                }
+
+                patternTable->draw(pos, size, texPos, texPosEnd, palette);
+            }
         }
     }
 }
 
 void NES::drawSprites()
 {
+    if (!ppu.getRegisters()->mask.showSprites)
+    {
+        return;
+    }
+
     float tileSize = getTileSize();
     glm::vec2 offset = getGraphicsOffset();
     Texture *patternTable = ResourceManager::getTexture(
@@ -368,6 +388,7 @@ void NES::drawSprites()
     uint16_t paletteAddresses[] = { 0x3F11, 0x3F15, 0x3F19, 0x3F1D };
     uint16_t nesWidth = PPU::NAMETABLE_COLS * PPU::TILE_SIZE;
     uint16_t nesHeight = PPU::NAMETABLE_ROWS * PPU::TILE_SIZE;
+    std::vector<PPU::Color> grayscalePalette = { { 0, 0, 0, 0 }, { 50, 50, 50, 255 }, { 100, 100, 100, 255 }, { 200, 200, 200, 255 } };
 
     // 64 sprites in Oam to draw. Sprites with lower address are drawn on top
     for (int i = PPU::OAM_SIZE - 1; i >= 0; i--)
@@ -376,7 +397,17 @@ void NES::drawSprites()
         uint16_t paletteAddress = paletteAddresses[sprite->attributes.palette];
         auto palette = ppu.getPalette(paletteAddress);
 
+        if (ppu.getRegisters()->mask.grayscale)
+        {
+            palette = grayscalePalette;
+        }
+
         if (sprite->xPos > nesWidth || sprite->yPos > nesHeight)
+        {
+            continue;
+        }
+
+        if (!ppu.getRegisters()->mask.showLeftmostSprite && sprite->xPos < 8)
         {
             continue;
         }

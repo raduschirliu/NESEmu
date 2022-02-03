@@ -63,7 +63,16 @@ public:
 			uint8_t masterSlave : 1;
 			uint8_t nmiEnable : 1;
 		} ctrl; // Top - LSB, Bottom - MSB
-		uint8_t mask;
+		struct PpuMask {
+			uint8_t grayscale : 1;
+			uint8_t showLeftmostBg : 1;
+			uint8_t showLeftmostSprite : 1;
+			uint8_t showBg : 1;
+			uint8_t showSprites : 1;
+			uint8_t emphasizeRed : 1;
+			uint8_t emphasizeGreen : 1;
+			uint8_t emphasizeBlue : 1;
+		} mask; // Top - LSB, Bottom - MSB
 		struct PpuStatus {
 			uint8_t lastLsb : 5;
 			uint8_t spriteOverflow : 1;

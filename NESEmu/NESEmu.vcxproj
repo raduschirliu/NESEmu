@@ -211,6 +211,7 @@
     <ClInclude Include="src\emulator\ROM.h" />
     <ClInclude Include="src\util\Input.h" />
     <ClInclude Include="src\util\Logger.h" />
+    <ClInclude Include="src\util\Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
