@@ -4,6 +4,10 @@
 #include <bitset>
 #include <iostream>
 
+using std::bind;
+using std::placeholders::_1;
+using std::placeholders::_2;
+using std::placeholders::_3;
 
 PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus)
 {
@@ -39,15 +43,8 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus)
 	oamTransferRequested = false;
 
 	// Callbacks
-	bus.setPpuAccessCallback([this](uint16_t address, uint8_t newValue, bool write)
-		{
-			onRegisterAccess(address, newValue, write);
-		});
-
-	bus.setPpuOamTransferCallback([this](uint8_t *data)
-		{
-			writeOamData(data);
-		});
+	bus.registerMemoryAccessCallback(bind(&PPU::onRegisterAccess, this, _1, _2, _3));
+	bus.setPpuOamTransferCallback(bind(&PPU::writeOamData, this, _1));
 
 	reset();
 }

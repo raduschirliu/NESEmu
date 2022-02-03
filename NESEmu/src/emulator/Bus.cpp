@@ -73,7 +73,7 @@ uint8_t Bus::read(uint16_t address, bool skipCallback)
 		
 		if (!skipCallback)
 		{
-			dispatchCallbacks(address, 0, false);
+			dispatchMemoryAccessCallbacks(address, 0, false);
 		}
 
 		return val;
@@ -93,7 +93,7 @@ void Bus::write(uint16_t address, uint8_t value, bool skipCallback)
 
 		if (!skipCallback)
 		{
-			dispatchCallbacks(address, value, true);
+			dispatchMemoryAccessCallbacks(address, value, true);
 		}
 	}
 }
@@ -124,9 +124,9 @@ void Bus::dump(Logger &logger)
 	logger.write(ss.str());
 }
 
-void Bus::setPpuAccessCallback(AccessCallback callback)
+void Bus::registerMemoryAccessCallback(AccessCallback callback)
 {
-	ppuMemoryAccessCallback = callback;
+	memoryAccessCallbacks.push_back(callback);
 }
 
 void Bus::setPpuOamTransferCallback(OamTransferCallback callback)
@@ -168,30 +168,29 @@ bool Bus::pollOamTransfer()
 	return shouldDispatchOamTransfer;
 }
 
-void Bus::dispatchCallbacks(uint16_t address, uint8_t value, bool write)
+void Bus::dispatchMemoryAccessCallbacks(uint16_t address, uint8_t value, bool write)
 {
-	if (address >= 0x2000 && address <= 0x3FFF)
+	uint16_t target = address;
+
+	if (address >= 0x0000 && address <= 0x1FFF)
+	{
+		// Get from CPU memory ($0000 - $1FFF, mirrored > $07FF)
+		target = address % 0x0800;
+	}
+	else if (address >= 0x2000 && address <= 0x3FFF)
 	{
 		// Accessing PPU memory ($2000 - $3FFF, mirrored > $2007)
 		// Normalize target to non-mirrored register range ($2000 - $2007)
-		uint16_t target = (address - 0x2000) % 0x0008 + 0x2000;
-
-		if (ppuMemoryAccessCallback)
-		{
-			ppuMemoryAccessCallback(target, value, write);
-		}
+		target = (address - 0x2000) % 0x0008 + 0x2000;
 	}
-	else if (address == 0x4014)
+	
+	if (address == OAMDMA && write)
 	{
-		// Accessing OAMDMA for PPU
-		if (ppuMemoryAccessCallback)
-		{
-			ppuMemoryAccessCallback(0x4014, value, write);
-			
-			if (write)
-			{
-				shouldDispatchOamTransfer = true;
-			}
-		}
+		shouldDispatchOamTransfer = true;
+	}
+
+	for (auto &callback : memoryAccessCallbacks)
+	{
+		callback(target, value, write);
 	}
 }

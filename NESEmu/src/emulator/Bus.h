@@ -4,11 +4,18 @@
 
 #include <cstdint>
 #include <functional>
+#include <vector>
 
 // Contains the 64KB of RAM that is addressable by the 6502 CPU
 class Bus
 {
 public:
+	// All mapped register addresses
+	static constexpr uint16_t PPUCTRL = 0x2000;
+	static constexpr uint16_t OAMDMA = 0x4014;
+	static constexpr uint16_t JOY1 = 0x4016;
+	static constexpr uint16_t JOY2 = 0x4017;
+
 	// Callback types
 	using AccessCallback = std::function<void(uint16_t address, uint8_t newValue, bool write)>;
 	using OamTransferCallback = std::function<void(uint8_t *data)>;
@@ -31,8 +38,8 @@ public:
 	// Dump entire contents of memory ($0000 - $FFFF) to given logger
 	void dump(Logger &logger);
 
-	// Set the PPU memory access callback
-	void setPpuAccessCallback(AccessCallback callback);
+	// Register a new memory access callback
+	void registerMemoryAccessCallback(AccessCallback callback);
 
 	// Set the PPU Oam transfer callback
 	void setPpuOamTransferCallback(OamTransferCallback callback);
@@ -67,8 +74,8 @@ private:
 	// Cartridge Memory: PRG ROM, PRG RAM, and mapper registers (from $4020 - $FFFF)
 	uint8_t *romMem;
 
-	// Callbacks for the PPU
-	AccessCallback ppuMemoryAccessCallback;
+	// Callbacks
+	std::vector<AccessCallback> memoryAccessCallbacks;
 	OamTransferCallback ppuOamTransferCallback;
 
 	// Whether the NMI has already been dispatched to the CPU
@@ -77,6 +84,6 @@ private:
 	// Whether an OAM transfer is needed
 	bool shouldDispatchOamTransfer;
 
-	// Dispatch any callbacks if needed
-	void dispatchCallbacks(uint16_t address, uint8_t value, bool write);
+	// Dispatch any memory access callbacks if needed
+	void dispatchMemoryAccessCallbacks(uint16_t address, uint8_t value, bool write);
 };

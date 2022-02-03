@@ -3,9 +3,11 @@
 #include "../graphics/windows/DebugWindow.h"
 #include "../graphics/windows/MemoryViewWindow.h"
 #include "../graphics/windows/PPUDebugWindow.h"
+#include "../graphics/windows/InputDebugWindow.h"
 #include "../graphics/Texture.h"
 #include "../graphics/Shader.h"
 #include "../graphics/ResourceManager.h"
+#include "../util/Input.h"
 
 #include <iostream>
 #include <stdio.h>
@@ -25,7 +27,12 @@ static void glfwErrorCallback(int error, const char *desc)
     printf("GLFW error: %i %s\n", error, desc);
 }
 
-NES::NES(): cpu(bus), ppu(bus)
+void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+
+}
+
+NES::NES(): cpu(bus), ppu(bus), controller(bus, Bus::JOY1)
 {
     // TODO: Use initializer list
     windowWidth = 1280;
@@ -93,6 +100,8 @@ bool NES::init()
 
     printf("Loaded OpenGL version %s\n", glGetString(GL_VERSION));
 
+    Input::init(window);
+
     // TODO: Move to graphics.cpp / graphics.h
 #ifdef OPENGL_DEBUG
     GLint flags;
@@ -129,8 +138,21 @@ bool NES::init()
     drawables.push_back(new DebugWindow(*this, cpu));
     drawables.push_back(new MemoryViewWindow(bus));
     drawables.push_back(new PPUDebugWindow(*this, ppu));
+    drawables.push_back(new InputDebugWindow(controller));
 
     GL_ERROR_CHECK();
+
+    Input::registerKeyMap("joy1",
+        {
+            { GLFW_KEY_A, Controller::Button::B },
+            { GLFW_KEY_S, Controller::Button::A },
+            { GLFW_KEY_Q, Controller::Button::SELECT },
+            { GLFW_KEY_W, Controller::Button::START },
+            { GLFW_KEY_UP, Controller::Button::UP },
+            { GLFW_KEY_DOWN, Controller::Button::DOWN },
+            { GLFW_KEY_LEFT, Controller::Button::LEFT },
+            { GLFW_KEY_RIGHT, Controller::Button::RIGHT },
+        });
 
     return true;
 }
@@ -222,6 +244,12 @@ void NES::step()
     ppu.step();
     ppu.step();
     ppu.step();
+
+    if (controller.isPolling())
+    {
+        Controller::ButtonStates keyMap = Input::getKeyMap("joy1");
+        controller.setButtonStates(keyMap);
+    }
 }
 
 void NES::shutdown()

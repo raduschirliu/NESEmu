@@ -28,7 +28,7 @@ public:
 	static constexpr uint16_t OAM_SIZE = 64;
 
 	// Location of registers on CPU memory bus
-	static constexpr uint16_t REGISTER_START_ADDRESS = 0x2000;
+	static constexpr uint16_t REGISTER_START_ADDRESS = Bus::PPUCTRL;
 
 	// Represents a system palette color
 	struct Color

@@ -154,6 +154,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\emulator\Controller.cpp" />
     <ClCompile Include="src\emulator\CPU.cpp" />
     <ClCompile Include="src\emulator\NES.cpp" />
     <ClCompile Include="src\graphics\Graphics.cpp" />
@@ -168,6 +169,7 @@
     <ClCompile Include="src\graphics\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\graphics\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\graphics\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\graphics\windows\InputDebugWindow.cpp" />
     <ClCompile Include="src\graphics\windows\MemoryViewWindow.cpp" />
     <ClCompile Include="src\graphics\windows\PPUDebugWindow.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -176,10 +178,12 @@
     <ClCompile Include="src\emulator\Bus.cpp" />
     <ClCompile Include="src\emulator\PPU.cpp" />
     <ClCompile Include="src\emulator\ROM.cpp" />
+    <ClCompile Include="src\util\Input.cpp" />
     <ClCompile Include="src\util\Logger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\emulator\CPU.h" />
+    <ClInclude Include="src\emulator\Controller.h" />
     <ClInclude Include="src\emulator\Mapper.h" />
     <ClInclude Include="src\graphics\ResourceManager.h" />
     <ClInclude Include="src\graphics\Shader.h" />
@@ -198,12 +202,14 @@
     <ClInclude Include="src\graphics\imgui\imstb_truetype.h" />
     <ClInclude Include="src\graphics\Window.h" />
     <ClInclude Include="src\graphics\windows\DemoWindow.h" />
+    <ClInclude Include="src\graphics\windows\InputDebugWindow.h" />
     <ClInclude Include="src\graphics\windows\MemoryViewWindow.h" />
     <ClInclude Include="src\graphics\windows\PPUDebugWindow.h" />
     <ClInclude Include="src\mappers\Mapper0.h" />
     <ClInclude Include="src\emulator\Bus.h" />
     <ClInclude Include="src\emulator\PPU.h" />
     <ClInclude Include="src\emulator\ROM.h" />
+    <ClInclude Include="src\util\Input.h" />
     <ClInclude Include="src\util\Logger.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

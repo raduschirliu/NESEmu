@@ -6,6 +6,7 @@
 #include "PPU.h"
 #include "Bus.h"
 #include "ROM.h"
+#include "Controller.h"
 #include "../graphics/Graphics.h"
 #include "../graphics/IDrawable.h"
 
@@ -85,6 +86,7 @@ private:
 	ROM rom;
 	CPU cpu;
 	PPU ppu;
+	Controller controller;
 
 	// Draw PPU background
 	void drawBackground();
