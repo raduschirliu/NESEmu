@@ -1,26 +1,18 @@
-#include "ROM.h"
+#include "Cartridge.h"
 #include <fstream>
 #include <cerrno>
 
-ROM::ROM()
+Cartridge::Cartridge() : header({ 0 }), path(""), mapper(nullptr)
 {
-	path = "";
-	mapperID = 0;
+
 }
 
-ROM::ROM(std::string path)
-{
-	this->path = path;
-	mapperID = 0;
-}
-
-void ROM::load(std::string path)
+void Cartridge::load(std::string path)
 {
 	this->path = path;
-	mapperID = 0;
 }
 
-void ROM::map(Bus &bus, CPU &cpu, PPU &ppu)
+void Cartridge::map(Bus &bus, CPU &cpu, PPU &ppu)
 {
 	std::ifstream stream;
 	stream.open(path, std::ifstream::binary);
@@ -34,19 +26,17 @@ void ROM::map(Bus &bus, CPU &cpu, PPU &ppu)
 	// Read header
 	stream.get((char *)&header, sizeof(Header));
 
-	// Check if trainer is present
-	if (header.mapperFlags1 & 0b100)
+	if (memcmp(header.name, HEADER_NAME, sizeof(HEADER_NAME)) != 0)
 	{
-		// Skip trainer if it is present (512 bytes)
-		stream.seekg(512, std::ios_base::cur);
+		printf("Error, cartridge loaded rom with invalid header constant\n");
+		return;
 	}
 
-	// Set mapper ID
-	mapperID = header.mapperFlags2 & 0xF;
-	mapperID |= (header.mapperFlags1 & 0xF) >> 4;
-
-	// Set mirroring
-	mirroring = (Mirroring)(header.mapperFlags1 & 0x1);
+	// Check if trainer is present
+	if (header.flags6.hasTrainer)
+	{
+		stream.seekg(TRAINER_SIZE, std::ios_base::cur);
+	}
 
 	// TODO: Implement mappers
 	// Equivalent to using mapper 0 (NROM)
@@ -79,12 +69,17 @@ void ROM::map(Bus &bus, CPU &cpu, PPU &ppu)
 	printf("Done, loaded $%X (%d) bytes from ROM\n", offset, offset);
 }
 
-uint8_t ROM::getMapperID() const
+Cartridge::Header Cartridge::getHeader() const
 {
-	return mapperID;
+	return header;
 }
 
-std::string ROM::getPath() const
+uint8_t Cartridge::getMapperID() const
+{
+	return header.flags6.mapperLowerNibble & (header.flags7.mapperUpperNibble << 4);
+}
+
+std::string Cartridge::getPath() const
 {
 	return path;
 }

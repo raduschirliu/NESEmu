@@ -48,15 +48,17 @@ NES::NES(): cpu(bus), ppu(bus), controller(bus, Bus::JOY1)
 
 void NES::load(std::string path)
 {
-	rom.load(path);
-	rom.map(bus, cpu, ppu);
+    cartridge.load(path);
+    cartridge.map(bus, cpu, ppu);
 
     printf("Loaded ROM: %s\n", path.c_str());
-	printf("\tMapper: %u\n", rom.getMapperID());
-	printf("\tPRG ROM size: %u banks -> %u bytes\n", rom.header.prgBanks, rom.header.prgBanks * 0x4000);
-    printf("\tCHR ROM size: %u banks -> %u bytes\n", rom.header.chrBanks, rom.header.chrBanks * 0x2000);
+	printf("\tMapper: %u\n", cartridge.getMapperID());
+    Cartridge::Header romHeader = cartridge.getHeader();
+	printf("\tPRG ROM size: %u banks -> %u bytes\n", romHeader.prgBanks, romHeader.prgBanks * 0x4000);
+    printf("\tCHR ROM size: %u banks -> %u bytes\n", romHeader.chrBanks, romHeader.chrBanks * 0x2000);
 
     cpu.reset();
+    ppu.reset();
 }
 
 bool NES::init()
@@ -289,9 +291,9 @@ void NES::setEmulationSpeed(double speed)
     emulationSpeed = speed;
 }
 
-ROM& NES::getRom()
+Cartridge & NES::getCartridge()
 {
-    return rom;
+    return cartridge;
 }
 
 float NES::getTileSize()

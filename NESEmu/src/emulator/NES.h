@@ -5,7 +5,7 @@
 #include "CPU.h"
 #include "PPU.h"
 #include "Bus.h"
-#include "ROM.h"
+#include "Cartridge.h"
 #include "Controller.h"
 #include "../graphics/Graphics.h"
 #include "../graphics/IDrawable.h"
@@ -49,8 +49,8 @@ public:
 	// Set emulation speed
 	void setEmulationSpeed(double speed);
 
-	// Returns the NES' current ROM
-	ROM& getRom();
+	// Returns the currently loaded cartridge
+	Cartridge& getCartridge();
 
 	// Gets the current tile size with the applied rendering scale
 	float getTileSize();
@@ -83,7 +83,7 @@ private:
 
 	// NES Components
 	Bus bus;
-	ROM rom;
+	Cartridge cartridge;
 	CPU cpu;
 	PPU ppu;
 	Controller controller;

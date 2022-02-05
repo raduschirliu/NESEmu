@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ROM.h"
 #include "Bus.h"
 #include "../util/Logger.h"
 

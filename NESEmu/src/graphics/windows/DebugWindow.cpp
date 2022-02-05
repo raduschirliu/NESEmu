@@ -61,18 +61,6 @@ void DebugWindow::draw()
 
 	ImGui::Spacing();
 
-	// ROM info
-	if (ImGui::CollapsingHeader("ROM Info"))
-	{
-		ROM rom = nes.getRom();
-		ImGui::Text("Path: %s", rom.getPath().c_str());
-		ImGui::Text("Mapper: %u", rom.getMapperID());
-		ImGui::Text("PRG ROM size: %u banks (%u bytes)", rom.header.prgBanks, rom.header.prgBanks * 0x4000);
-		ImGui::Text("CHR ROM size: %u banks (%u bytes)", rom.header.chrBanks, rom.header.chrBanks * 0x2000);
-	}
-
-	ImGui::Spacing();
-
 	// Emulator controls
 	{
 		ImGui::BeginGroup();

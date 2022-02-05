@@ -12,8 +12,9 @@ void testEmulator()
     PPU ppu(bus);
     CPU cpu(bus);
 
-    ROM rom("..\\roms\\nestest.nes");
-    rom.map(bus, cpu, ppu);
+    Cartridge cartridge;
+    cartridge.load("..\\roms\\nestest.nes");
+    cartridge.map(bus, cpu, ppu);
 
     // Set PC to 0xC000 to put NESTest rom into "automation" mode
     cpu.setPC(0xC000);

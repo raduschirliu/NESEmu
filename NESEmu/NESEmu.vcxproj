@@ -177,7 +177,7 @@
     <ClCompile Include="src\mappers\Mapper0.cpp" />
     <ClCompile Include="src\emulator\Bus.cpp" />
     <ClCompile Include="src\emulator\PPU.cpp" />
-    <ClCompile Include="src\emulator\ROM.cpp" />
+    <ClCompile Include="src\emulator\Cartridge.cpp" />
     <ClCompile Include="src\util\Input.cpp" />
     <ClCompile Include="src\util\Logger.cpp" />
   </ItemGroup>
@@ -208,7 +208,7 @@
     <ClInclude Include="src\mappers\Mapper0.h" />
     <ClInclude Include="src\emulator\Bus.h" />
     <ClInclude Include="src\emulator\PPU.h" />
-    <ClInclude Include="src\emulator\ROM.h" />
+    <ClInclude Include="src\emulator\Cartridge.h" />
     <ClInclude Include="src\util\Input.h" />
     <ClInclude Include="src\util\Logger.h" />
     <ClInclude Include="src\util\Utils.h" />
