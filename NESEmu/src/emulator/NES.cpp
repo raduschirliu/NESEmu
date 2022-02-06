@@ -135,7 +135,7 @@ bool NES::init()
     drawables.push_back(new DemoWindow());
     drawables.push_back(new DebugWindow(*this, cpu));
     drawables.push_back(new MemoryViewWindow(bus));
-    drawables.push_back(new PPUDebugWindow(*this, ppu));
+    drawables.push_back(new PPUDebugWindow(*this, ppu, cartridge));
     drawables.push_back(new CartridgeDebugWindow(cartridge));
     drawables.push_back(new InputDebugWindow(controller));
 
@@ -399,7 +399,7 @@ void NES::drawSprites()
     std::vector<PPU::Color> grayscalePalette = { { 0, 0, 0, 0 }, { 50, 50, 50, 255 }, { 100, 100, 100, 255 }, { 200, 200, 200, 255 } };
 
     // 64 sprites in Oam to draw. Sprites with lower address are drawn on top
-    for (int i = PPU::OAM_SIZE - 1; i >= 0; i--)
+    for (int i = PPU::OAM_ENTRIES - 1; i >= 0; i--)
     {
         PPU::OamSprite *sprite = ppu.getOamSprite(i * sizeof(PPU::OamSprite));
         uint16_t paletteAddress = paletteAddresses[sprite->attributes.palette];

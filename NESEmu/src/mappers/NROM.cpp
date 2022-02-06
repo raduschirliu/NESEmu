@@ -9,7 +9,7 @@ namespace mappers
 
 	}
 
-	uint8_t NROM::getNumber()
+	uint8_t NROM::getId()
 	{
 		return 0;
 	}

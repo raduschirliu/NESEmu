@@ -12,9 +12,9 @@ using std::placeholders::_3;
 PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr)
 {
 	// TODO: Convert to modern C++ arrays
-	ciram = new uint8_t[0x800]();
-	paletteTables = new uint8_t[0x20](); // 32 bytes, not configurable/remapable
-	oam = new uint8_t[256]();			   // 256 bytes, internal PPU memory
+	ciram = new uint8_t[CIRAM_SIZE]();
+	paletteTables = new uint8_t[PALETTE_TABLE_SIZE]();
+	oam = new uint8_t[OAM_SIZE]();
 
 	// Initialize registers
 	registers = reinterpret_cast<Registers *>(bus.get(REGISTER_START_ADDRESS));

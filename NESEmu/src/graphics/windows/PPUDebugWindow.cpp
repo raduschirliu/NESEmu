@@ -62,7 +62,8 @@ VSO. ....
            line); cleared after reading $2002 and at dot 1 of the pre-render line.
 )";
 
-PPUDebugWindow::PPUDebugWindow(NES &nes, PPU &ppu) : Window(GLFW_KEY_F3), nes(nes), ppu(ppu), debugViewNametable(0)
+PPUDebugWindow::PPUDebugWindow(NES &nes, PPU &ppu, Cartridge &cartridge) :
+	Window(GLFW_KEY_F3), nes(nes), ppu(ppu), cartridge(cartridge), debugViewNametable(0)
 {
 	patternTableLeft = ResourceManager::getTexture("pattern_left");
 	patternTableRight = ResourceManager::getTexture("pattern_right");
@@ -146,15 +147,17 @@ void PPUDebugWindow::draw()
 		// Nametables
 		if (ImGui::BeginTabItem("Nametables"))
 		{
+			IMapper *mapper = cartridge.getMapper();
 			ImGui::Text("Active nametable: %u ($%X)", ppu.getRegisters()->ctrl.baseNametable, ppu.getActiveNametableAddress());
-			ImGui::Spacing();
+			ImGui::Text("Mirroring mode: %s", utils::mirroringModeToString(mapper->getMirroringMode()));
 
 			ImGui::Text("Display nametable: "); ImGui::SameLine();
 			ImGui::RadioButton("1", &debugViewNametable, 0); ImGui::SameLine();
 			ImGui::RadioButton("2", &debugViewNametable, 1); ImGui::SameLine();
 			ImGui::RadioButton("3", &debugViewNametable, 2); ImGui::SameLine();
 			ImGui::RadioButton("4", &debugViewNametable, 3);
-			ImGui::Spacing();
+			
+			ImGui::Dummy(ImVec2(0.0f, 6.0f));
 
 			drawNametable(debugViewNametable);
 			ImGui::EndTabItem();
@@ -284,7 +287,7 @@ void PPUDebugWindow::drawOam()
 	ImGui::Text("Sprite table: %u ($%X)", registers->ctrl.spritePatternTable, ppu.getActiveSpritePatternTableAddress());
 	ImGui::Spacing();
 
-	for (int i = 0; i < PPU::OAM_SIZE; i++)
+	for (int i = 0; i < PPU::OAM_ENTRIES; i++)
 	{
 		PPU::OamSprite *sprite = ppu.getOamSprite(i * sizeof(PPU::OamSprite));
 		uint8_t *attributeByte = reinterpret_cast<uint8_t *>(&sprite->attributes);

@@ -20,4 +20,18 @@ namespace utils
 			ss << std::endl;
 		}
 	}
+
+	std::string mirroringModeToString(MirroringMode mode)
+	{
+		switch (mode)
+		{
+		case MirroringMode::HORIZONTAL: return "Horizontal";
+		case MirroringMode::VERTICAL: return "Vertical";
+		case MirroringMode::SINGLE_SCREEN: return "Single Screen";
+		case MirroringMode::FOUR_SCREEN: return "4 Screen";
+		case MirroringMode::CUSTOM: return "Custom";
+		}
+
+		return "Invalid";
+	}
 }

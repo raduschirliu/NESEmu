@@ -14,7 +14,7 @@ class IMapper
 {
 public:
 	IMapper(Cartridge &cartridge) { }
-	virtual uint8_t getNumber() = 0;
+	virtual uint8_t getId() = 0;
 	virtual std::string getName() = 0;
 	virtual MirroringMode getMirroringMode() = 0;
 

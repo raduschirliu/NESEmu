@@ -47,7 +47,7 @@ void DebugWindow::draw()
 
 	// Emulator controls
 	{
-		ImGui::BeginGroup();
+		ImGui::BeginChild("Debugger##Controls", ImVec2(0, 110), true);
 		ImGui::Text("FPS: %u", fps);
 		ImGui::Spacing();
 
@@ -92,28 +92,36 @@ void DebugWindow::draw()
 			ImGui::EndCombo();
 		}
 
-		ImGui::EndGroup();
+		ImGui::EndChild();
 	}
 
 	// CPU state
-	CPU::State cpuState = cpu.getState();
-	ImGui::Text("Cycle:   %d", cpuState.totalCycles);
-	ImGui::Text("PC:      $%X", cpuState.pc);
-	ImGui::Text("Opcode:  $%X | %s (%s)", cpuState.opcode, cpuState.instruction.c_str(), cpuState.addressingMode.c_str());
-	ImGui::Text("SP:      $%X", cpuState.sp);
-
-	ImGui::Text("P:       $%X (%s)", cpuState.p, utils::toBitString(cpuState.p).c_str());
-
-	if (ImGui::IsItemHovered())
 	{
-		ImGui::SetTooltip(STATUS_HELP_TEXT);
+		// TODO: Make auto sizing
+		ImGui::BeginChild("Debugger##CPU State", ImVec2(0, 150), true);
+		// float start = ImGui::GetCursorPosY();
+
+		CPU::State cpuState = cpu.getState();
+		ImGui::Text("Cycle:   %d", cpuState.totalCycles);
+		ImGui::Text("PC:      $%X", cpuState.pc);
+		ImGui::Text("Opcode:  $%X | %s (%s)", cpuState.opcode, cpuState.instruction.c_str(), cpuState.addressingMode.c_str());
+		ImGui::Text("SP:      $%X", cpuState.sp);
+
+		ImGui::Text("P:       $%X (%s)", cpuState.p, utils::toBitString(cpuState.p).c_str());
+
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::SetTooltip(STATUS_HELP_TEXT);
+		}
+
+		ImGui::Text("A:       $%X", cpuState.a);
+		ImGui::Text("X:       $%X", cpuState.x);
+		ImGui::Text("Y:       $%X", cpuState.y);
+
+		//printf("frame height: %f", ImGui::GetStyle().WindowPadding.y);
+		//printf("diff: %f\n", (ImGui::GetCursorPosY() - start + ImGui::GetStyle().WindowPadding.y));
+		ImGui::EndChild();
 	}
-
-	ImGui::Text("A:       $%X", cpuState.a);
-	ImGui::Text("X:       $%X", cpuState.x);
-	ImGui::Text("Y:       $%X", cpuState.y);
-
-	ImGui::Spacing();
 
 	ImGui::End();
 }

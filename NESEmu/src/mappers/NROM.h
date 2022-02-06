@@ -14,7 +14,7 @@ namespace mappers
 		static constexpr uint16_t PRG_RAM_SIZE = 0x2000;
 
 		NROM(Cartridge &cartridge);
-		uint8_t getNumber() override;
+		uint8_t getId() override;
 		std::string getName() override;
 		MirroringMode getMirroringMode() override;
 

@@ -10,7 +10,7 @@
 class PPUDebugWindow : public Window
 {
 public:
-	PPUDebugWindow(NES &nes, PPU &ppu);
+	PPUDebugWindow(NES &nes, PPU &ppu, Cartridge &cartridge);
 
 	void draw() override;
 
@@ -22,6 +22,7 @@ private:
 
 	NES &nes;
 	PPU &ppu;
+	Cartridge &cartridge;
 	Texture *patternTableLeft;
 	Texture *patternTableRight;
 	std::stringstream ss;

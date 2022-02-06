@@ -13,6 +13,12 @@ class IMapper;
 class Cartridge
 {
 public:
+	// PRG ROM bank size: 16 KiB ($4000)
+	static constexpr uint16_t PRG_BANK_SIZE = 0x4000;
+
+	// CHR ROM bank size: 8 KiB ($2000)
+	static constexpr uint16_t CHR_BANK_SIZE = 0x2000;
+
 	// Constant at the start of every header: "NES" followed by MS-DOS EOF
 	static constexpr uint8_t HEADER_NAME[] = { 0x4E, 0x45, 0x53, 0x1A };
 
@@ -35,7 +41,7 @@ public:
 		struct Flags7 {
 			uint8_t vsUnisystem : 1;
 			uint8_t hasPlaychoiceData : 1;
-			uint8_t usesNes2Format : 2;
+			uint8_t format : 2;
 			uint8_t mapperUpperNibble : 4;
 		} flags7; // Top - LSB, Bottom - MSB
 		uint8_t prgRamSize; // Size of PRG RAM in 8 KiB units

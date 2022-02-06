@@ -8,7 +8,7 @@
 class PPU
 {
 public:
-	// The start address of each nametable. Each is 960 ($3C0) bytes long
+	// The start address of each nametable. Each is 960 bytes ($3C0) long
 	static constexpr uint16_t NAMETABLE_ADDRESSES[] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 	static constexpr uint16_t NAMETABLE_ROWS = 30;
 	static constexpr uint16_t NAMETABLE_COLS = 32;
@@ -25,7 +25,16 @@ public:
 	static constexpr uint16_t ATTRIBUTE_TABLE_COLS = 8;
 
 	// Amount of entries in OAM
-	static constexpr uint16_t OAM_SIZE = 64;
+	static constexpr uint16_t OAM_ENTRIES = 64;
+
+	// Size of OAM in bytes
+	static constexpr uint16_t OAM_SIZE = 256;
+
+	// Size of palette table in bytes
+	static constexpr uint16_t PALETTE_TABLE_SIZE = 0x20;
+
+	// Size of CIRAM, enough to hold two nametables: 2 KiB ($800)
+	static constexpr uint16_t CIRAM_SIZE = 0x800;
 
 	// Location of registers on CPU memory bus
 	static constexpr uint16_t REGISTER_START_ADDRESS = Bus::PPUCTRL;
