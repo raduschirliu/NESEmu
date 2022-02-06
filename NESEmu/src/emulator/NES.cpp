@@ -28,11 +28,6 @@ static void glfwErrorCallback(int error, const char *desc)
     printf("GLFW error: %i %s\n", error, desc);
 }
 
-void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
-{
-
-}
-
 NES::NES(): cpu(bus), ppu(bus), controller(bus, Bus::JOY1)
 {
     // TODO: Use initializer list
