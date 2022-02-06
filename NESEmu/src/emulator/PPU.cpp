@@ -383,7 +383,13 @@ uint16_t PPU::mirrorNametableAddress(uint16_t address)
 
 	case MirroringMode::VERTICAL:
 	{
-		// TODO: Add vertical mirroring
+		if (address >= 0x2800)
+		{
+			// Each nametable is 1024 bytes
+			address -= 1024 * 2;
+		}
+
+		return address;
 		break;
 	}
 

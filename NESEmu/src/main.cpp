@@ -47,7 +47,7 @@ int runEmulator()
     }
 
     // nes.loadDebugMode();
-    nes.load("..\\roms\\donkey-kong.nes");
+    nes.load("..\\roms\\super-mario-bros.nes");
     nes.run();
 
     return 0;
