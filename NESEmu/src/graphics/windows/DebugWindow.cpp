@@ -1,11 +1,28 @@
 #include "DebugWindow.h"
+#include "../../util/Utils.h"
 
 #include <algorithm>
+
+// Help texts from NES Wiki:
+// https://wiki.nesdev.org/w/index.php/Status_flags
+static const char *STATUS_HELP_TEXT = R"(
+7  bit  0
+---- ----
+NVss DIZC
+|||| ||||
+|||| |||+- Carry
+|||| ||+-- Zero
+|||| |+--- Interrupt Disable
+|||| +---- Decimal
+||++------ No CPU effect, see: the B flag
+|+-------- Overflow
++--------- Negative
+)";
 
 DebugWindow::DebugWindow(NES &nes, CPU &cpu)
 	: Window(GLFW_KEY_F1), prevTime(0), frames(0), fps(0), emulationSpeed(1.0), renderingScale(1), nes(nes), cpu(cpu)
 {
-	enable();
+	setVisible(true);
 }
 
 void DebugWindow::draw()
@@ -21,45 +38,12 @@ void DebugWindow::draw()
 		prevTime = currentTime;
 	}
 
-	// If window not enabled, don't draw it
-	if (!enabled)
-	{
-		return;
-	}
-
 	// If collapsed, exit out early as optimization
-	if (!ImGui::Begin("Debugger", &enabled))
+	if (!ImGui::Begin("Debugger", &visible))
 	{
 		ImGui::End();
 		return;
 	}
-
-	// CPU state
-	if (ImGui::CollapsingHeader("CPU State"))
-	{
-		CPU::State cpuState = cpu.getState();
-		ImGui::Text("Cycle: %d", cpuState.totalCycles);
-		ImGui::Text("PC: $%X", cpuState.pc);
-		ImGui::Text("Opcode: $%X | %s (%s)", cpuState.opcode, cpuState.instruction.c_str(), cpuState.addressingMode.c_str());
-		ImGui::Text("SP: $%X", cpuState.sp);
-
-		char statusBuf[20];
-		uint8_t statusRegister = cpuState.p;
-
-		for (int i = 0; i < 8; i++)
-		{
-			uint8_t bit = ((statusRegister >> 7) - i) & 0b00000001;
-			sprintf_s(statusBuf + i, (size_t)20 - i, "%d", bit);
-		}
-
-		ImGui::Text("P: $%X | NO-BDIZC: %s", statusRegister, statusBuf);
-
-		ImGui::Text("A: $%X", cpuState.a);
-		ImGui::Text("X: $%X", cpuState.x);
-		ImGui::Text("Y: $%X", cpuState.y);
-	}
-
-	ImGui::Spacing();
 
 	// Emulator controls
 	{
@@ -110,6 +94,26 @@ void DebugWindow::draw()
 
 		ImGui::EndGroup();
 	}
+
+	// CPU state
+	CPU::State cpuState = cpu.getState();
+	ImGui::Text("Cycle:   %d", cpuState.totalCycles);
+	ImGui::Text("PC:      $%X", cpuState.pc);
+	ImGui::Text("Opcode:  $%X | %s (%s)", cpuState.opcode, cpuState.instruction.c_str(), cpuState.addressingMode.c_str());
+	ImGui::Text("SP:      $%X", cpuState.sp);
+
+	ImGui::Text("P:       $%X (%s)", cpuState.p, utils::toBitString(cpuState.p).c_str());
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip(STATUS_HELP_TEXT);
+	}
+
+	ImGui::Text("A:       $%X", cpuState.a);
+	ImGui::Text("X:       $%X", cpuState.x);
+	ImGui::Text("Y:       $%X", cpuState.y);
+
+	ImGui::Spacing();
 
 	ImGui::End();
 }

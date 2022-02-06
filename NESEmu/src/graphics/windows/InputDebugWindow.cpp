@@ -1,20 +1,14 @@
 #include "InputDebugWindow.h"
 
-InputDebugWindow::InputDebugWindow(Controller &controller) : Window(GLFW_KEY_F4), controller(controller)
+InputDebugWindow::InputDebugWindow(Controller &controller) : Window(GLFW_KEY_F5), controller(controller)
 {
 
 }
 
 void InputDebugWindow::draw()
 {
-	// If window not enabled, don't draw it
-	if (!enabled)
-	{
-		return;
-	}
-
 	// If collapsed, exit out early as optimization
-	if (!ImGui::Begin("Input", &enabled))
+	if (!ImGui::Begin("Input", &visible))
 	{
 		ImGui::End();
 		return;

@@ -1,5 +1,6 @@
 #include "MemoryViewWindow.h"
 #include "../../util/Logger.h"
+#include "../../util/Utils.h"
 
 #include <iomanip>
 
@@ -10,29 +11,28 @@ MemoryViewWindow::MemoryViewWindow(Bus &bus) : Window(GLFW_KEY_F2), currentPage(
 
 void MemoryViewWindow::draw()
 {
-	// If window not enabled, don't draw it
-	if (!enabled)
-	{
-		return;
-	}
-
 	// If collapsed, exit out early as optimization
-	if (!ImGui::Begin("Memory Viewer", &enabled))
+	if (!ImGui::Begin("Memory Viewer", &visible))
 	{
 		ImGui::End();
 		return;
 	}
 
-	// Initialize window
-	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_HorizontalScrollbar;
-	ImGui::BeginChild("Memory", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, 260), false, windowFlags);
+	ImGui::Text("CPU addressable memory:");
+	ImGui::Spacing();
 
-	// Display current memory page
-	printMemory(pageSize * currentPage, pageSize * (currentPage + 1));
-	ImGui::Text(ss.str().c_str());
-	ss.str("");
+	// Initialize sub-window
+	{
+		ImGuiWindowFlags windowFlags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysAutoResize;
+		ImGui::BeginChild("Memory", ImVec2(ImGui::GetWindowContentRegionWidth(), 400), true, windowFlags);
 
-	ImGui::EndChild();
+		// Display current memory page
+		utils::printMemory(ss, pageSize * currentPage, pageSize * (currentPage + 1), [&](uint16_t address) { return bus.read(address); });
+		ImGui::Text(ss.str().c_str());
+		ss.str("");
+
+		ImGui::EndChild();
+	}
 
 	// Jump 10 pages back
 	if (ImGui::Button("<<"))
@@ -105,7 +105,7 @@ void MemoryViewWindow::draw()
 		Logger dump("..\\logs\\memdump.log");
 		dump.write("Memory dump\n\n");
 
-		printMemory(0, 0xFFFF);
+		utils::printMemory(ss, 0, 0xFFFF, [&](uint16_t address) { return bus.read(address); });
 		dump.write(ss.str().c_str());
 
 		printf("Dumped memory to logs/memdump.log");
@@ -113,23 +113,4 @@ void MemoryViewWindow::draw()
 	}
 
 	ImGui::End();
-}
-
-void MemoryViewWindow::printMemory(uint16_t start, uint16_t end)
-{
-	// Draw 8 bytes per line from start address to end address
-	for (int base = start; base <= end; base += 8)
-	{
-		ss << std::hex
-			<< std::setw(4) << std::setfill('0')
-			<< base << ":\t";
-
-		for (int line = 0; line < 8; line++)
-		{
-			ss << std::setw(2) << std::setfill('0')
-				<< (int)bus.read(base + line) << " ";
-		}
-
-		ss << std::endl;
-	}
 }

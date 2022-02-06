@@ -70,29 +70,11 @@ PPUDebugWindow::PPUDebugWindow(NES &nes, PPU &ppu) : Window(GLFW_KEY_F3), nes(ne
 
 void PPUDebugWindow::draw()
 {
-	// If window not enabled, don't draw it
-	if (!enabled)
-	{
-		return;
-	}
-
 	// If collapsed, exit out early as optimization
-	if (!ImGui::Begin("PPU Debugger", &enabled))
+	if (!ImGui::Begin("PPU Debugger", &visible))
 	{
 		ImGui::End();
 		return;
-	}
-
-	if (ImGui::Button("Dump CHR ROM"))
-	{
-		Logger dump("..\\logs\\chrrom_dump.log");
-		dump.write("CHR ROM dump\n\n");
-
-		printMemory(0x0000, 0x3FFF);
-		dump.write(ss.str().c_str());
-
-		printf("Dumped CHR ROM to logs");
-		ss.str("");
 	}
 
 	ImGui::Text("Current cycle: %u", ppu.getCycles());
@@ -100,31 +82,30 @@ void PPUDebugWindow::draw()
 	ImGui::Text("Current frame: %u", ppu.getFrameCount());
 	ImGui::Text("Total cycles: %u", ppu.getTotalCycles());
 
-	ImGui::Spacing();
-
-	if (ImGui::CollapsingHeader("PPU Registers"))
-	{
-		PPU::Registers* registers = ppu.getRegisters();
-
-		drawRegister("PPUCTRL  ", 0x2000, &registers->ctrl, CTRL_HELP_TEXT);
-		drawRegister("PPUMASK  ", 0x2001, &registers->mask, MASK_HELP_TEXT);
-		drawRegister("PPUSTATUS", 0x2002, &registers->status, STATUS_HELP_TEXT);
-		drawRegister("OAMADDR  ", 0x2003, &registers->oamAddr, nullptr);
-		drawRegister("OAMDATA  ", 0x2004, &registers->oamData, nullptr);
-		drawRegister("PPUSCROLL", 0x2005, &registers->scroll, nullptr);
-		drawRegister("PPUADDR  ", 0x2006, &registers->addr, nullptr);
-		drawRegister("PPUDATA  ", 0x2007, &registers->data, nullptr);
-	}
-
-	ImGui::Spacing();
+	ImGui::Dummy(ImVec2(0, 4));
 
 	if (ImGui::BeginTabBar("PPU Views", ImGuiTabBarFlags_None))
 	{
+		// Registers
+		if (ImGui::BeginTabItem("Registers"))
+		{
+			PPU::Registers *registers = ppu.getRegisters();
+			drawRegister("PPUCTRL  ", 0x2000, &registers->ctrl, CTRL_HELP_TEXT);
+			drawRegister("PPUMASK  ", 0x2001, &registers->mask, MASK_HELP_TEXT);
+			drawRegister("PPUSTATUS", 0x2002, &registers->status, STATUS_HELP_TEXT);
+			drawRegister("OAMADDR  ", 0x2003, &registers->oamAddr, nullptr);
+			drawRegister("OAMDATA  ", 0x2004, &registers->oamData, nullptr);
+			drawRegister("PPUSCROLL", 0x2005, &registers->scroll, nullptr);
+			drawRegister("PPUADDR  ", 0x2006, &registers->addr, nullptr);
+			drawRegister("PPUDATA  ", 0x2007, &registers->data, nullptr);
+
+			ImGui::EndTabItem();
+		}
+
 		// Pattern table
 		if (ImGui::BeginTabItem("Pattern Table"))
 		{
 			PPU::Registers *registers = ppu.getRegisters();
-
 			ImGui::Text("Background table:\t%u ($%X)", registers->ctrl.bgPatternTable, ppu.getActiveBgPatternTableAddress());
 			ImGui::Text("Sprite table:\t\t%u ($%X)", registers->ctrl.spritePatternTable, ppu.getActiveSpritePatternTableAddress());
 
@@ -168,7 +149,7 @@ void PPUDebugWindow::draw()
 			ImGui::Text("Active nametable: %u ($%X)", ppu.getRegisters()->ctrl.baseNametable, ppu.getActiveNametableAddress());
 			ImGui::Spacing();
 
-			ImGui::Text("Display nametable: ");
+			ImGui::Text("Display nametable: "); ImGui::SameLine();
 			ImGui::RadioButton("1", &debugViewNametable, 0); ImGui::SameLine();
 			ImGui::RadioButton("2", &debugViewNametable, 1); ImGui::SameLine();
 			ImGui::RadioButton("3", &debugViewNametable, 2); ImGui::SameLine();
@@ -208,25 +189,6 @@ void PPUDebugWindow::drawRegister(string name, uint16_t address, const void* reg
 		ImGui::Text("%s ($%X)", name.c_str(), address);
 		ImGui::Text(CTRL_HELP_TEXT);
 		ImGui::EndTooltip();
-	}
-}
-
-void PPUDebugWindow::printMemory(uint16_t start, uint16_t end)
-{
-	// Draw 8 bytes per line from start address to end address
-	for (int base = start; base <= end; base += 8)
-	{
-		ss << std::hex
-			<< std::setw(4) << std::setfill('0')
-			<< base << ":\t";
-
-		for (int line = 0; line < 8; line++)
-		{
-			ss << std::setw(2) << std::setfill('0')
-				<< (int)ppu.readMemory(base + line) << " ";
-		}
-
-		ss << std::endl;
 	}
 }
 

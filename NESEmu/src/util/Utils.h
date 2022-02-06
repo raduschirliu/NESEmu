@@ -4,6 +4,9 @@
 #include <string>
 #include <bitset>
 #include <limits>
+#include <sstream>
+#include <iomanip>
+#include <functional>
 
 namespace utils
 {
@@ -14,4 +17,6 @@ namespace utils
 		std::bitset<size> bits = num;
 		return bits.to_string();
 	}
+
+	void printMemory(std::stringstream &ss, uint16_t start, uint16_t end, std::function<uint8_t(uint16_t address)> readCallback);
 }

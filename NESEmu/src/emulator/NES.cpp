@@ -4,6 +4,7 @@
 #include "../graphics/windows/MemoryViewWindow.h"
 #include "../graphics/windows/PPUDebugWindow.h"
 #include "../graphics/windows/InputDebugWindow.h"
+#include "../graphics/windows/CartridgeDebugWindow.h"
 #include "../graphics/Texture.h"
 #include "../graphics/Shader.h"
 #include "../graphics/ResourceManager.h"
@@ -135,6 +136,7 @@ bool NES::init()
     drawables.push_back(new DebugWindow(*this, cpu));
     drawables.push_back(new MemoryViewWindow(bus));
     drawables.push_back(new PPUDebugWindow(*this, ppu));
+    drawables.push_back(new CartridgeDebugWindow(cartridge));
     drawables.push_back(new InputDebugWindow(controller));
 
     GL_ERROR_CHECK();
@@ -200,8 +202,17 @@ void NES::run()
             // Draw all drawable components
             for (IDrawable *drawable : drawables)
             {
+                if (!drawable->isActive())
+                {
+                    continue;
+                }
+
                 drawable->update();
-                drawable->draw();
+
+                if (drawable->isVisible())
+                {
+                    drawable->draw();
+                }
             }
 
             // Render ImGui

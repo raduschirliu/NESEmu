@@ -162,6 +162,7 @@
     <ClCompile Include="src\graphics\ResourceManager.cpp" />
     <ClCompile Include="src\graphics\Shader.cpp" />
     <ClCompile Include="src\graphics\Texture.cpp" />
+    <ClCompile Include="src\graphics\windows\CartridgeDebugWindow.cpp" />
     <ClCompile Include="src\graphics\windows\DebugWindow.cpp" />
     <ClCompile Include="src\graphics\imgui\imgui.cpp" />
     <ClCompile Include="src\graphics\imgui\imgui_demo.cpp" />
@@ -180,6 +181,7 @@
     <ClCompile Include="src\emulator\Cartridge.cpp" />
     <ClCompile Include="src\util\Input.cpp" />
     <ClCompile Include="src\util\Logger.cpp" />
+    <ClCompile Include="src\util\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\emulator\CPU.h" />
@@ -190,6 +192,7 @@
     <ClInclude Include="src\graphics\ResourceManager.h" />
     <ClInclude Include="src\graphics\Shader.h" />
     <ClInclude Include="src\graphics\Texture.h" />
+    <ClInclude Include="src\graphics\windows\CartridgeDebugWindow.h" />
     <ClInclude Include="src\graphics\windows\DebugWindow.h" />
     <ClInclude Include="src\emulator\NES.h" />
     <ClInclude Include="src\graphics\Graphics.h" />

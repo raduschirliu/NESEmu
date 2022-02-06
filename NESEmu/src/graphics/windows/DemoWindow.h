@@ -11,7 +11,6 @@ public:
 	// Show ImGui demo window
 	void draw() override
 	{
-		if (!enabled) return;
-		ImGui::ShowDemoWindow(&enabled);
+		ImGui::ShowDemoWindow(&visible);
 	}
 };
