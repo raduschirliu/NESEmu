@@ -167,11 +167,16 @@ uint8_t PPU::readMemory(uint16_t address)
 			{
 				return value;
 			}
-			else
+
+			address = mirrorNametableAddress(address);
+			uint16_t ciramOffset = address - 0x2000;
+
+			if (ciramOffset >= CIRAM_SIZE)
 			{
-				address = mirrorNametableAddress(address);
-				return ciram[address - 0x2000];
+				return 0;
 			}
+
+			return ciram[ciramOffset];
 		}
 
 		return mapper->chrRead(address);
@@ -206,12 +211,16 @@ void PPU::writeMemory(uint16_t address, uint8_t value)
 			{
 				return;
 			}
-			else
+
+			address = mirrorNametableAddress(address);
+			uint16_t ciramOffset = address - 0x2000;
+
+			if (ciramOffset >= CIRAM_SIZE)
 			{
-				address = mirrorNametableAddress(address);
-				ciram[address - 0x2000] = value;
 				return;
 			}
+
+			ciram[ciramOffset] = value;
 		}
 
 		mapper->chrWrite(address, value);
