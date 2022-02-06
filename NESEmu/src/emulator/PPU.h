@@ -98,9 +98,6 @@ public:
 	// Emulate one PPU cycle
 	void step();
 
-	// Returns pointer to memory location
-	uint8_t *getMemory(uint16_t address);
-
 	// Reads from memory location
 	uint8_t readMemory(uint16_t address);
 
@@ -152,16 +149,15 @@ public:
 	// Returns whether an OAM transfer is requested from the CPU
 	bool isOamTransferRequested();
 
+	// Sets the active mapper
+	void setMapper(IMapper *mapper);
+
 private:
 	// Cycle related stats
 	uint32_t cycles, scanlines, frames, totalCycles;
 
-	// Used for pattern tables, $0000 - $1FFF. Each pattern table being $1000 in size
-	// Mapped to cartridge using bank switching
-	uint8_t *patternTables;
-
-	// Used for name tables, $2000 - $2FFF. Normally mapped to 2kB of internal NES VRAM
-	uint8_t *nameTables;
+	// PPU internal VRAM of 2 KiB ($800)
+	uint8_t *ciram;
 
 	// Used to hold palette control information, $3F00 - $3FFF. Region $3F20 - $3FFF mirrors $3F00 - $3F1F
 	uint8_t *paletteTables;
@@ -178,8 +174,9 @@ private:
 	// Log PPU activities
 	Logger logger;
 
-	// CPU memory bus
+	// Other NES components
 	Bus &bus;
+	IMapper *mapper;
 
 	// Control the address that the CPU can access through PPUADDR/PPUDATA
 	uint16_t accessAddress;
@@ -193,6 +190,9 @@ private:
 
 	// If the PPU is currently being reset or not
 	bool isResetting;
+
+	// Mirror the nametable address according to the mapper
+	uint16_t mirrorNametableAddress(uint16_t address);
 
 	// Load the system palette
 	void loadPalette(std::string path);

@@ -49,13 +49,8 @@ NES::NES(): cpu(bus), ppu(bus), controller(bus, Bus::JOY1)
 void NES::load(std::string path)
 {
     cartridge.load(path);
-    cartridge.map(bus, cpu, ppu);
-
-    printf("Loaded ROM: %s\n", path.c_str());
-	printf("\tMapper: %u\n", cartridge.getMapperID());
-    Cartridge::Header romHeader = cartridge.getHeader();
-	printf("\tPRG ROM size: %u banks -> %u bytes\n", romHeader.prgBanks, romHeader.prgBanks * 0x4000);
-    printf("\tCHR ROM size: %u banks -> %u bytes\n", romHeader.chrBanks, romHeader.chrBanks * 0x2000);
+    bus.setMapper(cartridge.getMapper());
+    ppu.setMapper(cartridge.getMapper());
 
     cpu.reset();
     ppu.reset();

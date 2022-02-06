@@ -10,10 +10,10 @@ Bus::Bus()
 {
 	// Allocate memory arrays for all NES components
 	cpuMem = new uint8_t[2048]();
-	ppuMem = new uint8_t[8]();
+	ppuRegisterMem = new uint8_t[8]();
 	apuMem = new uint8_t[24]();
 	testMem = new uint8_t[8]();
-	romMem = new uint8_t[49120]();
+	mapper = nullptr;
 	
 	// Other things needed on the bus
 	shouldDispatchNmi = false;
@@ -24,10 +24,9 @@ Bus::~Bus()
 {
 	// Deallocate all memory arrays
 	delete[] cpuMem;
-	delete[] ppuMem;
+	delete[] ppuRegisterMem;
 	delete[] apuMem;
 	delete[] testMem;
-	delete[] romMem;
 }
 
 uint8_t *Bus::get(uint16_t address)
@@ -40,9 +39,9 @@ uint8_t *Bus::get(uint16_t address)
 	}
 	else if (address >= 0x2000 && address <= 0x3FFF)
 	{
-		// Get from PPU memory ($2000 - $3FFF, mirrored > $2007)
+		// Get from PPU register memory ($2000 - $3FFF, mirrored > $2007)
 		uint16_t target = (address - 0x2000) % 0x0008;
-		return &ppuMem[target];
+		return &ppuRegisterMem[target];
 	}
 	else if (address >= 0x4000 && address <= 0x4017)
 	{
@@ -54,17 +53,19 @@ uint8_t *Bus::get(uint16_t address)
 		// Get from APU & I/O test Memory (usually disabled) ($4018 - $401F)
 		return &testMem[address - 0x4018];
 	}
-	else if (address >= 0x4020 && address <= 0xFFFF)
-	{
-		// Get from cartridge Memory ($4020 - $FFFF)
-		return &romMem[address - 0x4020];
-	}
 
 	return nullptr;
 }
 
 uint8_t Bus::read(uint16_t address, bool skipCallback)
 {
+	// Get from cartridge Memory ($4020 - $FFFF)
+	if (address >= 0x4020 && address <= 0xFFFF)
+	{
+		return mapper->prgRead(address);
+	}
+
+	// Any other bus accesible memory (< $4020)
 	uint8_t *ptr = get(address);
 
 	if (ptr != nullptr)
@@ -85,6 +86,14 @@ uint8_t Bus::read(uint16_t address, bool skipCallback)
 
 void Bus::write(uint16_t address, uint8_t value, bool skipCallback)
 {
+	// Get from cartridge Memory ($4020 - $FFFF)
+	if (address >= 0x4020 && address <= 0xFFFF)
+	{
+		mapper->prgWrite(address, value);
+		return;
+	}
+
+	// Any other bus accesible memory (< $4020)
 	uint8_t *ptr = get(address);
 
 	if (ptr != nullptr)
@@ -166,6 +175,11 @@ bool Bus::pollNmi()
 bool Bus::pollOamTransfer()
 {
 	return shouldDispatchOamTransfer;
+}
+
+void Bus::setMapper(IMapper *mapper)
+{
+	this->mapper = mapper;
 }
 
 void Bus::dispatchMemoryAccessCallbacks(uint16_t address, uint8_t value, bool write)

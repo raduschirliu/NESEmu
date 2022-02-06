@@ -1,14 +1,13 @@
 #pragma once
 
-#include "Mapper.h"
 #include "Bus.h"
 #include "PPU.h"
-#include "CPU.h"
 
+#include <vector>
 #include <string>
 
-// Forward declaration
-class CPU;
+// Forward declarations
+class IMapper;
 
 // Representation of a game cartridge, which handles loading and dealing with files in the iNES format
 class Cartridge
@@ -24,8 +23,8 @@ public:
 	struct Header
 	{
 		char name[4]; // Must be == HEADER_NAME
-		uint8_t prgBanks; // PRG ROM banks in 16 KB units
-		uint8_t chrBanks; // CHR ROM banks in 8 KB units
+		uint8_t prgBanks; // PRG ROM banks in 16 KiB units
+		uint8_t chrBanks; // CHR ROM banks in 8 KiB units
 		struct Flags6 {
 			uint8_t mirroring : 1;
 			uint8_t hasPrgRam : 1;
@@ -39,7 +38,7 @@ public:
 			uint8_t usesNes2Format : 2;
 			uint8_t mapperUpperNibble : 4;
 		} flags7; // Top - LSB, Bottom - MSB
-		uint8_t prgRamSize; // Size of PRG RAM in 8 KB units
+		uint8_t prgRamSize; // Size of PRG RAM in 8 KiB units
 		uint8_t tvFlags1;
 		uint8_t tvFlags2;
 		uint8_t _padding[5];
@@ -49,28 +48,32 @@ public:
 	Cartridge();
 
 	// Load ROM from given file path
-	void load(std::string path);
+	bool load(std::string path);
 
-	// Reads ROM from file path and maps it into memory based on mapper configuration
-	void map(Bus &bus, CPU &cpu, PPU &ppu);
-
-	// Returns the ROM headers
+	// iNES ROM data getters
 	Header getHeader() const;
-
-	// Returns the mapper ID associated with the ROM
-	uint8_t getMapperID() const;
+	std::vector<uint8_t> &getPrgRom();
+	std::vector<uint8_t> &getChrRom();
 
 	// Returns the path of the ROM file on the disk
 	std::string getPath() const;
 
+	// Returns the mapper ID associated with the ROM
+	uint8_t getMapperID() const;
+
+	// Returns the active mapper
+	IMapper *getMapper();
+
 private:
-	// iNES headers
+	// iNES ROM data
 	Header header;
+	std::vector<uint8_t> prgRom;
+	std::vector<uint8_t> chrRom;
 
 	// ROM path on disk
 	std::string path;
 
 	// Mapper used for this ROM
-	Mapper *mapper;
+	IMapper *mapper;
 };
 

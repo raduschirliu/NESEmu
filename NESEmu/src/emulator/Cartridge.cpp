@@ -1,4 +1,6 @@
 #include "Cartridge.h"
+#include "MapperFactory.h"
+
 #include <fstream>
 #include <cerrno>
 
@@ -7,29 +9,25 @@ Cartridge::Cartridge() : header({ 0 }), path(""), mapper(nullptr)
 
 }
 
-void Cartridge::load(std::string path)
+bool Cartridge::load(std::string path)
 {
 	this->path = path;
-}
-
-void Cartridge::map(Bus &bus, CPU &cpu, PPU &ppu)
-{
 	std::ifstream stream;
 	stream.open(path, std::ifstream::binary);
 
 	if (!stream.is_open())
 	{
 		printf("Failed to open file\n");
-		return;
+		return false;
 	}
-
+	
 	// Read header
-	stream.get((char *)&header, sizeof(Header));
+	stream.read((char *)&header, sizeof(Header));
 
 	if (memcmp(header.name, HEADER_NAME, sizeof(HEADER_NAME)) != 0)
 	{
-		printf("Error, cartridge loaded rom with invalid header constant\n");
-		return;
+		printf("Error, cartridge loaded ROM with invalid header constant\n");
+		return false;
 	}
 
 	// Check if trainer is present
@@ -38,35 +36,46 @@ void Cartridge::map(Bus &bus, CPU &cpu, PPU &ppu)
 		stream.seekg(TRAINER_SIZE, std::ios_base::cur);
 	}
 
-	// TODO: Implement mappers
-	// Equivalent to using mapper 0 (NROM)
-	uint16_t offset = 0;
-	uint8_t byte;
+	// TODO: Make more efficient
 
-	stream.seekg(1, std::ios_base::cur);
-
-	while (!stream.eof())
+	// Read PRG ROM in 16 KiB ($4000) increments
+	uint16_t prgRomSize = 0x4000 * header.prgBanks;
+	for (uint32_t i = 0; i < prgRomSize; i++)
 	{
+		uint8_t byte;
 		stream.read((char *)&byte, 1);
-			
-		// Copy first 16KB of PRG ROM to CPU memory
-		if (offset >= 0 && offset < 0x4000)
-		{
-			// TEST: Write 0x4000 bytes (16KB) to memory, mirrored at 0x8000-0xBFFF and 0xC000-0xFFFF
-			bus.write(0x8000 + offset, byte);
-			bus.write(0xC000 + offset, byte);
-		}
-
-		// Copy next 8KB of CHR ROM to PPU memory
-		if (offset >= 0x4000 && offset < 0x6000)
-		{
-			ppu.writeMemory(offset - 0x4000, byte);
-		}
-
-		offset++;
+		prgRom.push_back(byte);
 	}
 
-	printf("Done, loaded $%X (%d) bytes from ROM\n", offset, offset);
+	// Read CHR ROM in 8 KiB ($2000) increments
+	uint16_t chrRomSize = 0x2000 * header.chrBanks;
+	for (uint32_t i = 0; i < chrRomSize; i++)
+	{
+		uint8_t byte;
+		stream.read((char *)&byte, 1);
+		chrRom.push_back(byte);
+	}
+
+	// Create mapper
+	if (mapper)
+	{
+		delete mapper;
+	}
+
+	mapper = MapperFactory::createMapper(*this);
+
+	if (!mapper)
+	{
+		printf("Error, mapper %u not implemented yet!\n", getMapperID());
+		return false;
+	}
+
+	printf("Loaded ROM: %s\n", path.c_str());
+	printf("\tMapper: %u\n", getMapperID());
+	printf("\tMirroring: %u\n", mapper->getMirroringMode());
+	printf("\tPRG ROM size: %u banks -> %u bytes\n", header.prgBanks, prgRom.size());
+	printf("\tCHR ROM size: %u banks -> %u bytes\n", header.chrBanks, chrRom.size());
+	return true;
 }
 
 Cartridge::Header Cartridge::getHeader() const
@@ -74,12 +83,27 @@ Cartridge::Header Cartridge::getHeader() const
 	return header;
 }
 
-uint8_t Cartridge::getMapperID() const
+std::vector<uint8_t> &Cartridge::getPrgRom()
 {
-	return header.flags6.mapperLowerNibble & (header.flags7.mapperUpperNibble << 4);
+	return prgRom;
+}
+
+std::vector<uint8_t> &Cartridge::getChrRom()
+{
+	return chrRom;
 }
 
 std::string Cartridge::getPath() const
 {
 	return path;
+}
+
+uint8_t Cartridge::getMapperID() const
+{
+	return header.flags6.mapperLowerNibble & (header.flags7.mapperUpperNibble << 4);
+}
+
+IMapper *Cartridge::getMapper()
+{
+	return mapper;
 }

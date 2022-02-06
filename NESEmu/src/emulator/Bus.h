@@ -1,12 +1,13 @@
 #pragma once
 
 #include "../util/Logger.h"
+#include "IMapper.h"
 
 #include <cstdint>
 #include <functional>
 #include <vector>
 
-// Contains the 64KB of RAM that is addressable by the 6502 CPU
+// Contains the 64 KiB of RAM that is addressable by the 6502 CPU
 class Bus
 {
 public:
@@ -15,6 +16,9 @@ public:
 	static constexpr uint16_t OAMDMA = 0x4014;
 	static constexpr uint16_t JOY1 = 0x4016;
 	static constexpr uint16_t JOY2 = 0x4017;
+
+	// Addressess
+	static constexpr uint16_t CARTRIDGE_ADDRESS = 0x4020;
 
 	// Callback types
 	using AccessCallback = std::function<void(uint16_t address, uint8_t newValue, bool write)>;
@@ -56,14 +60,17 @@ public:
 	// Poll for whether an OAM data transfer is requested
 	bool pollOamTransfer();
 
+	// Sets the active mapper
+	void setMapper(IMapper* mapper);
+
 private:
-	// Internal 2KB of CPU Memory (from $0000 - $07FFF)
+	// Internal 2 KiB of CPU Memory (from $0000 - $07FFF)
 	// Mirrored 3 times from $0800 - $1FFF
 	uint8_t *cpuMem;
 
 	// PPU Memory mapped registers (from $2000 - $2007)
 	// Mirrored every 8 bytes from $2008 - $3FFF
-	uint8_t *ppuMem;
+	uint8_t *ppuRegisterMem;
 
 	// APU & I/O Memory (from $4000 - $4017)
 	uint8_t *apuMem;
@@ -71,8 +78,8 @@ private:
 	// APU & I/O Memory - usually disabled (from $4018 - $401F)
 	uint8_t *testMem;
 
-	// Cartridge Memory: PRG ROM, PRG RAM, and mapper registers (from $4020 - $FFFF)
-	uint8_t *romMem;
+	// Cartridge Memory: used for PRG ROM, PRG RAM, and mapper registers (from $4020 - $FFFF)
+	IMapper *mapper;
 
 	// Callbacks
 	std::vector<AccessCallback> memoryAccessCallbacks;

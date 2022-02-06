@@ -14,7 +14,6 @@ void testEmulator()
 
     Cartridge cartridge;
     cartridge.load("..\\roms\\nestest.nes");
-    cartridge.map(bus, cpu, ppu);
 
     // Set PC to 0xC000 to put NESTest rom into "automation" mode
     cpu.setPC(0xC000);

@@ -9,11 +9,10 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 
-PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus)
+PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr)
 {
 	// TODO: Convert to modern C++ arrays
-	patternTables = new uint8_t[0x2000](); // TEST: Init pattern table to 16KB of memory
-	nameTables = new uint8_t[0x1000]();	 // TEST: Init just to be able to dump memory (8KB of memory)
+	ciram = new uint8_t[0x800]();
 	paletteTables = new uint8_t[0x20](); // 32 bytes, not configurable/remapable
 	oam = new uint8_t[256]();			   // 256 bytes, internal PPU memory
 
@@ -51,9 +50,7 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus)
 
 PPU::~PPU()
 {
-	// TODO: Cleanup nameTable and patternTable if necessary
-	delete[] patternTables;
-	delete[] nameTables;
+	delete[] ciram;
 	delete[] paletteTables;
 	delete[] oam;
 }
@@ -149,44 +146,42 @@ void PPU::step()
 	totalCycles++;
 }
 
-uint8_t *PPU::getMemory(uint16_t address)
+uint8_t PPU::readMemory(uint16_t address)
 {
-	if (address >= 0 && address <= 0x1FFF)
+	if (address <= 0x3EFF)
 	{
-		// Pattern table from 0x0000 - 0x1FFF
-		return &patternTables[address];
-	}
-	else if (address >= 0x2000 && address <= 0x2FFF)
-	{
-		// Nametables from 0x2000 - 0x2FFF
-		uint16_t offset = address - 0x2000;
-		return &nameTables[offset];
-	}
-	else if (address >= 0x3000 && address <= 0x3EFF)
-	{
-		// Mirrors memory region 0x2000 - 0x2EFF
-		uint16_t offset = address - 0x3000;
-		return &nameTables[offset];
+		// $0000 - $1FFF: Pattern tables
+		// $2000 - $2FFF: Nametables
+		// $3000 - $3EFF: Mirrors $2000 - $2EFF
+
+		if (address >= 0x3000)
+		{
+			address -= 0x1000;
+		}
+
+		if (address >= 0x2000 && address <= 0x2FFF)
+		{
+			uint8_t value;
+
+			if (mapper->nametableRead(address, value))
+			{
+				return value;
+			}
+			else
+			{
+				address = mirrorNametableAddress(address);
+				return ciram[address - 0x2000];
+			}
+		}
+
+		return mapper->chrRead(address);
 	}
 	else if (address >= 0x3F00 && address <= 0x3FFF)
 	{
-		// Region 0x3F00 - 0x3F1F maps to palette RAM
-		// Region 0x3F20 - 0x3FFF mirrors region above
+		// $3F00 - $3F1F: Palette RAM
+		// $3F20 - $3FFF: Mirrors $3F00 - $3F1F
 		uint16_t offset = (address - 0x3F00) % 0x20;
-		return &paletteTables[offset];
-	}
-
-	// Invalid address
-	return nullptr;
-}
-
-uint8_t PPU::readMemory(uint16_t address)
-{
-	uint8_t *mem = getMemory(address);
-
-	if (mem)
-	{
-		return *mem;
+		return paletteTables[offset];
 	}
 
 	return 0;
@@ -194,11 +189,39 @@ uint8_t PPU::readMemory(uint16_t address)
 
 void PPU::writeMemory(uint16_t address, uint8_t value)
 {
-	uint8_t *mem = getMemory(address);
-
-	if (mem)
+	if (address <= 0x3EFF)
 	{
-		*mem = value;
+		// $0000 - $1FFF: Pattern tables
+		// $2000 - $2FFF: Nametables
+		// $3000 - $3EFF: Mirrors $2000 - $2EFF
+
+		if (address >= 0x3000)
+		{
+			address -= 0x1000;
+		}
+
+		if (address >= 0x2000 && address <= 0x2FFF)
+		{
+			if (mapper->nametableWrite(address, value))
+			{
+				return;
+			}
+			else
+			{
+				address = mirrorNametableAddress(address);
+				ciram[address - 0x2000] = value;
+				return;
+			}
+		}
+
+		mapper->chrWrite(address, value);
+	}
+	else if (address >= 0x3F00 && address <= 0x3FFF)
+	{
+		// $3F00 - $3F1F: Palette RAM
+		// $3F20 - $3FFF: Mirrors $3F00 - $3F1F
+		uint16_t offset = (address - 0x3F00) % 0x20;
+		paletteTables[offset] = value;
 	}
 }
 
@@ -327,6 +350,41 @@ bool PPU::isOamTransferRequested()
 	return oamTransferRequested;
 }
 
+void PPU::setMapper(IMapper *mapper)
+{
+	this->mapper = mapper;
+}
+
+uint16_t PPU::mirrorNametableAddress(uint16_t address)
+{
+	switch (mapper->getMirroringMode())
+	{
+	case MirroringMode::HORIZONTAL:
+	{
+		if ((address >= 0x2400 && address < 0x2800) ||
+			(address >= 0x2C00 && address < 0x3000))
+		{
+			// Each nametable is 1024 bytes
+			address -= 1024;
+		}
+
+		return address;
+		break;
+	}
+
+	case MirroringMode::VERTICAL:
+	{
+		// TODO: Add vertical mirroring
+		break;
+	}
+
+	// TODO: Add other mirroring options
+	}
+
+	printf("Invalid mirroring mode: %u\n", mapper->getMirroringMode());
+	return 0;
+}
+
 void PPU::loadPalette(std::string path)
 {
 	std::ifstream stream;
@@ -430,7 +488,6 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 		if (write)
 		{
 			writeMemory(accessAddress, newValue);
-			//printf("Writing to %X\n", accessAddress);
 		}
 
 		// Update value post-read if from memory before the palette data

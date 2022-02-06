@@ -156,6 +156,7 @@
   <ItemGroup>
     <ClCompile Include="src\emulator\Controller.cpp" />
     <ClCompile Include="src\emulator\CPU.cpp" />
+    <ClCompile Include="src\emulator\MapperFactory.cpp" />
     <ClCompile Include="src\emulator\NES.cpp" />
     <ClCompile Include="src\graphics\Graphics.cpp" />
     <ClCompile Include="src\graphics\ResourceManager.cpp" />
@@ -173,8 +174,7 @@
     <ClCompile Include="src\graphics\windows\MemoryViewWindow.cpp" />
     <ClCompile Include="src\graphics\windows\PPUDebugWindow.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\emulator\Mapper.cpp" />
-    <ClCompile Include="src\mappers\Mapper0.cpp" />
+    <ClCompile Include="src\mappers\NROM.cpp" />
     <ClCompile Include="src\emulator\Bus.cpp" />
     <ClCompile Include="src\emulator\PPU.cpp" />
     <ClCompile Include="src\emulator\Cartridge.cpp" />
@@ -184,7 +184,9 @@
   <ItemGroup>
     <ClInclude Include="src\emulator\CPU.h" />
     <ClInclude Include="src\emulator\Controller.h" />
-    <ClInclude Include="src\emulator\Mapper.h" />
+    <ClInclude Include="src\emulator\IMapper.h" />
+    <ClInclude Include="src\emulator\MapperFactory.h" />
+    <ClInclude Include="src\emulator\MirroringMode.h" />
     <ClInclude Include="src\graphics\ResourceManager.h" />
     <ClInclude Include="src\graphics\Shader.h" />
     <ClInclude Include="src\graphics\Texture.h" />
@@ -205,7 +207,7 @@
     <ClInclude Include="src\graphics\windows\InputDebugWindow.h" />
     <ClInclude Include="src\graphics\windows\MemoryViewWindow.h" />
     <ClInclude Include="src\graphics\windows\PPUDebugWindow.h" />
-    <ClInclude Include="src\mappers\Mapper0.h" />
+    <ClInclude Include="src\mappers\NROM.h" />
     <ClInclude Include="src\emulator\Bus.h" />
     <ClInclude Include="src\emulator\PPU.h" />
     <ClInclude Include="src\emulator\Cartridge.h" />
