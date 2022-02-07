@@ -10,7 +10,7 @@ class Controller
 public:
 	enum class Button : uint8_t
 	{
-		A,
+		A = 0,
 		B,
 		SELECT,
 		START,

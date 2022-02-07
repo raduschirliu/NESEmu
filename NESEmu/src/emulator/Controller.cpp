@@ -30,16 +30,19 @@ void Controller::onBusMemoryAccess(uint16_t address, uint8_t newValue, bool writ
 {
 	if (address == Bus::JOY1 && write)
 	{
-		strobe = newValue == 1;
+		// We only care about bit 0
+		strobe = (newValue & 0b1) == 1;
 
-		if (strobe)
+		// Start reading inputs in serial mode when strobe is disabled
+		if (!strobe)
 		{
 			currentIndex = 0;
 			updateOutput();
+			return;
 		}
 	}
 
-	if (address == outputRegister && !write)
+	if (address == outputRegister && !write && !strobe)
 	{
 		updateOutput();
 	}
@@ -53,7 +56,7 @@ void Controller::updateOutput()
 		return;
 	}
 
-	uint8_t value = buttonStates[currentIndex];
+	uint8_t value = static_cast<uint8_t>(buttonStates.test(currentIndex));
 	bus.write(outputRegister, value, true);
 
 	currentIndex++;
