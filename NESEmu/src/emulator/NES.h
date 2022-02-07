@@ -58,6 +58,8 @@ public:
 	// Gets the offset of the NES output
 	glm::vec2 getGraphicsOffset();
 
+	void setHighlighted(bool sprite, int index);
+
 private:
 	// Window and viewport dimensions
 	int windowWidth, windowHeight;

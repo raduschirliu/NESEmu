@@ -311,13 +311,21 @@ void PPUDebugWindow::drawOam()
 				offset.y + sprite->yPos * renderingScale
 			);
 
-			// TODO: Display attributes in more readable format
 			ImGui::BeginTooltip();
 			ImGui::Text("OAM Index:  %u", i);
-			ImGui::Text("Pos:        %d, %d ($%X, $%X)", sprite->xPos, sprite->yPos, sprite->xPos, sprite->yPos);
 			ImGui::Text("Pattern:    $%X", sprite->tileIndex);
-			ImGui::Text("Attributes: $%X", *attributeByte);
+			ImGui::Text("Pos:        %d, %d ($%X, $%X)", sprite->xPos, sprite->yPos, sprite->xPos, sprite->yPos);
 			ImGui::Text("Screen Pos: %.2f, %.2f", screenPos.x, screenPos.y);
+
+			ImGui::Text("Attributes: %s ($%X)", utils::toBitString(*attributeByte).c_str(), *attributeByte);
+			ImGui::Indent();
+			ImGui::Text("Palette:  %X", sprite->attributes.palette);
+			ImGui::Text("Unused:   %X", sprite->attributes.unused);
+			ImGui::Text("Priority: %X", sprite->attributes.priority);
+			ImGui::Text("Flip H:   %X", sprite->attributes.flipHorizontal);
+			ImGui::Text("Flip V:   %X", sprite->attributes.flipVertical);
+			ImGui::Unindent();
+
 			ImGui::EndTooltip();
 		}
 

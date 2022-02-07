@@ -272,9 +272,27 @@ bool NES::getRunning() const
 
 void NES::loadDebugMode()
 {
-    load("..\\roms\\nestest.nes");
+    load("..\\roms\\test\\nestest.nes");
     cpu.setPC(0xC000);
     printf("Set PC to 0xC000 for nestest automation mode\n");
+
+    // 26554 cycles for entire NESTest ROM
+    for (int i = 0; i < 26554; i++)
+    {
+        cpu.step();
+    }
+
+    printf("Executed 26554 cycles of NESTest ROM\n");
+
+    // Read NESTest test result codes
+    printf("Test results:\n");
+    printf("\t0x02: %02X\n", bus.read(0x02));
+    printf("\t0x03: %02X\n", bus.read(0x03));
+
+    // Dump memory post-run
+    Logger memlog("..\\logs\\post-run-memory.log");
+    bus.dump(memlog);
+    printf("Memory dumped post-run");
 }
 
 void NES::setRenderingScale(float scale)
@@ -360,6 +378,7 @@ void NES::drawBackground()
                 glm::vec2 size(tileSize, tileSize);
                 glm::vec2 texPos(cTex, rTex);
                 glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);
+                glm::vec4 color(1.0f);
 
                 uint8_t paletteTableIndex = ppu.getNametableEntryPalette(nametable, nametableIndex);
                 uint16_t paletteAddress = bgPaletteAddresses[paletteTableIndex];
@@ -370,7 +389,7 @@ void NES::drawBackground()
                     palette = grayscalePalette;
                 }
 
-                patternTable->draw(pos, size, texPos, texPosEnd, palette);
+                patternTable->draw(pos, size, texPos, texPosEnd, palette, color);
             }
         }
     }
@@ -422,6 +441,7 @@ void NES::drawSprites()
             sprite->attributes.priority == 0 ? FOREGROUND_SPRITE_DEPTH : BACKGROUND_SPRITE_DEPTH
         );
         glm::vec2 size(tileSize, tileSize);
+        glm::vec4 color(1.0f);
 
         // Texture coordinates
         float cTex = floor(sprite->tileIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
@@ -442,6 +462,6 @@ void NES::drawSprites()
             texPosEnd.y = rTex;
         }
 
-        patternTable->draw(pos, size, texPos, texPosEnd, palette);
+        patternTable->draw(pos, size, texPos, texPosEnd, palette, color);
     }
 }

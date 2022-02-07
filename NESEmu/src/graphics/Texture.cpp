@@ -105,15 +105,18 @@ void Texture::update(PPU &ppu, uint16_t baseAddress)
 void Texture::draw(glm::vec2 pos, glm::vec2 size)
 {
 	vector<PPU::Color> palette(4);
-	draw(pos, size, glm::vec2(0, 0), glm::vec2(width, height), palette);
+	//draw(pos, size, glm::vec2(0, 0), glm::vec2(width, height), palette);
+	draw(glm::vec3(pos, 0.0f), size, glm::vec2(0.0f), glm::vec2(width, height), palette, glm::vec4(1.0f));
 }
 
+/*
 void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, std::vector<PPU::Color> palette)
 {
 	draw(glm::vec3(pos.x, pos.y, 0.0f), size, uvTopLeft, uvBottomRight, palette);
 }
+*/
 
-void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, vector<PPU::Color> palette)
+void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, vector<PPU::Color> palette, glm::vec4 color)
 {
 	assert(palette.size() == 4);
 
@@ -130,6 +133,7 @@ void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 	vector<float> normalizedPalette = normalizePalette(palette);
 	assert(normalizedPalette.size() == palette.size() * 4);
 
+	shader->setVector4f("colorModifier", color);
 	shader->setVector4f("palette", normalizedPalette);
 	shader->setMatrix4f("model", model);
 	shader->setMatrix4f("projection", projection);
