@@ -60,7 +60,25 @@ public:
 		uint8_t xPos;
 	};
 
-	// Represents the PPU registers (0x2000 - 0x2007)
+	struct InternalRegisters
+	{
+		struct VramAddress
+		{
+			uint8_t coarseXScroll : 5;
+			uint8_t coarseYScroll : 5;
+			uint8_t nametableSelect : 2;
+			uint8_t fineYScroll : 3; // TODO: Bit 14 may be unusable, change fineYScroll to size 2 and add 1 to padding?
+			uint8_t _padding : 1;
+		}; // Top - LSB, Bottom - MSB
+
+		VramAddress v; // "Loopy V", 15 bits
+		VramAddress t; // "Loopy T", 15 bits
+
+		uint8_t x : 3; // Fine X scroll
+		uint8_t w : 1; // First/second write toggle bit
+	};
+
+	// Represents the memory-mapped PPU registers ($2000 - $2007)
 	struct Registers
 	{
 		struct PpuCtrl {
@@ -93,6 +111,23 @@ public:
 		uint8_t scroll;
 		uint8_t addr;
 		uint8_t data;
+	};
+
+	// Represents a single background tile
+	struct Tile
+	{
+		uint8_t row;
+		uint8_t col;
+		uint8_t paletteIndex;
+		uint8_t patternIndex;
+	};
+
+	// Represents a frame the PPU should draw to the screen
+	struct Frame
+	{
+		Color solidBgColor;
+		std::vector<Tile> backgroundTiles;
+		std::vector<OamSprite> sprites;
 	};
 
 	// Initialize memory
@@ -160,6 +195,9 @@ public:
 
 	// Sets the active mapper
 	void setMapper(IMapper *mapper);
+	
+	// Gets the current frame
+	Frame getCurrentFrame();
 
 private:
 	// Cycle related stats
@@ -174,8 +212,9 @@ private:
 	// Internal Object Attribute Memory (256kB)
 	uint8_t *oam;
 
-	// PPU registers from CPU memory
+	// PPU registers
 	Registers *registers;
+	InternalRegisters internalRegisters;
 
 	// System color palette
 	std::vector<Color> systemPalette;
@@ -183,13 +222,16 @@ private:
 	// Log PPU activities
 	Logger logger;
 
+	// Current frame
+	Frame currentFrame;
+
 	// Other NES components
 	Bus &bus;
 	IMapper *mapper;
 
+	// TODO: These should use internal v/t registers (loopy v/t instead)?
 	// Control the address that the CPU can access through PPUADDR/PPUDATA
 	uint16_t accessAddress;
-	bool accessAddressHighByte;
 
 	// Track when NMI has occured
 	bool nmiOccured;

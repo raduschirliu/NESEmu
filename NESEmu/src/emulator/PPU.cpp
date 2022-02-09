@@ -17,6 +17,8 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr)
 	oam = new uint8_t[OAM_SIZE]();
 
 	// Initialize registers
+	internalRegisters = { 0 };
+
 	registers = reinterpret_cast<Registers *>(bus.get(REGISTER_START_ADDRESS));
 	registers->ctrl = { 0 };
 	registers->mask = { 0 };
@@ -38,8 +40,9 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr)
 
 	// Set access info for PPUADDR/PPUDATA/OAMDMA
 	accessAddress = 0;
-	accessAddressHighByte = true;
 	oamTransferRequested = false;
+
+	currentFrame = { 0 };
 
 	// Callbacks
 	bus.registerMemoryAccessCallback(bind(&PPU::onRegisterAccess, this, _1, _2, _3));
@@ -62,8 +65,10 @@ void PPU::reset()
 	registers->scroll = 0;
 	registers->addr = 0;
 
+	// TODO: Resetting internal registers?
+	internalRegisters = { 0 };
+
 	accessAddress = 0;
-	accessAddressHighByte = true;
 	isResetting = true;
 }
 
@@ -364,6 +369,11 @@ void PPU::setMapper(IMapper *mapper)
 	this->mapper = mapper;
 }
 
+PPU::Frame PPU::getCurrentFrame()
+{
+	return currentFrame;
+}
+
 uint16_t PPU::mirrorNametableAddress(uint16_t address)
 {
 	switch (mapper->getMirroringMode())
@@ -427,15 +437,19 @@ void PPU::loadPalette(std::string path)
 
 void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 {
+	// v,t,x,y == internal registers; d = newValue
+
 	switch (address)
 	{
 		// PPUCTRL ($2000)
 	case 0x2000:
 	{
-		// Setting the NMI enable flag during VBlank immediately triggers an NMI
 		if (write)
 		{
-			// TODO: Add this
+			// TODO: Setting the NMI enable flag during VBlank immediately triggers an NMI
+
+			// t: ...GH.. ........ <- d: ......GH
+			internalRegisters.t.nametableSelect = newValue & 0b11;
 		}
 
 		break;
@@ -444,9 +458,10 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 	// PPUSTATUS ($2002)
 	case 0x2002:
 	{
-		// Reading status register clears bit 7
+		// Reading status register clears vblank flag and write toggle
 		if (!write)
 		{
+			internalRegisters.w = 0;
 			registers->status.vblank = 0;
 			nmiOccured = false;
 		}
@@ -467,15 +482,49 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 		break;
 	}
 
+	// PPUSCROLL $(2005)
+	case 0x2005:
+	{
+		if (write)
+		{
+			if (internalRegisters.w == 0)
+			{
+				/*
+					First write
+					t: ....... ...ABCDE <- d: ABCDE...
+					x:              FGH <- d: .....FGH
+					w:                  <- 1
+				*/
+				internalRegisters.t.coarseXScroll = newValue & 0b11111000;
+				internalRegisters.x = newValue & 0b111;
+				internalRegisters.w = 1;
+			}
+			else
+			{
+				/*
+					Second write
+					t: FGH..AB CDE..... <- d: ABCDEFGH
+					w:                  <- 0
+				*/
+				internalRegisters.t.coarseYScroll = newValue & 0b11111000;
+				internalRegisters.t.fineYScroll = newValue & 0b111;
+				internalRegisters.w = 0;
+			}
+		}
+
+		break;
+	}
+
 	// PPUADDR ($2006)
 	case 0x2006:
 	{
 		if (write)
 		{
+			// TODO: Use loopy t and loopy v
 			uint16_t mask = 0x00FF;
 			uint16_t val = newValue;
 
-			if (accessAddressHighByte)
+			if (internalRegisters.w == 1)
 			{
 				mask = 0xFF00;
 				val <<= 8;
@@ -485,7 +534,7 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 			accessAddress |= val;
 
 			registers->data = 0;
-			accessAddressHighByte = !accessAddressHighByte;
+			internalRegisters.w = !internalRegisters.w;
 
 			// If reading palette data, update immediately
 			if (accessAddress >= 0x3F00 && accessAddress <= 0x3FFF)

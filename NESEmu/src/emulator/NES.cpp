@@ -332,16 +332,16 @@ glm::vec2 NES::getGraphicsOffset()
 
 void NES::drawBackground()
 {
-    uint16_t start = ppu.getActiveNametableAddress();
     float tileSize = getTileSize();
     glm::vec2 offset = getGraphicsOffset();
 
-    uint8_t nametable = ppu.getRegisters()->ctrl.baseNametable;
     Texture *patternTable = ResourceManager::getTexture(
         ppu.getActiveBgPatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
     uint16_t bgColorAddress = 0x3F00;
 	uint16_t bgPaletteAddresses[] = { 0x3F01, 0x3F05, 0x3F09, 0x3F0D };
     std::vector<PPU::Color> grayscalePalette = { { 0, 0, 0, 0 }, { 50, 50, 50, 255 }, { 100, 100, 100, 255 }, { 200, 200, 200, 255 } };
+
+    PPU::Frame frame = ppu.getCurrentFrame();
 
     // Solid background color
     {
@@ -351,8 +351,7 @@ void NES::drawBackground()
         glm::vec2 texEndPos(patternTable->getWidth(), patternTable->getHeight());
 
         // TODO: Draw this without needlessly using texture
-        PPU::Color bgColor = ppu.getPalette(bgColorAddress)[0];
-        std::vector<PPU::Color> palette(4, bgColor);
+        std::vector<PPU::Color> palette(4, frame.solidBgColor);
 
         patternTable->draw(pos, size, texPos, texEndPos, palette);
     }
@@ -360,43 +359,33 @@ void NES::drawBackground()
     // Nametable background tiles
     if (ppu.getRegisters()->mask.showBg)
     {
-        for (uint32_t r = 0; r < PPU::NAMETABLE_ROWS; r++)
+        for (auto &tile : frame.backgroundTiles)
         {
-            if (!ppu.getRegisters()->mask.showLeftmostBg)
+            float cTex = floor(tile.patternIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
+            float rTex = floor(tile.patternIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
+
+            glm::vec3 pos(offset.x + tile.row * tileSize, offset.y + tile.col * tileSize, BACKGROUND_TILE_DEPTH);
+            glm::vec2 size(tileSize, tileSize);
+            glm::vec2 texPos(cTex, rTex);
+            glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);
+            glm::vec4 color(1.0f);
+
+            uint16_t paletteAddress = bgPaletteAddresses[tile.paletteIndex];
+            auto palette = ppu.getPalette(paletteAddress);
+
+            if (ppu.getRegisters()->mask.grayscale)
             {
-                continue;
+                palette = grayscalePalette;
             }
 
-            for (uint32_t c = 0; c < PPU::NAMETABLE_COLS; c++)
-            {
-                uint16_t nametableIndex = r * PPU::NAMETABLE_COLS + c;
-                uint8_t patternIndex = ppu.readMemory(start + nametableIndex);
-                float cTex = floor(patternIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
-                float rTex = floor(patternIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
-
-                glm::vec3 pos(offset.x + c * tileSize, offset.y + r * tileSize, BACKGROUND_TILE_DEPTH);
-                glm::vec2 size(tileSize, tileSize);
-                glm::vec2 texPos(cTex, rTex);
-                glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);
-                glm::vec4 color(1.0f);
-
-                uint8_t paletteTableIndex = ppu.getNametableEntryPalette(nametable, nametableIndex);
-                uint16_t paletteAddress = bgPaletteAddresses[paletteTableIndex];
-                auto palette = ppu.getPalette(paletteAddress);
-
-                if (ppu.getRegisters()->mask.grayscale)
-                {
-                    palette = grayscalePalette;
-                }
-
-                patternTable->draw(pos, size, texPos, texPosEnd, palette, color);
-            }
+            patternTable->draw(pos, size, texPos, texPosEnd, palette, color);
         }
     }
 }
 
 void NES::drawSprites()
 {
+    /*
     if (!ppu.getRegisters()->mask.showSprites)
     {
         return;
@@ -464,4 +453,5 @@ void NES::drawSprites()
 
         patternTable->draw(pos, size, texPos, texPosEnd, palette, color);
     }
+    */
 }
