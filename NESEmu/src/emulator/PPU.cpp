@@ -41,7 +41,8 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr)
 	// Set access info for PPUADDR/PPUDATA/OAMDMA
 	accessAddress = 0;
 	oamTransferRequested = false;
-
+	bgFetchCounter = 0;
+	nmiOccured = false;
 	currentFrame = { 0 };
 
 	// Callbacks
@@ -91,6 +92,10 @@ void PPU::step()
 		{
 			scanlines = 0;
 			frames++;
+
+			// Clear frame
+			currentFrame.backgroundTiles.clear();
+			currentFrame.sprites.clear();
 		}
 	}
 
@@ -98,9 +103,45 @@ void PPU::step()
 	{
 		// (0 - 239) Rendering, visible scanlines
 
-		if (cycles >= 257 && cycles <= 320)
+		if (cycles > 0 && cycles < 257)
 		{
+			fetchBgTile();
+
+			if (cycles == 256)
+			{
+				// TODO: Nametable wrapping for fine Y scroll
+				if (internalRegisters.v.fineYScroll < 7)
+				{
+					internalRegisters.v.fineYScroll++;
+				}
+				else
+				{
+					internalRegisters.v.coarseYScroll++;
+					internalRegisters.v.fineYScroll = 0;
+				}
+			}
+		}
+		else if (cycles >= 257 && cycles < 321)
+		{
+			// Idle cycles to reset registers, no rendering/fetches
 			registers->oamAddr = 0;
+
+			if (cycles == 257)
+			{
+				// Copy all bits related to horizontal position from t -> v
+				internalRegisters.v.coarseXScroll = internalRegisters.t.coarseXScroll;
+
+				internalRegisters.v.nametableSelect &= 0b10;
+				internalRegisters.v.nametableSelect |= (internalRegisters.t.nametableSelect & 0b01);
+			}
+		}
+		else if (cycles >= 321 && cycles < 337)
+		{
+			// TODO: First two tiles on next scanline
+		}
+		else
+		{
+			// Unused nametable fetches
 		}
 	}
 	else if (scanlines == 240)
@@ -144,6 +185,16 @@ void PPU::step()
 		if (cycles >= 257 && cycles <= 320)
 		{
 			registers->oamAddr = 0;
+		}
+
+		if (cycles >= 280 && cycles <= 304)
+		{
+			// Copy all vertical position bits from t -> v
+			internalRegisters.v.coarseYScroll = internalRegisters.t.coarseYScroll;
+			internalRegisters.v.fineYScroll = internalRegisters.t.fineYScroll;
+
+			internalRegisters.v.nametableSelect &= 0b01;
+			internalRegisters.v.nametableSelect |= (internalRegisters.t.nametableSelect & 0b10);
 		}
 	}
 
@@ -374,6 +425,52 @@ PPU::Frame PPU::getCurrentFrame()
 	return currentFrame;
 }
 
+void PPU::fetchBgTile()
+{
+	// Takes 8 cycles to fetch a bg tile
+	if (bgFetchCounter == 1)
+	{
+		// Creating new tile in the current frame
+		Tile tile = { 0 };
+		tile.col = internalRegisters.v.coarseXScroll;
+		tile.row = internalRegisters.v.coarseYScroll;
+
+		currentFrame.backgroundTiles.push_back(tile);
+	}
+	else if (bgFetchCounter == 2)
+	{
+		// Nametable byte fetch
+		Tile tile = currentFrame.backgroundTiles[currentFrame.backgroundTiles.size() - 1];
+
+		uint16_t nametableAddress = NAMETABLE_ADDRESSES[internalRegisters.v.nametableSelect];
+		uint16_t address = nametableAddress + tile.row * NAMETABLE_COLS + tile.col;
+
+		tile.patternIndex = readMemory(address);
+	}
+	else if (bgFetchCounter == 4)
+	{
+		// Attribute table byte fetch
+		Tile tile = currentFrame.backgroundTiles[currentFrame.backgroundTiles.size() - 1];
+		uint16_t tileIndex = tile.row * NAMETABLE_COLS + tile.col;
+
+		tile.paletteIndex = getNametableEntryPalette(internalRegisters.v.nametableSelect, tileIndex);
+	}
+	else if (bgFetchCounter == 8)
+	{
+		// Pattern table byte fetch
+		// TODO: Move pattern table fetch logic from table into here
+	}
+
+	bgFetchCounter++;
+
+	if (bgFetchCounter > 8)
+	{
+		// TODO: Nametable wrapping for coarse X scroll
+		bgFetchCounter = 1;
+		internalRegisters.v.coarseXScroll++;
+	}
+}
+
 uint16_t PPU::mirrorNametableAddress(uint16_t address)
 {
 	switch (mapper->getMirroringMode())
@@ -449,7 +546,7 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 			// TODO: Setting the NMI enable flag during VBlank immediately triggers an NMI
 
 			// t: ...GH.. ........ <- d: ......GH
-			internalRegisters.t.nametableSelect = newValue & 0b11;
+			internalRegisters.t.nametableSelect = registers->ctrl.baseNametable;
 		}
 
 		break;

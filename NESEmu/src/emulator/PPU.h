@@ -64,11 +64,11 @@ public:
 	{
 		struct VramAddress
 		{
-			uint8_t coarseXScroll : 5;
-			uint8_t coarseYScroll : 5;
-			uint8_t nametableSelect : 2;
+			uint8_t coarseXScroll : 5; // Controls the current bg tile col (0 - 31)
+			uint8_t coarseYScroll : 5; // Controls the current bg tile col (0 - 31)
+			uint8_t nametableSelect : 2; // Controls current nametable. bit0 = ntX, bit1 = ntY
 			uint8_t fineYScroll : 3; // TODO: Bit 14 may be unusable, change fineYScroll to size 2 and add 1 to padding?
-			uint8_t _padding : 1;
+			uint8_t _padding : 1; // Unused
 		}; // Top - LSB, Bottom - MSB
 
 		VramAddress v; // "Loopy V", 15 bits
@@ -120,14 +120,15 @@ public:
 		uint8_t col;
 		uint8_t paletteIndex;
 		uint8_t patternIndex;
+		// TODO: Store pattern table data
 	};
 
 	// Represents a frame the PPU should draw to the screen
 	struct Frame
 	{
 		Color solidBgColor;
-		std::vector<Tile> backgroundTiles;
-		std::vector<OamSprite> sprites;
+		std::vector<PPU::Tile> backgroundTiles;
+		std::vector<PPU::OamSprite> sprites;
 	};
 
 	// Initialize memory
@@ -233,6 +234,9 @@ private:
 	// Control the address that the CPU can access through PPUADDR/PPUDATA
 	uint16_t accessAddress;
 
+	// Keep track of what to fetch during the bg fetching rendering process
+	uint16_t bgFetchCounter;
+
 	// Track when NMI has occured
 	bool nmiOccured;
 
@@ -241,6 +245,9 @@ private:
 
 	// If the PPU is currently being reset or not
 	bool isResetting;
+
+	// Fetch the current bg tile in the rendering cycle, and increment V coarse X
+	void fetchBgTile();
 
 	// Mirror the nametable address according to the mapper
 	uint16_t mirrorNametableAddress(uint16_t address);
