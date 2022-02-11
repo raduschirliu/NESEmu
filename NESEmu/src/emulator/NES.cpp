@@ -364,7 +364,7 @@ void NES::drawBackground()
             float cTex = floor(tile.patternIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
             float rTex = floor(tile.patternIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
 
-            glm::vec3 pos(offset.x + tile.row * tileSize, offset.y + tile.col * tileSize, BACKGROUND_TILE_DEPTH);
+            glm::vec3 pos(offset.x + tile.col * tileSize, offset.y + tile.row * tileSize, BACKGROUND_TILE_DEPTH);
             glm::vec2 size(tileSize, tileSize);
             glm::vec2 texPos(cTex, rTex);
             glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);

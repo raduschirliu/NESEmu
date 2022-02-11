@@ -9,7 +9,7 @@
 // TODO: Use modern C++ constructs (new-style casts, smart pointers, etc)
 
 // Debugging
-static bool constexpr DEBUG_LOG = true;
+static bool constexpr DEBUG_LOG = false;
 static char debugBuf[100];
 
 // Address of the low byte of various jump vectors

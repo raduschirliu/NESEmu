@@ -420,7 +420,7 @@ void PPU::setMapper(IMapper *mapper)
 	this->mapper = mapper;
 }
 
-PPU::Frame PPU::getCurrentFrame()
+const PPU::Frame& PPU::getCurrentFrame()
 {
 	return currentFrame;
 }

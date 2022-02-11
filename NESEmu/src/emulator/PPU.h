@@ -198,7 +198,7 @@ public:
 	void setMapper(IMapper *mapper);
 	
 	// Gets the current frame
-	Frame getCurrentFrame();
+	const Frame& getCurrentFrame();
 
 private:
 	// Cycle related stats
