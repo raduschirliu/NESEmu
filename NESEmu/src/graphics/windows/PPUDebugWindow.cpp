@@ -163,6 +163,25 @@ void PPUDebugWindow::draw()
 			ImGui::EndTabItem();
 		}
 
+		// Attribute tables
+		if (ImGui::BeginTabItem("Attribute tables"))
+		{
+			IMapper *mapper = cartridge.getMapper();
+			ImGui::Text("Active nametable: %u ($%X)", ppu.getRegisters()->ctrl.baseNametable, ppu.getActiveNametableAddress());
+			ImGui::Text("Mirroring mode: %s", utils::mirroringModeToString(mapper->getMirroringMode()));
+
+			ImGui::Text("Display attribute table: "); ImGui::SameLine();
+			ImGui::RadioButton("1", &debugViewNametable, 0); ImGui::SameLine();
+			ImGui::RadioButton("2", &debugViewNametable, 1); ImGui::SameLine();
+			ImGui::RadioButton("3", &debugViewNametable, 2); ImGui::SameLine();
+			ImGui::RadioButton("4", &debugViewNametable, 3);
+
+			ImGui::Dummy(ImVec2(0.0f, 6.0f));
+
+			drawAttributeTable(debugViewNametable);
+			ImGui::EndTabItem();
+		}
+
 		// OAM
 		if (ImGui::BeginTabItem("OAM"))
 		{
@@ -224,7 +243,7 @@ void PPUDebugWindow::drawPalette(std::string label, const Palette &palette)
 		ImU32 imColor = ImColor(color.r, color.g, color.b);
 		drawList->AddRectFilled(ImVec2(pos.x, pos.y), ImVec2(pos.x + tileSize, pos.y + tileSize), imColor);
 
-		ss << "0x" << std::hex
+		ss << "0x" << std::hex << std::uppercase
 			<< std::setw(2) << std::setfill('0')
 			<< index;
 		drawList->AddText(ImVec2(pos.x, pos.y), textColor, ss.str().c_str());
@@ -242,9 +261,9 @@ void PPUDebugWindow::drawPalette(std::string label, const Palette &palette)
 	ImGui::EndGroup();
 }
 
-void PPUDebugWindow::drawNametable(uint8_t nametable)
+void PPUDebugWindow::drawNametable(uint8_t index)
 {
-	uint16_t address = PPU::NAMETABLE_ADDRESSES[nametable];
+	uint16_t address = PPU::NAMETABLE_ADDRESSES[index];
 	ImVec2 tileSize(16, 16);
 	PPU::Registers *registers = ppu.getRegisters();
 	Texture *bgTable = registers->ctrl.bgPatternTable == 0 ? patternTableLeft : patternTableRight;
@@ -255,7 +274,7 @@ void PPUDebugWindow::drawNametable(uint8_t nametable)
 		{
 			uint16_t offset = r * PPU::NAMETABLE_COLS + c;
 			uint8_t index = ppu.readMemory(address + offset);
-			uint8_t paletteIndex = ppu.getNametableEntryPalette(nametable, offset);
+			uint8_t paletteIndex = ppu.getNametableEntryPalette(index, offset);
 			float cTex = index % PPU::PATTERN_TABLE_SIZE;
 			float rTex = index / PPU::PATTERN_TABLE_SIZE;
 
@@ -276,6 +295,42 @@ void PPUDebugWindow::drawNametable(uint8_t nametable)
 			if (c != PPU::NAMETABLE_COLS - 1)
 			{
 				ImGui::SameLine();
+			}
+		}
+	}
+}
+
+void PPUDebugWindow::drawAttributeTable(uint8_t index)
+{
+	uint16_t baseAddress = PPU::NAMETABLE_ADDRESSES[index] + PPU::ATTRIBUTE_TABLE_OFFSET;
+
+	for (uint16_t r = 0; r < PPU::ATTRIBUTE_TABLE_ROWS; r++)
+	{
+		ImGui::Text("$%X:  ", static_cast<int>(baseAddress + r * PPU::ATTRIBUTE_TABLE_COLS));
+
+		for (uint16_t c = 0; c < PPU::ATTRIBUTE_TABLE_COLS; c++)
+		{
+			uint16_t address = baseAddress + r * PPU::ATTRIBUTE_TABLE_COLS + c;
+			uint8_t attByte = ppu.readMemory(address);
+
+			ImGui::SameLine();
+			ImGui::Text("$%02X", static_cast<int>(attByte));
+
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::BeginTooltip();
+
+				uint8_t topLeft = (attByte & (0b11 << 0)) >> 0;
+				uint8_t topRight = (attByte & (0b11 << 2)) >> 2;
+				ImGui::Text("  %X  |  %X  ", topLeft, topRight);
+
+				ImGui::Text("-----|-----");
+
+				uint8_t bottomLeft = (attByte & (0b11 << 4)) >> 4;
+				uint8_t bottomRight = (attByte & (0b11 << 6)) >> 6;
+				ImGui::Text("  %X  |  %X  ", bottomLeft, bottomRight);
+
+				ImGui::EndTooltip();
 			}
 		}
 	}

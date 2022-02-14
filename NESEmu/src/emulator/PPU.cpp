@@ -421,11 +421,6 @@ const PPU::Frame& PPU::getCurrentFrame()
 	return currentFrame;
 }
 
-void PPU::resetCurrentFrame()
-{
-	memset(&currentFrame, 0, sizeof(Frame));
-}
-
 void PPU::incrementXScroll()
 {
 	if (internalRegisters.v.coarseXScroll == 31)
@@ -464,8 +459,8 @@ void PPU::incrementYScroll()
 void PPU::fetchBgTile()
 {
 	uint16_t tileIndex = 
-		static_cast<uint16_t>(internalRegisters.v.coarseXScroll) * NAMETABLE_COLS +
-		static_cast<uint16_t>(internalRegisters.v.coarseYScroll);
+		static_cast<uint16_t>(internalRegisters.v.coarseYScroll) * NAMETABLE_COLS +
+		static_cast<uint16_t>(internalRegisters.v.coarseXScroll);
 	Tile &tile = currentFrame.backgroundTiles[tileIndex];
 
 	// Takes 8 cycles to fetch a bg tile
@@ -672,7 +667,6 @@ void PPU::onMemoryAccess(uint16_t address, uint8_t newValue, bool write)
 		if (write)
 		{
 			uint16_t *t = reinterpret_cast<uint16_t *>(&internalRegisters.t);
-			printf("Pre: $%X (new: $%X, W: $%X)\n", *t, newValue, internalRegisters.w);
 
 			if (internalRegisters.w == 0)
 			{
@@ -706,8 +700,6 @@ void PPU::onMemoryAccess(uint16_t address, uint8_t newValue, bool write)
 					registers->data = readMemory(*t);
 				}
 			}
-
-			printf("Post: $%X\n", *t);
 		}
 
 		break;

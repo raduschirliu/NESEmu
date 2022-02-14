@@ -24,7 +24,12 @@ public:
 
 	// Each attribute table "block" controls 4 tiles in the nametable
 	static constexpr uint16_t ATTRIBUTE_TABLE_BLOCK_SIZE = 4;
+
+	// Amount of columns in the attribute table
 	static constexpr uint16_t ATTRIBUTE_TABLE_COLS = 8;
+
+	// Amount of rows in the attribute table
+	static constexpr uint16_t ATTRIBUTE_TABLE_ROWS = 8;
 
 	// Amount of entries in OAM
 	static constexpr uint16_t OAM_ENTRIES = 64;
@@ -260,9 +265,6 @@ private:
 
 	// If the PPU is currently being reset or not
 	bool isResetting;
-
-	// Reset the current frame
-	void resetCurrentFrame();
 
 	// Increment coarse X scroll and swap nametable if needed
 	void incrementXScroll();
