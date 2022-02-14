@@ -9,7 +9,7 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 
-PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr)
+PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr), systemPalette(SYSTEM_PALETTE_ENTRIES)
 {
 	// TODO: Convert to modern C++ arrays
 	ciram = new uint8_t[CIRAM_SIZE]();
@@ -46,7 +46,7 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr)
 	currentFrame = { 0 };
 
 	// Callbacks
-	bus.registerMemoryAccessCallback(bind(&PPU::onRegisterAccess, this, _1, _2, _3));
+	bus.registerMemoryAccessCallback(bind(&PPU::onMemoryAccess, this, _1, _2, _3));
 	bus.setPpuOamTransferCallback(bind(&PPU::writeOamData, this, _1));
 
 	reset();
@@ -92,10 +92,6 @@ void PPU::step()
 		{
 			scanlines = 0;
 			frames++;
-
-			// Clear frame
-			currentFrame.backgroundTiles.clear();
-			currentFrame.sprites.clear();
 		}
 	}
 
@@ -103,22 +99,13 @@ void PPU::step()
 	{
 		// (0 - 239) Rendering, visible scanlines
 
-		if (cycles > 0 && cycles < 257)
+		if (cycles > 0 && cycles < 257 && registers->mask.showBg)
 		{
 			fetchBgTile();
 
 			if (cycles == 256)
 			{
-				// TODO: Nametable wrapping for fine Y scroll
-				if (internalRegisters.v.fineYScroll < 7)
-				{
-					internalRegisters.v.fineYScroll++;
-				}
-				else
-				{
-					internalRegisters.v.coarseYScroll++;
-					internalRegisters.v.fineYScroll = 0;
-				}
+				incrementYScroll();
 			}
 		}
 		else if (cycles >= 257 && cycles < 321)
@@ -126,7 +113,7 @@ void PPU::step()
 			// Idle cycles to reset registers, no rendering/fetches
 			registers->oamAddr = 0;
 
-			if (cycles == 257)
+			if (cycles == 257 && registers->mask.showBg)
 			{
 				// Copy all bits related to horizontal position from t -> v
 				internalRegisters.v.coarseXScroll = internalRegisters.t.coarseXScroll;
@@ -182,12 +169,26 @@ void PPU::step()
 			isResetting = false;
 		}
 
+		if (cycles == 256 && registers->mask.showBg)
+		{
+			incrementYScroll();
+		}
+
 		if (cycles >= 257 && cycles <= 320)
 		{
 			registers->oamAddr = 0;
 		}
 
-		if (cycles >= 280 && cycles <= 304)
+		if (cycles == 257 && registers->mask.showBg)
+		{
+			// Copy all bits related to horizontal position from t -> v
+			internalRegisters.v.coarseXScroll = internalRegisters.t.coarseXScroll;
+
+			internalRegisters.v.nametableSelect &= 0b10;
+			internalRegisters.v.nametableSelect |= (internalRegisters.t.nametableSelect & 0b01);
+		}
+
+		if (cycles >= 280 && cycles <= 304 && registers->mask.showBg)
 		{
 			// Copy all vertical position bits from t -> v
 			internalRegisters.v.coarseYScroll = internalRegisters.t.coarseYScroll;
@@ -273,10 +274,16 @@ void PPU::writeMemory(uint16_t address, uint8_t value)
 
 			if (ciramOffset >= CIRAM_SIZE)
 			{
+				printf("-------> OOB array: Wrote $%X = $%X\n", address, value);
 				return;
 			}
 
+			// printf("Wrote $%X = $%X\n", address, value);
 			ciram[ciramOffset] = value;
+		}
+		else
+		{
+			printf("-------> OOB pattern: Wrote $%X = $%X\n", address, value);
 		}
 
 		mapper->chrWrite(address, value);
@@ -287,6 +294,7 @@ void PPU::writeMemory(uint16_t address, uint8_t value)
 		// $3F20 - $3FFF: Mirrors $3F00 - $3F1F
 		uint16_t offset = (address - 0x3F00) % 0x20;
 		paletteTables[offset] = value;
+		updateFramePalettes();
 	}
 }
 
@@ -372,34 +380,22 @@ uint16_t PPU::getActiveSpritePatternTableAddress()
 	return registers->ctrl.spritePatternTable * 0x1000;
 }
 
-std::vector<PPU::Color> PPU::getPalette(uint16_t address)
+const Color& PPU::getUniversalBgColor()
 {
-	std::vector<Color> palette;
-
-	if (address == 0x3F00)
-	{
-		// If only requesting background, return correct color
-		uint8_t bgIndex = readMemory(0x3F00);
-		palette.push_back(systemPalette[bgIndex]);
-	}
-	else if (address >= 0x3F01 && address <= 0x3F1F)
-	{
-		// For other palettes, return transparent color as background
-		Color transparent = { 0, 0, 0, 0 };
-		palette.push_back(transparent);
-
-		// Background and sprite palettes
-		for (uint16_t i = 0; i < 3; i++)
-		{
-			uint8_t colorIndex = readMemory(address + i);
-			palette.push_back(systemPalette[colorIndex]);
-		}
-	}
-
-	return palette;
+	return framePalettes[0].getColors()[0];
 }
 
-std::vector<PPU::Color> PPU::getSystemPalette()
+const Palette &PPU::getPalette(PaletteType type, uint16_t index)
+{
+	if (type == PaletteType::SPRITE)
+	{
+		index += 4;
+	}
+
+	return framePalettes[index];
+}
+
+const Palette& PPU::getSystemPalette()
 {
 	return systemPalette;
 }
@@ -425,23 +421,62 @@ const PPU::Frame& PPU::getCurrentFrame()
 	return currentFrame;
 }
 
+void PPU::resetCurrentFrame()
+{
+	memset(&currentFrame, 0, sizeof(Frame));
+}
+
+void PPU::incrementXScroll()
+{
+	if (internalRegisters.v.coarseXScroll == 31)
+	{
+		// Last column, overflow switch horizontal nametable
+		internalRegisters.v.nametableSelect ^= 0b01;
+	}
+
+	internalRegisters.v.coarseXScroll++;
+}
+
+void PPU::incrementYScroll()
+{
+	if (internalRegisters.v.fineYScroll < 7)
+	{
+		internalRegisters.v.fineYScroll++;
+	}
+	else
+	{
+		// Wrap fine Y
+		internalRegisters.v.fineYScroll = 0;
+
+		if (internalRegisters.v.coarseYScroll == 29)
+		{
+			// Last row of nametable, switch vertical nametable
+			internalRegisters.v.coarseYScroll = 0;
+			internalRegisters.v.nametableSelect ^= 0b10;
+		}
+		else
+		{
+			internalRegisters.v.coarseYScroll++;
+		}
+	}
+}
+
 void PPU::fetchBgTile()
 {
+	uint16_t tileIndex = 
+		static_cast<uint16_t>(internalRegisters.v.coarseXScroll) * NAMETABLE_COLS +
+		static_cast<uint16_t>(internalRegisters.v.coarseYScroll);
+	Tile &tile = currentFrame.backgroundTiles[tileIndex];
+
 	// Takes 8 cycles to fetch a bg tile
 	if (bgFetchCounter == 1)
 	{
-		// Creating new tile in the current frame
-		Tile tile = { 0 };
 		tile.col = internalRegisters.v.coarseXScroll;
 		tile.row = internalRegisters.v.coarseYScroll;
-
-		currentFrame.backgroundTiles.push_back(tile);
 	}
 	else if (bgFetchCounter == 2)
 	{
 		// Nametable byte fetch
-		Tile tile = currentFrame.backgroundTiles[currentFrame.backgroundTiles.size() - 1];
-
 		uint16_t nametableAddress = NAMETABLE_ADDRESSES[internalRegisters.v.nametableSelect];
 		uint16_t address = nametableAddress + tile.row * NAMETABLE_COLS + tile.col;
 
@@ -450,9 +485,6 @@ void PPU::fetchBgTile()
 	else if (bgFetchCounter == 4)
 	{
 		// Attribute table byte fetch
-		Tile tile = currentFrame.backgroundTiles[currentFrame.backgroundTiles.size() - 1];
-		uint16_t tileIndex = tile.row * NAMETABLE_COLS + tile.col;
-
 		tile.paletteIndex = getNametableEntryPalette(internalRegisters.v.nametableSelect, tileIndex);
 	}
 	else if (bgFetchCounter == 8)
@@ -465,9 +497,8 @@ void PPU::fetchBgTile()
 
 	if (bgFetchCounter > 8)
 	{
-		// TODO: Nametable wrapping for coarse X scroll
-		bgFetchCounter = 1;
-		internalRegisters.v.coarseXScroll++;
+		bgFetchCounter = 0;
+		incrementXScroll();
 	}
 }
 
@@ -519,23 +550,46 @@ void PPU::loadPalette(std::string path)
 	}
 
 	// NES colors have no alpha value, so set to max
-	Color color = { 0 };
-	color.a = 255;
+	std::vector<Color> colors;
+	colors.reserve(SYSTEM_PALETTE_ENTRIES);
 
 	// Read first 64 palette color entries
-	while (!stream.eof() && systemPalette.size() < 64)
+	for (size_t i = 0; i < SYSTEM_PALETTE_ENTRIES; i++)
 	{
+		Color &color = colors[i];
 		stream.read((char *)&color, 3);
-		systemPalette.push_back(color);
+		color.a = 255;
+		colors.push_back(color);
 	}
 
-	printf("Loaded %zu system palette colors\n", systemPalette.size());
+	systemPalette.setColors(colors);
+	printf("Loaded %zu system palette colors\n", colors.size());
 }
 
-void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
+void PPU::updateFramePalettes()
 {
-	// v,t,x,y == internal registers; d = newValue
+	uint16_t paletteOffsets[] = { 0x01, 0x05, 0x09, 0x0D, 0x11, 0x15, 0x19, 0x1D };
+	auto& systemColors = systemPalette.getColors();
 
+	for (size_t i = 0; i < 8; i++)
+	{
+		std::vector<Color> colors;
+		colors.reserve(4);
+		colors.push_back(systemColors[paletteTables[0]]);
+
+		for (size_t colorIdx = 0; colorIdx < 3; colorIdx++)
+		{
+			colors.push_back(systemColors[paletteTables[paletteOffsets[i] + colorIdx]]);
+		}
+
+		framePalettes[i].setColors(colors);
+	}
+}
+
+void PPU::onMemoryAccess(uint16_t address, uint8_t newValue, bool write)
+{
+	// Memory mapped registers
+	// v,t,x,y == internal registers; d = newValue
 	switch (address)
 	{
 		// PPUCTRL ($2000)
@@ -617,27 +671,43 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 	{
 		if (write)
 		{
-			// TODO: Use loopy t and loopy v
-			uint16_t mask = 0x00FF;
-			uint16_t val = newValue;
+			uint16_t *t = reinterpret_cast<uint16_t *>(&internalRegisters.t);
+			printf("Pre: $%X (new: $%X, W: $%X)\n", *t, newValue, internalRegisters.w);
 
-			if (internalRegisters.w == 1)
+			if (internalRegisters.w == 0)
 			{
-				mask = 0xFF00;
-				val <<= 8;
+				/*
+					First write
+					t: .CDEFGH ........ <- d: ..CDEFGH
+					<unused>     <- d: AB......
+					t: Z...... ........ <- 0 (bit Z is cleared)
+					w:                  <- 1
+				*/
+				(*t) &= 0x00FF;
+				(*t) |= ((newValue & 0b00111111) << 8);
+				internalRegisters.w = 1;
+			}
+			else
+			{
+				/*
+					Second write
+					t: ....... ABCDEFGH <- d: ABCDEFGH
+					v: <...all bits...> <- t: <...all bits...>
+					w:                  <- 0
+				*/
+				(*t) &= 0xFF00;
+				(*t) |= newValue;
+				internalRegisters.v = internalRegisters.t;
+				internalRegisters.w = 0;
+
+				// If reading palette data, update immediately
+				if (*t >= 0x3F00 && *t <= 0x3FFF)
+				{
+					registers->data = readMemory(*t);
+				}
 			}
 
-			accessAddress &= ~mask;
-			accessAddress |= val;
-
-			registers->data = 0;
-			internalRegisters.w = !internalRegisters.w;
-
-			// If reading palette data, update immediately
-			if (accessAddress >= 0x3F00 && accessAddress <= 0x3FFF)
-			{
-				registers->data = readMemory(accessAddress);
-			}
+			printf("Post: $%X\n", *t);
 		}
 
 		break;
@@ -646,25 +716,28 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
 	// PPUDATA ($2007)
 	case 0x2007:
 	{
+		// Write address == internalRegisters.v
+		uint16_t *address = reinterpret_cast<uint16_t *>(&internalRegisters.v);
+
 		if (write)
 		{
-			writeMemory(accessAddress, newValue);
+			writeMemory(*address, newValue);
 		}
 
 		// Update value post-read if from memory before the palette data
-		if (accessAddress <= 0x3EFF)
+		if (*address <= 0x3EFF)
 		{
-			registers->data = readMemory(accessAddress);
+			registers->data = readMemory(*address);
 		}
 
 		// Increment after access
 		if (registers->ctrl.addressIncrement == 0)
 		{
-			accessAddress++;
+			(*address)++;
 		}
 		else
 		{
-			accessAddress += 32;
+			*address += 32;
 		}
 
 		break;

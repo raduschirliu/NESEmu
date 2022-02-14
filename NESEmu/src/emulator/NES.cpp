@@ -23,6 +23,9 @@ static constexpr float BACKGROUND_SPRITE_DEPTH = -1.0f;
 static constexpr float BACKGROUND_TILE_DEPTH = 0.0f;
 static constexpr float FOREGROUND_SPRITE_DEPTH = 1.0f;
 
+static const Palette grayscalePalette({ { 0, 0, 0, 0 }, { 50, 50, 50, 255 }, { 100, 100, 100, 255 }, { 200, 200, 200, 255 } });
+static const Palette blackPalette({ {0, 0, 0, 0 }, {0, 0, 0, 0 }, {0, 0, 0, 0 }, {0, 0, 0, 0 } });
+
 static void glfwErrorCallback(int error, const char *desc)
 {
     printf("GLFW error: %i %s\n", error, desc);
@@ -339,7 +342,6 @@ void NES::drawBackground()
         ppu.getActiveBgPatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
     uint16_t bgColorAddress = 0x3F00;
 	uint16_t bgPaletteAddresses[] = { 0x3F01, 0x3F05, 0x3F09, 0x3F0D };
-    std::vector<PPU::Color> grayscalePalette = { { 0, 0, 0, 0 }, { 50, 50, 50, 255 }, { 100, 100, 100, 255 }, { 200, 200, 200, 255 } };
 
     PPU::Frame frame = ppu.getCurrentFrame();
 
@@ -351,9 +353,7 @@ void NES::drawBackground()
         glm::vec2 texEndPos(patternTable->getWidth(), patternTable->getHeight());
 
         // TODO: Draw this without needlessly using texture
-        std::vector<PPU::Color> palette(4, frame.solidBgColor);
-
-        patternTable->draw(pos, size, texPos, texEndPos, palette);
+        patternTable->draw(pos, size, texPos, texEndPos, blackPalette);
     }
 
     // Nametable background tiles
@@ -370,15 +370,15 @@ void NES::drawBackground()
             glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);
             glm::vec4 color(1.0f);
 
-            uint16_t paletteAddress = bgPaletteAddresses[tile.paletteIndex];
-            auto palette = ppu.getPalette(paletteAddress);
-
             if (ppu.getRegisters()->mask.grayscale)
             {
-                palette = grayscalePalette;
+                patternTable->draw(pos, size, texPos, texPosEnd, grayscalePalette, color);
             }
-
-            patternTable->draw(pos, size, texPos, texPosEnd, palette, color);
+            else
+            {
+                const Palette &palette = ppu.getPalette(PPU::PaletteType::BACKGROUND, tile.paletteIndex);
+                patternTable->draw(pos, size, texPos, texPosEnd, palette, color);
+            }
         }
     }
 }

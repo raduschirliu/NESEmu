@@ -6,23 +6,6 @@
 
 using std::vector;
 
-static vector<float> normalizePalette(vector<PPU::Color> palette);
-
-vector<float> normalizePalette(vector<PPU::Color> palette)
-{
-	vector<float> normalized;
-
-	for (auto color : palette)
-	{
-		normalized.push_back(color.r / 255.0f);
-		normalized.push_back(color.g / 255.0f);
-		normalized.push_back(color.b / 255.0f);
-		normalized.push_back(color.a / 255.0f);
-	}
-
-	return normalized;
-}
-
 Texture::Texture(Shader *shader, int width, int height) : 
 	shader(shader), textureId(0), vaoId(0), vboId(0), eboId(0), width(width), height(height)
 {
@@ -102,21 +85,16 @@ void Texture::update(PPU &ppu, uint16_t baseAddress)
 	GL_ERROR_CHECK();
 }
 
+/*
 void Texture::draw(glm::vec2 pos, glm::vec2 size)
 {
 	vector<PPU::Color> palette(4);
-	//draw(pos, size, glm::vec2(0, 0), glm::vec2(width, height), palette);
 	draw(glm::vec3(pos, 0.0f), size, glm::vec2(0.0f), glm::vec2(width, height), palette, glm::vec4(1.0f));
-}
-
-/*
-void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, std::vector<PPU::Color> palette)
-{
-	draw(glm::vec3(pos.x, pos.y, 0.0f), size, uvTopLeft, uvBottomRight, palette);
 }
 */
 
-void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight, vector<PPU::Color> palette, glm::vec4 color)
+void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight,
+	const Palette& palette, glm::vec4 color)
 {
 	assert(palette.size() == 4);
 
@@ -129,12 +107,8 @@ void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 	// TODO: Update projection matrix when window is changed
 	glm::mat4 projection = glm::ortho<float>(0.0f, 1280.0f, 720.0f, 0.0f, -10.0f, 10.0f);
 
-	// TODO: Cache normalized float palette
-	vector<float> normalizedPalette = normalizePalette(palette);
-	assert(normalizedPalette.size() == palette.size() * 4);
-
 	shader->setVector4f("colorModifier", color);
-	shader->setVector4f("palette", normalizedPalette);
+	shader->setVector4f("palette", palette.getNormalized());
 	shader->setMatrix4f("model", model);
 	shader->setMatrix4f("projection", projection);
 

@@ -125,21 +125,21 @@ void PPUDebugWindow::draw()
 			drawPalette("System table", ppu.getSystemPalette());
 			ImGui::Spacing();
 
-			drawPalette("Background 0", ppu.getPalette(0x3F01)); // Background 0
+			drawPalette("Background 0", ppu.getPalette(PPU::PaletteType::BACKGROUND, 0)); // Background 0
 			ImGui::SameLine();
-			drawPalette("Background 1", ppu.getPalette(0x3F05)); // Background 1
+			drawPalette("Background 1", ppu.getPalette(PPU::PaletteType::BACKGROUND, 1)); // Background 1
 			ImGui::SameLine();
-			drawPalette("Background 2", ppu.getPalette(0x3F09)); // Background 2
+			drawPalette("Background 2", ppu.getPalette(PPU::PaletteType::BACKGROUND, 2)); // Background 2
 			ImGui::SameLine();
-			drawPalette("Background 3", ppu.getPalette(0x3F0D)); // Background 3
+			drawPalette("Background 3", ppu.getPalette(PPU::PaletteType::BACKGROUND, 3)); // Background 3
 
-			drawPalette("Sprite 0", ppu.getPalette(0x3F11)); // Sprite 0
+			drawPalette("Sprite 0", ppu.getPalette(PPU::PaletteType::SPRITE, 0)); // Sprite 0
 			ImGui::SameLine();
-			drawPalette("Sprite 1", ppu.getPalette(0x3F15)); // Sprite 1
+			drawPalette("Sprite 1", ppu.getPalette(PPU::PaletteType::SPRITE, 1)); // Sprite 1
 			ImGui::SameLine();
-			drawPalette("Sprite 2", ppu.getPalette(0x3F19)); // Sprite 2
+			drawPalette("Sprite 2", ppu.getPalette(PPU::PaletteType::SPRITE, 2)); // Sprite 2
 			ImGui::SameLine();
-			drawPalette("Sprite 3", ppu.getPalette(0x3F1D)); // Sprite 3
+			drawPalette("Sprite 3", ppu.getPalette(PPU::PaletteType::SPRITE, 3)); // Sprite 3
 
 			ImGui::EndTabItem();
 		}
@@ -195,7 +195,7 @@ void PPUDebugWindow::drawRegister(string name, uint16_t address, const void* reg
 	}
 }
 
-void PPUDebugWindow::drawPalette(string label, std::vector<PPU::Color> palette)
+void PPUDebugWindow::drawPalette(std::string label, const Palette &palette)
 {
 	ImGui::BeginGroup();
 	ImGui::Text(label.c_str());
@@ -206,23 +206,23 @@ void PPUDebugWindow::drawPalette(string label, std::vector<PPU::Color> palette)
 	int rows = 1;
 	int maxCols = 0;
 	int index = 0;
-	const float size = 64;
+	const float tileSize = 64;
 	const ImU32 textColor = ImColor(255, 255, 255);
 	const float xStart = pos.x;
 	ImVec2 totalSize;
 
-	for (PPU::Color color : palette)
+	for (const Color& color : palette.getColors())
 	{
 		if (cols >= 16)
 		{
 			cols = 0;
 			rows++;
 			pos.x = xStart;
-			pos.y += size;
+			pos.y += tileSize;
 		}
 
 		ImU32 imColor = ImColor(color.r, color.g, color.b);
-		drawList->AddRectFilled(ImVec2(pos.x, pos.y), ImVec2(pos.x + size, pos.y + size), imColor);
+		drawList->AddRectFilled(ImVec2(pos.x, pos.y), ImVec2(pos.x + tileSize, pos.y + tileSize), imColor);
 
 		ss << "0x" << std::hex
 			<< std::setw(2) << std::setfill('0')
@@ -232,12 +232,12 @@ void PPUDebugWindow::drawPalette(string label, std::vector<PPU::Color> palette)
 
 		cols++;
 		maxCols = std::max(cols, maxCols);
-		pos.x += size;
+		pos.x += tileSize;
 		index++;
 	}
 
-	totalSize.x = maxCols * size + 10;
-	totalSize.y = rows * size + 10;
+	totalSize.x = maxCols * tileSize + 10;
+	totalSize.y = rows * tileSize + 10;
 	ImGui::Dummy(totalSize);
 	ImGui::EndGroup();
 }

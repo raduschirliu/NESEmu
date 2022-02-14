@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <array>
 #include <glm/glm.hpp>
 
 class Shader
@@ -20,9 +21,11 @@ public:
 	GLint getUniformLocation(std::string name);
 
 	void setVector3f(std::string name, const glm::vec3 &vec);
-	void setVector3f(std::string name, std::vector<GLfloat> &vec);
+	void setVector3f(std::string name, const std::vector<GLfloat> &vec);
+
 	void setVector4f(std::string name, const glm::vec4 &vec);
-	void setVector4f(std::string name, std::vector<GLfloat> &vec);
+	void setVector4f(std::string name, const std::vector<GLfloat> &vec);
+
 	void setMatrix4f(std::string name, const glm::mat4 &matrix);
 
 private:

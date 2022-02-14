@@ -159,6 +159,7 @@
     <ClCompile Include="src\emulator\CPU.cpp" />
     <ClCompile Include="src\emulator\MapperFactory.cpp" />
     <ClCompile Include="src\emulator\NES.cpp" />
+    <ClCompile Include="src\emulator\Palette.cpp" />
     <ClCompile Include="src\graphics\Graphics.cpp" />
     <ClCompile Include="src\graphics\ResourceManager.cpp" />
     <ClCompile Include="src\graphics\Shader.cpp" />
@@ -190,6 +191,7 @@
     <ClInclude Include="src\emulator\IMapper.h" />
     <ClInclude Include="src\emulator\MapperFactory.h" />
     <ClInclude Include="src\emulator\MirroringMode.h" />
+    <ClInclude Include="src\emulator\Palette.h" />
     <ClInclude Include="src\graphics\ResourceManager.h" />
     <ClInclude Include="src\graphics\Shader.h" />
     <ClInclude Include="src\graphics\Texture.h" />

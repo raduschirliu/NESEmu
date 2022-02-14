@@ -2,7 +2,9 @@
 
 #include "../util/Logger.h"
 #include "Bus.h"
+#include "Palette.h"
 
+#include <array>
 #include <vector>
 
 class PPU
@@ -32,6 +34,12 @@ public:
 
 	// Size of palette table in bytes
 	static constexpr uint16_t PALETTE_TABLE_SIZE = 0x20;
+	
+	// Amount of entries in the palette table
+	static constexpr uint16_t SYSTEM_PALETTE_ENTRIES = 64;
+
+	// Amount of entries in a single frame palette (3 colors + 1 constant bg)
+	static constexpr uint16_t FRAME_PALETTE_ENTRIES = 4;
 
 	// Size of CIRAM, enough to hold two nametables: 2 KiB ($800)
 	static constexpr uint16_t CIRAM_SIZE = 0x800;
@@ -39,10 +47,10 @@ public:
 	// Location of registers on CPU memory bus
 	static constexpr uint16_t REGISTER_START_ADDRESS = Bus::PPUCTRL;
 
-	// Represents a system palette color
-	struct Color
+	enum class PaletteType : uint8_t
 	{
-		uint8_t r, g, b, a;
+		BACKGROUND = 0,
+		SPRITE
 	};
 
 	// Represents a 4 byte sprite stored in the Object Attribute Memory (OAM)
@@ -65,9 +73,9 @@ public:
 		struct VramAddress
 		{
 			uint8_t coarseXScroll : 5; // Controls the current bg tile col (0 - 31)
-			uint8_t coarseYScroll : 5; // Controls the current bg tile col (0 - 31)
+			uint8_t coarseYScroll : 5; // Controls the current bg tile row (0 - 29)
 			uint8_t nametableSelect : 2; // Controls current nametable. bit0 = ntX, bit1 = ntY
-			uint8_t fineYScroll : 3; // TODO: Bit 14 may be unusable, change fineYScroll to size 2 and add 1 to padding?
+			uint8_t fineYScroll : 3;
 			uint8_t _padding : 1; // Unused
 		}; // Top - LSB, Bottom - MSB
 
@@ -127,8 +135,8 @@ public:
 	struct Frame
 	{
 		Color solidBgColor;
-		std::vector<PPU::Tile> backgroundTiles;
-		std::vector<PPU::OamSprite> sprites;
+		std::array<PPU::Tile, NAMETABLE_COLS * NAMETABLE_ROWS> backgroundTiles;
+		std::array<PPU::OamSprite, OAM_ENTRIES> sprites;
 	};
 
 	// Initialize memory
@@ -170,11 +178,14 @@ public:
 	// Gets the address of the sprite pattern table
 	uint16_t getActiveSpritePatternTableAddress();
 
+	// Gets the universal background color
+	const Color &getUniversalBgColor();
+
 	// Gets the color palette starting at the given address
-	std::vector<Color> getPalette(uint16_t address);
+	const Palette &getPalette(PaletteType type, uint16_t index);
 
 	// Returns the system palette
-	std::vector<Color> getSystemPalette();
+	const Palette &getSystemPalette();
 
 	// Get the amount of cycles that have occured in the current frame
 	uint32_t getCycles();
@@ -217,8 +228,12 @@ private:
 	Registers *registers;
 	InternalRegisters internalRegisters;
 
-	// System color palette
-	std::vector<Color> systemPalette;
+	// Global system color palette
+	Palette systemPalette;
+
+	// TODO: Move into Frame? Rename to "activePalettes"?
+	// Color palettes currently active (4 background, 4 sprite) 
+	std::array<Palette, 8> framePalettes;
 	
 	// Log PPU activities
 	Logger logger;
@@ -246,6 +261,15 @@ private:
 	// If the PPU is currently being reset or not
 	bool isResetting;
 
+	// Reset the current frame
+	void resetCurrentFrame();
+
+	// Increment coarse X scroll and swap nametable if needed
+	void incrementXScroll();
+
+	// Increment fine Y scroll. Overflow to coarse Y or swap nametable if needed
+	void incrementYScroll();
+
 	// Fetch the current bg tile in the rendering cycle, and increment V coarse X
 	void fetchBgTile();
 
@@ -255,6 +279,9 @@ private:
 	// Load the system palette
 	void loadPalette(std::string path);
 
-	// Called when one of the PPU's memory mapped registers is accessed
-	void onRegisterAccess(uint16_t address, uint8_t newValue, bool write);
+	// Update the palette tables from what is set in RAM
+	void updateFramePalettes();
+
+	// Memory access callback
+	void onMemoryAccess(uint16_t address, uint8_t newValue, bool write);
 };
