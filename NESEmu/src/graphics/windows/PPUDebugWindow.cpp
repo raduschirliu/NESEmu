@@ -261,9 +261,9 @@ void PPUDebugWindow::drawPalette(std::string label, const Palette &palette)
 	ImGui::EndGroup();
 }
 
-void PPUDebugWindow::drawNametable(uint8_t index)
+void PPUDebugWindow::drawNametable(uint8_t nametableIndex)
 {
-	uint16_t address = PPU::NAMETABLE_ADDRESSES[index];
+	uint16_t address = PPU::NAMETABLE_ADDRESSES[nametableIndex];
 	ImVec2 tileSize(16, 16);
 	PPU::Registers *registers = ppu.getRegisters();
 	Texture *bgTable = registers->ctrl.bgPatternTable == 0 ? patternTableLeft : patternTableRight;
@@ -273,10 +273,10 @@ void PPUDebugWindow::drawNametable(uint8_t index)
 		for (uint16_t c = 0; c < PPU::NAMETABLE_COLS; c++)
 		{
 			uint16_t offset = r * PPU::NAMETABLE_COLS + c;
-			uint8_t index = ppu.readMemory(address + offset);
-			uint8_t paletteIndex = ppu.getNametableEntryPalette(index, offset);
-			float cTex = index % PPU::PATTERN_TABLE_SIZE;
-			float rTex = index / PPU::PATTERN_TABLE_SIZE;
+			uint8_t patternIndex = ppu.readMemory(address + offset);
+			uint8_t paletteIndex = ppu.getNametableEntryPalette(nametableIndex, offset);
+			float cTex = patternIndex % PPU::PATTERN_TABLE_SIZE;
+			float rTex = patternIndex / PPU::PATTERN_TABLE_SIZE;
 
 			ImVec2 posTopLeft(cTex * PPU::TILE_SIZE, rTex * PPU::TILE_SIZE);
 			ImVec2 posBottomRight(posTopLeft.x + PPU::TILE_SIZE, posTopLeft.y + PPU::TILE_SIZE);
@@ -287,7 +287,7 @@ void PPUDebugWindow::drawNametable(uint8_t index)
 				ImGui::BeginTooltip();
 				ImGui::Text("Pos:             %d, %d ($%X, $%X)", r, c, r, c);
 				ImGui::Text("Nametable Index: %u ($X)", offset, offset);
-				ImGui::Text("Pattern Index:   %u ($X)", index, index);
+				ImGui::Text("Pattern Index:   %u ($X)", patternIndex, patternIndex);
 				ImGui::Text("Palette Index:   %u", paletteIndex);
 				ImGui::EndTooltip();
 			}

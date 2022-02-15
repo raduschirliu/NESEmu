@@ -17,8 +17,8 @@ public:
 private:
 	void drawRegister(std::string name, uint16_t address, const void* reg, const char* helpText);
 	void drawPalette(std::string label, const Palette& palette);
-	void drawNametable(uint8_t index);
-	void drawAttributeTable(uint8_t index);
+	void drawNametable(uint8_t nametableIndex);
+	void drawAttributeTable(uint8_t attIndex);
 	void drawOam();
 
 	NES &nes;

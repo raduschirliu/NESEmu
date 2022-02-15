@@ -55,7 +55,9 @@ public:
 	enum class PaletteType : uint8_t
 	{
 		BACKGROUND = 0,
-		SPRITE
+		SPRITE,
+
+		COUNT
 	};
 
 	// Represents a 4 byte sprite stored in the Object Attribute Memory (OAM)

@@ -352,7 +352,7 @@ void NES::drawBackground()
         glm::vec2 texPos(0.0f, 0.0f);
         glm::vec2 texEndPos(patternTable->getWidth(), patternTable->getHeight());
 
-        // TODO: Draw this without needlessly using texture
+        // TODO: Draw this without needlessly using texture and use correct bg color
         patternTable->draw(pos, size, texPos, texEndPos, blackPalette);
     }
 

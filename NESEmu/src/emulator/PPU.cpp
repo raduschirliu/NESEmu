@@ -1,8 +1,8 @@
 #include "PPU.h"
 
 #include <fstream>
-#include <bitset>
 #include <iostream>
+#include <assert.h>
 
 using std::bind;
 using std::placeholders::_1;
@@ -305,6 +305,7 @@ PPU::Registers *PPU::getRegisters()
 
 void PPU::writeOamData(uint8_t *data)
 {
+	assert(data);
 	int spriteByte = 0;
 
 	for (int i = 0; i < 256; i++)
@@ -331,6 +332,8 @@ void PPU::writeOamData(uint8_t *data)
 
 PPU::OamSprite *PPU::getOamSprite(uint8_t address)
 {
+	assert(address < OAM_SIZE);
+
 	// Sprite unused attributes always set to 0
 	OamSprite *sprite = reinterpret_cast<OamSprite *>(&oam[address]);
 	sprite->attributes.unused = 0;
@@ -339,6 +342,9 @@ PPU::OamSprite *PPU::getOamSprite(uint8_t address)
 
 uint8_t PPU::getNametableEntryPalette(uint8_t nametable, uint16_t index)
 {
+	assert(nametable < 4);
+	assert(index < NAMETABLE_COLS * NAMETABLE_ROWS);
+
 	uint16_t nametableCol = index % NAMETABLE_COLS; 
 	uint16_t nametableRow = index / NAMETABLE_COLS;
 	uint16_t attCol = nametableCol / ATTRIBUTE_TABLE_BLOCK_SIZE;
@@ -387,6 +393,9 @@ const Color& PPU::getUniversalBgColor()
 
 const Palette &PPU::getPalette(PaletteType type, uint16_t index)
 {
+	assert(type < PaletteType::COUNT);
+	assert(index < framePalettes.size());
+
 	if (type == PaletteType::SPRITE)
 	{
 		index += 4;
@@ -413,6 +422,7 @@ bool PPU::isOamTransferRequested()
 
 void PPU::setMapper(IMapper *mapper)
 {
+	assert(mapper);
 	this->mapper = mapper;
 }
 
@@ -425,7 +435,7 @@ void PPU::incrementXScroll()
 {
 	if (internalRegisters.v.coarseXScroll == 31)
 	{
-		// Last column, overflow switch horizontal nametable
+		// Last column, switch horizontal nametable
 		internalRegisters.v.nametableSelect ^= 0b01;
 	}
 
@@ -464,12 +474,12 @@ void PPU::fetchBgTile()
 	Tile &tile = currentFrame.backgroundTiles[tileIndex];
 
 	// Takes 8 cycles to fetch a bg tile
-	if (bgFetchCounter == 1)
+	if (bgFetchCounter == 0)
 	{
 		tile.col = internalRegisters.v.coarseXScroll;
 		tile.row = internalRegisters.v.coarseYScroll;
 	}
-	else if (bgFetchCounter == 2)
+	else if (bgFetchCounter == 1)
 	{
 		// Nametable byte fetch
 		uint16_t nametableAddress = NAMETABLE_ADDRESSES[internalRegisters.v.nametableSelect];
@@ -477,12 +487,12 @@ void PPU::fetchBgTile()
 
 		tile.patternIndex = readMemory(address);
 	}
-	else if (bgFetchCounter == 4)
+	else if (bgFetchCounter == 3)
 	{
 		// Attribute table byte fetch
 		tile.paletteIndex = getNametableEntryPalette(internalRegisters.v.nametableSelect, tileIndex);
 	}
-	else if (bgFetchCounter == 8)
+	else if (bgFetchCounter == 7)
 	{
 		// Pattern table byte fetch
 		// TODO: Move pattern table fetch logic from table into here
@@ -490,7 +500,7 @@ void PPU::fetchBgTile()
 
 	bgFetchCounter++;
 
-	if (bgFetchCounter > 8)
+	if (bgFetchCounter > 7)
 	{
 		bgFetchCounter = 0;
 		incrementXScroll();
