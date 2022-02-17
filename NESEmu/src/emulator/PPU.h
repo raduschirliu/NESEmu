@@ -3,6 +3,7 @@
 #include "../util/Logger.h"
 #include "Bus.h"
 #include "Palette.h"
+#include "PatternTable.h"
 
 #include <array>
 #include <vector>
@@ -14,10 +15,6 @@ public:
 	static constexpr uint16_t NAMETABLE_ADDRESSES[] = { 0x2000, 0x2400, 0x2800, 0x2C00 };
 	static constexpr uint16_t NAMETABLE_ROWS = 30;
 	static constexpr uint16_t NAMETABLE_COLS = 32;
-
-	// Pattern table is 16 x 16 tiles
-	static constexpr uint16_t PATTERN_TABLE_SIZE = 16;
-	static constexpr uint16_t TILE_SIZE = 8;
 
 	// Each attribute table is offset 960 ($3C0) bytes from the start of a nametable
 	static constexpr uint16_t ATTRIBUTE_TABLE_OFFSET = 0x3C0;
@@ -36,6 +33,9 @@ public:
 
 	// Size of OAM in bytes
 	static constexpr uint16_t OAM_SIZE = 256;
+
+	// Size of secondary OAM in bytes
+	static constexpr uint16_t SECONDARY_OAM_SIZE = 32;
 
 	// Size of palette table in bytes
 	static constexpr uint16_t PALETTE_TABLE_SIZE = 0x20;
@@ -96,7 +96,7 @@ public:
 	// Represents the memory-mapped PPU registers ($2000 - $2007)
 	struct Registers
 	{
-		struct PpuCtrl {
+		struct PpuCtrl { // $2000
 			uint8_t baseNametable : 2;
 			uint8_t addressIncrement : 1;
 			uint8_t spritePatternTable : 1;
@@ -105,7 +105,7 @@ public:
 			uint8_t masterSlave : 1;
 			uint8_t nmiEnable : 1;
 		} ctrl; // Top - LSB, Bottom - MSB
-		struct PpuMask {
+		struct PpuMask { // $2001
 			uint8_t grayscale : 1;
 			uint8_t showLeftmostBg : 1;
 			uint8_t showLeftmostSprite : 1;
@@ -115,35 +115,43 @@ public:
 			uint8_t emphasizeGreen : 1;
 			uint8_t emphasizeBlue : 1;
 		} mask; // Top - LSB, Bottom - MSB
-		struct PpuStatus {
+		struct PpuStatus { // $2002
 			uint8_t lastLsb : 5;
 			uint8_t spriteOverflow : 1;
 			uint8_t sprite0Hit : 1;
 			uint8_t vblank : 1;
 		} status; // Top - LSB, Bottom - MSB
-		uint8_t oamAddr;
-		uint8_t oamData;
-		uint8_t scroll;
-		uint8_t addr;
-		uint8_t data;
+		uint8_t oamAddr; // $2003
+		uint8_t oamData; // $2004
+		uint8_t scroll; // $2005
+		uint8_t addr; // $2006
+		uint8_t data; // $2007
 	};
 
-	// Represents a single background tile
+	// Represents a single background tile in the current frame
 	struct Tile
 	{
 		uint8_t row;
 		uint8_t col;
 		uint8_t paletteIndex;
 		uint8_t patternIndex;
-		// TODO: Store pattern table data
+		PatternTable::Pattern patternData;
+	};
+
+	// Represents a single sprite in the current frame
+	struct Sprite : OamSprite
+	{
+		uint8_t index;
 	};
 
 	// Represents a frame the PPU should draw to the screen
 	struct Frame
 	{
 		Color solidBgColor;
+		// TODO: Implement fixed-size vector util
+		// TODO: Move to heap
 		std::array<PPU::Tile, NAMETABLE_COLS * NAMETABLE_ROWS> backgroundTiles;
-		std::array<PPU::OamSprite, OAM_ENTRIES> sprites;
+		std::array<PPU::Sprite, OAM_ENTRIES> sprites;
 	};
 
 	// Initialize memory
@@ -218,6 +226,9 @@ public:
 	// Gets the current frame
 	const Frame& getCurrentFrame();
 
+	// Gets a pattern table (0 or 1)
+	const PatternTable &getPatternTable(uint8_t index);
+
 private:
 	// Cycle related stats
 	uint32_t cycles, scanlines, frames, totalCycles;
@@ -228,8 +239,11 @@ private:
 	// Used to hold palette control information, $3F00 - $3FFF. Region $3F20 - $3FFF mirrors $3F00 - $3F1F
 	uint8_t *paletteTables;
 	
-	// Internal Object Attribute Memory (256kB)
+	// Internal Object Attribute Memory (256 bytes)
 	uint8_t *oam;
+	
+	// Secondary OAM memory (32 byte buffer)
+	uint8_t *secondaryOam;
 
 	// PPU registers
 	Registers *registers;
@@ -241,6 +255,9 @@ private:
 	// TODO: Move into Frame? Rename to "activePalettes"?
 	// Color palettes currently active (4 background, 4 sprite) 
 	std::array<Palette, 8> framePalettes;
+
+	// Pattern tables
+	std::array<PatternTable, 2> patternTables;
 	
 	// Log PPU activities
 	Logger logger;
@@ -277,6 +294,9 @@ private:
 	// Fetch the current bg tile in the rendering cycle, and increment V coarse X
 	void fetchBgTile();
 
+	// Perform sprite evaluation
+	void evaluateSprites();
+
 	// Mirror the nametable address according to the mapper
 	uint16_t mirrorNametableAddress(uint16_t address);
 
@@ -285,6 +305,9 @@ private:
 
 	// Update the palette tables from what is set in RAM
 	void updateFramePalettes();
+
+	// Update pattern data from the pattern tables
+	void updatePatternTables();
 
 	// Memory access callback
 	void onMemoryAccess(uint16_t address, uint8_t newValue, bool write);

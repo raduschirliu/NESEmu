@@ -275,11 +275,11 @@ void PPUDebugWindow::drawNametable(uint8_t nametableIndex)
 			uint16_t offset = r * PPU::NAMETABLE_COLS + c;
 			uint8_t patternIndex = ppu.readMemory(address + offset);
 			uint8_t paletteIndex = ppu.getNametableEntryPalette(nametableIndex, offset);
-			float cTex = patternIndex % PPU::PATTERN_TABLE_SIZE;
-			float rTex = patternIndex / PPU::PATTERN_TABLE_SIZE;
+			float cTex = patternIndex % PatternTable::SIZE;
+			float rTex = patternIndex / PatternTable::SIZE;
 
-			ImVec2 posTopLeft(cTex * PPU::TILE_SIZE, rTex * PPU::TILE_SIZE);
-			ImVec2 posBottomRight(posTopLeft.x + PPU::TILE_SIZE, posTopLeft.y + PPU::TILE_SIZE);
+			ImVec2 posTopLeft(cTex * PatternTable::TILE_SIZE, rTex * PatternTable::TILE_SIZE);
+			ImVec2 posBottomRight(posTopLeft.x + PatternTable::TILE_SIZE, posTopLeft.y + PatternTable::TILE_SIZE);
 			bgTable->drawGui(tileSize, posTopLeft, posBottomRight);
 
 			if (ImGui::IsItemHovered())
@@ -349,10 +349,10 @@ void PPUDebugWindow::drawOam()
 		Texture *spriteTable = registers->ctrl.spritePatternTable == 0 ? patternTableLeft : patternTableRight;
 
 		ImVec2 uvStart(
-			std::floor(sprite->tileIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE),
-			std::floor(sprite->tileIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE)
+			std::floor(sprite->tileIndex % PatternTable::SIZE * PatternTable::TILE_SIZE),
+			std::floor(sprite->tileIndex / PatternTable::SIZE * PatternTable::TILE_SIZE)
 		);
-		ImVec2 uvEnd(uvStart.x + PPU::TILE_SIZE, uvStart.y + PPU::TILE_SIZE);
+		ImVec2 uvEnd(uvStart.x + PatternTable::TILE_SIZE, uvStart.y + PatternTable::TILE_SIZE);
 
 		spriteTable->drawGui(ImVec2(32, 32), uvStart, uvEnd);
 

@@ -2,7 +2,7 @@
 
 #include "Graphics.h"
 #include "Shader.h"
-#include "../emulator/PPU.h"
+#include "../emulator/PatternTable.h"
 #include "../emulator/Palette.h"
 
 #include <cstdint>
@@ -16,9 +16,8 @@ public:
 	Texture(const Texture &other);
 	~Texture();
 
-	void load(PPU& ppu, uint16_t baseAddress);
-	void update(PPU &ppu, uint16_t baseAddress);
-	// void draw(glm::vec2 pos, glm::vec2 size);
+	void load(const PatternTable &patternTable);
+	void update(const PatternTable &patternTable);
 	void draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight,
 		const Palette& palette, glm::vec4 color = glm::vec4(1.0f));
 
@@ -35,5 +34,5 @@ private:
 	GLuint vaoId, vboId, eboId;
 	int width, height;
 
-	std::vector<uint8_t> getPixelData(PPU &ppu, uint16_t baseAddress);
+	std::vector<uint8_t> getPixelData(const PatternTable &patternTable);
 };

@@ -30,7 +30,7 @@ Texture::~Texture()
 	}
 }
 
-void Texture::load(PPU &ppu, uint16_t baseAddress)
+void Texture::load(const PatternTable &patternTable)
 {
 	// Create and bind buffers
 	glGenBuffers(1, &vboId);
@@ -49,7 +49,7 @@ void Texture::load(PPU &ppu, uint16_t baseAddress)
 
 	GL_ERROR_CHECK();
 
-	vector<uint8_t> pixels = getPixelData(ppu, baseAddress);
+	vector<uint8_t> pixels = getPixelData(patternTable);
 
 	// Create OpenGL texture identifier
 	glGenTextures(1, &textureId);
@@ -70,9 +70,9 @@ void Texture::load(PPU &ppu, uint16_t baseAddress)
 	GL_ERROR_CHECK();
 }
 
-void Texture::update(PPU &ppu, uint16_t baseAddress)
+void Texture::update(const PatternTable &patternTable)
 {
-	vector<uint8_t> pixels = getPixelData(ppu, baseAddress);
+	vector<uint8_t> pixels = getPixelData(patternTable);
 
 	glBindTexture(GL_TEXTURE_2D, textureId);
 	// Upload pixels into texture
@@ -191,36 +191,33 @@ int Texture::getHeight()
 	return height;
 }
 
-vector<uint8_t> Texture::getPixelData(PPU &ppu, uint16_t baseAddress)
+vector<uint8_t> Texture::getPixelData(const PatternTable &patternTable)
 {
 	vector<uint8_t> pixels;
 	pixels.reserve(128 * 128 * 3);
 
 	uint8_t colors[] = { 0, 51, 102, 153 }; // { 0.0, 0.2, 0.4, 0.6 } * 255
+	const size_t pixelSize = PatternTable::SIZE * PatternTable::TILE_SIZE;
 
-	for (uint8_t r = 0; r < 128; r++)
+	// Loop through all pixels of the texture and find the corresponding pattern to get the pixel data from
+	for (size_t y = 0; y < pixelSize; y++)
 	{
-		for (uint8_t c = 0; c < 128; c++)
+		for (size_t x = 0; x < pixelSize; x++)
 		{
-			uint16_t patternIndex = 16 * (r / 8) + c / 8; // Which pattern index to use
-			uint16_t byteIndex = r % 8; // Which byte of the pattern (row of pixels)
-			uint8_t bitIndex = 7 - c % 8; // The bit (pixel) to use in the current byte
+			// Cordinates of the pattern tile in the pattern table
+			size_t patternRow = y / PatternTable::TILE_SIZE;
+			size_t patternCol = x / PatternTable::TILE_SIZE;
 
-			uint16_t address = baseAddress | (patternIndex << 4) | byteIndex;
-			uint8_t loByte = ppu.readMemory(address);
-			uint8_t hiByte = ppu.readMemory(address + 8);
-			uint8_t mask = 1 << bitIndex;
+			// Cordinates of the pixel within the pattern
+			size_t patternY = y % PatternTable::TILE_SIZE;
+			size_t patternX = x % PatternTable::TILE_SIZE;
 
-			// Account for the edge case where bitIndex == 0, and the high bit needs to be shifted
-			// 1 to the left so that it doesn't occupy the same place as the low bit
-			uint8_t hiBit = bitIndex == 0 ?
-							((hiByte & mask) << 1) :
-							((hiByte & mask) >> (bitIndex - 1));
-			uint8_t bit = hiBit | ((loByte & mask) >> bitIndex);
+			size_t pixelIndex = patternY * PatternTable::TILE_SIZE + patternX;
+			uint8_t color = patternTable.getPattern(patternRow, patternCol)[pixelIndex];
 
-			pixels.push_back(colors[bit]);
-			pixels.push_back(colors[bit]);
-			pixels.push_back(colors[bit]);
+			pixels.push_back(colors[color]);
+			pixels.push_back(colors[color]);
+			pixels.push_back(colors[color]);
 		}
 	}
 

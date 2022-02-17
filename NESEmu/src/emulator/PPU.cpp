@@ -15,6 +15,7 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr), sys
 	ciram = new uint8_t[CIRAM_SIZE]();
 	paletteTables = new uint8_t[PALETTE_TABLE_SIZE]();
 	oam = new uint8_t[OAM_SIZE]();
+	secondaryOam = new uint8_t[SECONDARY_OAM_SIZE]();
 
 	// Initialize registers
 	internalRegisters = { 0 };
@@ -57,6 +58,7 @@ PPU::~PPU()
 	delete[] ciram;
 	delete[] paletteTables;
 	delete[] oam;
+	delete[] secondaryOam;
 }
 
 void PPU::reset()
@@ -130,6 +132,11 @@ void PPU::step()
 		{
 			// Unused nametable fetches
 		}
+
+		if (registers->mask.showSprites)
+		{
+			evaluateSprites();
+		}
 	}
 	else if (scanlines == 240)
 	{
@@ -196,6 +203,11 @@ void PPU::step()
 
 			internalRegisters.v.nametableSelect &= 0b01;
 			internalRegisters.v.nametableSelect |= (internalRegisters.t.nametableSelect & 0b10);
+		}
+
+		if (registers->mask.showSprites)
+		{
+			evaluateSprites();
 		}
 	}
 
@@ -424,6 +436,7 @@ void PPU::setMapper(IMapper *mapper)
 {
 	assert(mapper);
 	this->mapper = mapper;
+	updatePatternTables();
 }
 
 const PPU::Frame& PPU::getCurrentFrame()
@@ -507,6 +520,37 @@ void PPU::fetchBgTile()
 	}
 }
 
+void PPU::evaluateSprites()
+{
+	uint16_t nextScanline = scanlines + 1;
+
+	if (scanlines == 261)
+	{
+		// Pre-render scanline
+		nextScanline = 0;
+	}
+
+	if (cycles >= 1 && cycles <= 64)
+	{
+		// Clear secondary OAM
+		memset(secondaryOam, SECONDARY_OAM_SIZE, 0xFF);
+		registers->oamData = 0xFF;
+	}
+	else if (cycles >= 65 && cycles <= 256)
+	{
+		// Sprite evaluation
+	}
+	else if (cycles >= 257 && cycles <= 320)
+	{
+		// Sprite fetches
+	}
+	else if (cycles == 0 || (cycles >= 321 && cycles <= 340))
+	{
+		// Background render pipeline init
+
+	}
+}
+
 uint16_t PPU::mirrorNametableAddress(uint16_t address)
 {
 	switch (mapper->getMirroringMode())
@@ -575,12 +619,15 @@ void PPU::updateFramePalettes()
 {
 	uint16_t paletteOffsets[] = { 0x01, 0x05, 0x09, 0x0D, 0x11, 0x15, 0x19, 0x1D };
 	auto& systemColors = systemPalette.getColors();
+	Color bgColor = systemColors[paletteTables[0]];
+
+	currentFrame.solidBgColor = bgColor;
 
 	for (size_t i = 0; i < 8; i++)
 	{
 		std::vector<Color> colors;
 		colors.reserve(4);
-		colors.push_back(systemColors[paletteTables[0]]);
+		colors.push_back(bgColor);
 
 		for (size_t colorIdx = 0; colorIdx < 3; colorIdx++)
 		{
@@ -589,6 +636,12 @@ void PPU::updateFramePalettes()
 
 		framePalettes[i].setColors(colors);
 	}
+}
+
+void PPU::updatePatternTables()
+{
+	patternTables[0].load(*this, 0x0000);
+	patternTables[1].load(*this, 0x1000);
 }
 
 void PPU::onMemoryAccess(uint16_t address, uint8_t newValue, bool write)
@@ -765,4 +818,10 @@ uint32_t PPU::getFrameCount()
 uint32_t PPU::getTotalCycles()
 {
 	return totalCycles;
+}
+
+const PatternTable &PPU::getPatternTable(uint8_t index)
+{
+	assert(index < patternTables.size());
+	return patternTables[index];
 }

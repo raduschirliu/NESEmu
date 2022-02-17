@@ -122,7 +122,7 @@ bool NES::init()
 
     GL_ERROR_CHECK();
 
-    int patternTableSize = PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE;
+    int patternTableSize = PatternTable::SIZE * PatternTable::TILE_SIZE;
     ResourceManager::loadShader("pattern_shader", "shader.frag", "shader.vert");
     ResourceManager::loadTexture("pattern_left", "pattern_shader", patternTableSize, patternTableSize);
     ResourceManager::loadTexture("pattern_right", "pattern_shader", patternTableSize, patternTableSize);
@@ -166,8 +166,8 @@ void NES::run()
     // TODO: Create a PPU callback for loading/updating pattern tables
     Texture *leftPatternTable = ResourceManager::getTexture("pattern_left");
     Texture *rightPatternTable = ResourceManager::getTexture("pattern_right");
-    leftPatternTable->load(ppu, 0x0000);
-    rightPatternTable->load(ppu, 0x1000);
+    leftPatternTable->load(ppu.getPatternTable(0));
+    rightPatternTable->load(ppu.getPatternTable(1));
 
     // Draw window and poll events
     while (!glfwWindowShouldClose(window) && !shouldShutdown)
@@ -320,7 +320,7 @@ Cartridge & NES::getCartridge()
 
 float NES::getTileSize()
 {
-    return PPU::TILE_SIZE * renderingScale;
+    return PatternTable::TILE_SIZE * renderingScale;
 }
 
 glm::vec2 NES::getGraphicsOffset()
@@ -338,12 +338,9 @@ void NES::drawBackground()
     float tileSize = getTileSize();
     glm::vec2 offset = getGraphicsOffset();
 
+    PPU::Frame frame = ppu.getCurrentFrame();
     Texture *patternTable = ResourceManager::getTexture(
         ppu.getActiveBgPatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
-    uint16_t bgColorAddress = 0x3F00;
-	uint16_t bgPaletteAddresses[] = { 0x3F01, 0x3F05, 0x3F09, 0x3F0D };
-
-    PPU::Frame frame = ppu.getCurrentFrame();
 
     // Solid background color
     {
@@ -361,13 +358,13 @@ void NES::drawBackground()
     {
         for (auto &tile : frame.backgroundTiles)
         {
-            float cTex = floor(tile.patternIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
-            float rTex = floor(tile.patternIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
+            float cTex = floor(tile.patternIndex % PatternTable::SIZE * PatternTable::TILE_SIZE);
+            float rTex = floor(tile.patternIndex / PatternTable::SIZE * PatternTable::TILE_SIZE);
 
             glm::vec3 pos(offset.x + tile.col * tileSize, offset.y + tile.row * tileSize, BACKGROUND_TILE_DEPTH);
             glm::vec2 size(tileSize, tileSize);
             glm::vec2 texPos(cTex, rTex);
-            glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);
+            glm::vec2 texPosEnd(cTex + PatternTable::TILE_SIZE, rTex + PatternTable::TILE_SIZE);
             glm::vec4 color(1.0f);
 
             if (ppu.getRegisters()->mask.grayscale)

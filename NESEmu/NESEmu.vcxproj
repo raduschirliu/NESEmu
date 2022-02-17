@@ -181,6 +181,7 @@
     <ClCompile Include="src\emulator\Bus.cpp" />
     <ClCompile Include="src\emulator\PPU.cpp" />
     <ClCompile Include="src\emulator\Cartridge.cpp" />
+    <ClCompile Include="src\emulator\PatternTable.cpp" />
     <ClCompile Include="src\util\Input.cpp" />
     <ClCompile Include="src\util\Logger.cpp" />
     <ClCompile Include="src\util\Utils.cpp" />
@@ -192,6 +193,7 @@
     <ClInclude Include="src\emulator\MapperFactory.h" />
     <ClInclude Include="src\emulator\MirroringMode.h" />
     <ClInclude Include="src\emulator\Palette.h" />
+    <ClInclude Include="src\emulator\PatternTable.h" />
     <ClInclude Include="src\graphics\ResourceManager.h" />
     <ClInclude Include="src\graphics\Shader.h" />
     <ClInclude Include="src\graphics\Texture.h" />

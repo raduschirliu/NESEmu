@@ -74,7 +74,7 @@ namespace mappers
 		}
 		else if (address >= 0x8000 && address <= 0xFFFF)
 		{
-			// RPG ROM, either 16 KiB ($4000) mirrored or 32 KiB ($8000)
+			// PRG ROM, either 16 KiB ($4000) mirrored or 32 KiB ($8000)
 			// TODO: Determine why it needs to write to the ROM?
 			uint16_t offset = (address - 0x8000) % cartridge.getPrgRom().size();
 			cartridge.getPrgRom()[offset] = value;
