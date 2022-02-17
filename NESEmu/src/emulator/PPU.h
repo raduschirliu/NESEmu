@@ -147,11 +147,16 @@ public:
 	// Represents a frame the PPU should draw to the screen
 	struct Frame
 	{
+		// TODO: Move init logic?
+		Frame() :
+			solidBgColor({ 0 }),
+			backgroundTiles(NAMETABLE_COLS * NAMETABLE_ROWS, { 0 }),
+			sprites(OAM_ENTRIES) {}
+
 		Color solidBgColor;
 		// TODO: Implement fixed-size vector util
-		// TODO: Move to heap
-		std::array<PPU::Tile, NAMETABLE_COLS * NAMETABLE_ROWS> backgroundTiles;
-		std::array<PPU::Sprite, OAM_ENTRIES> sprites;
+		std::vector<PPU::Tile> backgroundTiles;
+		std::vector<PPU::Sprite> sprites;
 	};
 
 	// Initialize memory

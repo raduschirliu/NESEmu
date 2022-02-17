@@ -44,7 +44,6 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr), sys
 	oamTransferRequested = false;
 	bgFetchCounter = 0;
 	nmiOccured = false;
-	currentFrame = { 0 };
 
 	// Callbacks
 	bus.registerMemoryAccessCallback(bind(&PPU::onMemoryAccess, this, _1, _2, _3));
