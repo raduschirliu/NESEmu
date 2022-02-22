@@ -131,11 +131,12 @@ public:
 	// Represents a single background tile in the current frame
 	struct Tile
 	{
+		bool valid;
 		uint8_t row;
 		uint8_t col;
 		uint8_t paletteIndex;
 		uint8_t patternIndex;
-		PatternTable::Pattern patternData;
+		PatternTable::Pattern patternData; // TODO: Make pointer or ref to avoid copies
 	};
 
 	// Represents a single sprite in the current frame
@@ -295,6 +296,9 @@ private:
 
 	// Increment fine Y scroll. Overflow to coarse Y or swap nametable if needed
 	void incrementYScroll();
+
+	// New frame occured, reset anything that needs to be cleared
+	void resetFrame();
 
 	// Fetch the current bg tile in the rendering cycle, and increment V coarse X
 	void fetchBgTile();

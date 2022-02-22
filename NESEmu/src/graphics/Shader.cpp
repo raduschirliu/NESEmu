@@ -80,7 +80,10 @@ void Shader::setVector3f(string name, const glm::vec3 &vec)
 
 void Shader::setVector3f(string name, const vector<GLfloat> &vec)
 {
-	glUniform3fv(getUniformLocation(name), vec.size(), vec.data());
+	assert(vec.size() > 0);
+	assert(vec.size() % 3 == 0);
+
+	glUniform3fv(getUniformLocation(name), vec.size() / 3, vec.data());
 	GL_ERROR_CHECK();
 }
 
@@ -92,7 +95,10 @@ void Shader::setVector4f(string name, const glm::vec4 &vec)
 
 void Shader::setVector4f(string name, const vector<GLfloat> &vec)
 {
-	glUniform4fv(getUniformLocation(name), vec.size(), vec.data());
+	assert(vec.size() > 0);
+	assert(vec.size() % 4 == 0);
+
+	glUniform4fv(getUniformLocation(name), vec.size() / 4, vec.data());
 	GL_ERROR_CHECK();
 }
 

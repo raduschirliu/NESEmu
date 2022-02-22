@@ -96,7 +96,7 @@ void Texture::draw(glm::vec2 pos, glm::vec2 size)
 void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2 uvBottomRight,
 	const Palette& palette, glm::vec4 color)
 {
-	assert(palette.size() == 4);
+	assert(palette.getSize() == 4);
 
 	// Enable shader and set uniforms
 	shader->use();

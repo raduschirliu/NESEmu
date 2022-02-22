@@ -17,6 +17,11 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr), sys
 	oam = new uint8_t[OAM_SIZE]();
 	secondaryOam = new uint8_t[SECONDARY_OAM_SIZE]();
 
+	assert(ciram);
+	assert(paletteTables);
+	assert(oam);
+	assert(secondaryOam);
+
 	// Initialize registers
 	internalRegisters = { 0 };
 
@@ -54,6 +59,11 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr), sys
 
 PPU::~PPU()
 {
+	assert(ciram);
+	assert(paletteTables);
+	assert(oam);
+	assert(secondaryOam);
+
 	delete[] ciram;
 	delete[] paletteTables;
 	delete[] oam;
@@ -93,6 +103,7 @@ void PPU::step()
 		{
 			scanlines = 0;
 			frames++;
+			resetFrame();
 		}
 	}
 
@@ -478,6 +489,15 @@ void PPU::incrementYScroll()
 	}
 }
 
+void PPU::resetFrame()
+{
+	// Set tiles as "invalid"
+	for (auto &tile : currentFrame.backgroundTiles)
+	{
+		tile.valid = false;
+	}
+}
+
 void PPU::fetchBgTile()
 {
 	uint16_t tileIndex = 
@@ -486,28 +506,33 @@ void PPU::fetchBgTile()
 	Tile &tile = currentFrame.backgroundTiles[tileIndex];
 
 	// Takes 8 cycles to fetch a bg tile
-	if (bgFetchCounter == 0)
+	if (!tile.valid)
 	{
-		tile.col = internalRegisters.v.coarseXScroll;
-		tile.row = internalRegisters.v.coarseYScroll;
-	}
-	else if (bgFetchCounter == 1)
-	{
-		// Nametable byte fetch
-		uint16_t nametableAddress = NAMETABLE_ADDRESSES[internalRegisters.v.nametableSelect];
-		uint16_t address = nametableAddress + tile.row * NAMETABLE_COLS + tile.col;
+		if (bgFetchCounter == 0)
+		{
+			tile.col = internalRegisters.v.coarseXScroll;
+			tile.row = internalRegisters.v.coarseYScroll;
+		}
+		else if (bgFetchCounter == 1)
+		{
+			// Nametable byte fetch
+			uint16_t nametableAddress = NAMETABLE_ADDRESSES[internalRegisters.v.nametableSelect];
+			uint16_t address = nametableAddress + tile.row * NAMETABLE_COLS + tile.col;
 
-		tile.patternIndex = readMemory(address);
-	}
-	else if (bgFetchCounter == 3)
-	{
-		// Attribute table byte fetch
-		tile.paletteIndex = getNametableEntryPalette(internalRegisters.v.nametableSelect, tileIndex);
-	}
-	else if (bgFetchCounter == 7)
-	{
-		// Pattern table byte fetch
-		// TODO: Move pattern table fetch logic from table into here
+			tile.patternIndex = readMemory(address);
+		}
+		else if (bgFetchCounter == 3)
+		{
+			// Attribute table byte fetch
+			tile.paletteIndex = getNametableEntryPalette(internalRegisters.v.nametableSelect, tileIndex);
+		}
+		else if (bgFetchCounter == 7)
+		{
+			// Pattern table byte fetch
+			// TODO: Move pattern table fetch logic from table into here
+			tile.patternData = patternTables[registers->ctrl.baseNametable].getPattern(tile.patternIndex);
+			tile.valid = true;
+		}
 	}
 
 	bgFetchCounter++;
@@ -604,7 +629,7 @@ void PPU::loadPalette(std::string path)
 	// Read first 64 palette color entries
 	for (size_t i = 0; i < SYSTEM_PALETTE_ENTRIES; i++)
 	{
-		Color &color = colors[i];
+		Color color;
 		stream.read((char *)&color, 3);
 		color.a = 255;
 		colors.push_back(color);

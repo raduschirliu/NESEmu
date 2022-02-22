@@ -3,9 +3,9 @@
 
 #include <assert.h>
 
-PatternTable::PatternTable()
+PatternTable::PatternTable() : patterns(ENTRIES, { 0 })
 {
-	patterns.reserve(ENTRIES);
+	
 }
 
 void PatternTable::load(PPU &ppu, uint16_t baseAddress)
