@@ -1,10 +1,11 @@
-#include "emulator/CPU.h"
-#include "emulator/PPU.h"
-#include "util/Logger.h"
-#include "emulator/NES.h"
+#include <stdio.h>
 
 #include <iostream>
-#include <stdio.h>
+
+#include "emulator/CPU.h"
+#include "emulator/NES.h"
+#include "emulator/PPU.h"
+#include "util/Logger.h"
 
 int main(int argc, char **argv)
 {

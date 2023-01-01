@@ -1,21 +1,21 @@
 #pragma once
 
-#include "../Window.h"
-#include "../../emulator/Bus.h"
-
 #include <sstream>
+
+#include "emulator/Bus.h"
+#include "graphics/Window.h"
 
 class MemoryViewWindow : public Window
 {
-public:
-	MemoryViewWindow(Bus &bus);
+  public:
+    MemoryViewWindow(Bus &bus);
 
-	void draw() override;
+    void draw() override;
 
-private:
-	const int pageSize = 0x00FF;
+  private:
+    const int pageSize = 0x00FF;
 
-	int currentPage;
-	Bus &bus;
-	std::stringstream ss;
+    int currentPage;
+    Bus &bus;
+    std::stringstream ss;
 };

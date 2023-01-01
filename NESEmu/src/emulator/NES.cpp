@@ -1,17 +1,19 @@
 #include "NES.h"
-#include "../graphics/windows/DemoWindow.h"
-#include "../graphics/windows/DebugWindow.h"
-#include "../graphics/windows/MemoryViewWindow.h"
-#include "../graphics/windows/PPUDebugWindow.h"
-#include "../graphics/windows/InputDebugWindow.h"
-#include "../graphics/windows/CartridgeDebugWindow.h"
-#include "../graphics/Texture.h"
-#include "../graphics/Shader.h"
-#include "../graphics/ResourceManager.h"
-#include "../util/Input.h"
+
+#include <stdio.h>
 
 #include <iostream>
-#include <stdio.h>
+
+#include "graphics/ResourceManager.h"
+#include "graphics/Shader.h"
+#include "graphics/Texture.h"
+#include "graphics/windows/CartridgeDebugWindow.h"
+#include "graphics/windows/DebugWindow.h"
+#include "graphics/windows/DemoWindow.h"
+#include "graphics/windows/InputDebugWindow.h"
+#include "graphics/windows/MemoryViewWindow.h"
+#include "graphics/windows/PPUDebugWindow.h"
+#include "util/Input.h"
 
 using std::floor;
 
@@ -28,7 +30,7 @@ static void glfwErrorCallback(int error, const char *desc)
     printf("GLFW error: %i %s\n", error, desc);
 }
 
-NES::NES(): cpu(bus), ppu(bus), controller(bus, Bus::JOY1)
+NES::NES() : cpu(bus), ppu(bus), controller(bus, Bus::JOY1)
 {
     // TODO: Use initializer list
     windowWidth = 1280;
@@ -70,7 +72,8 @@ bool NES::init()
 #endif
 
     // Create window
-    window = glfwCreateWindow(windowWidth, windowHeight, WINDOW_TITLE, NULL, NULL);
+    window =
+        glfwCreateWindow(windowWidth, windowHeight, WINDOW_TITLE, NULL, NULL);
 
     if (!window)
     {
@@ -104,7 +107,8 @@ bool NES::init()
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(_glDebugOutput, nullptr);
-        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
+                              nullptr, GL_TRUE);
         printf("Enabled OpenGL debug context\n");
     }
 #endif
@@ -120,9 +124,12 @@ bool NES::init()
     GL_ERROR_CHECK();
 
     int patternTableSize = PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE;
-    ResourceManager::loadShader("pattern_shader", "shaders/shader.frag", "shaders/shader.vert");
-    ResourceManager::loadTexture("pattern_left", "pattern_shader", patternTableSize, patternTableSize);
-    ResourceManager::loadTexture("pattern_right", "pattern_shader", patternTableSize, patternTableSize);
+    ResourceManager::loadShader("pattern_shader", "shaders/shader.frag",
+                                "shaders/shader.vert");
+    ResourceManager::loadTexture("pattern_left", "pattern_shader",
+                                 patternTableSize, patternTableSize);
+    ResourceManager::loadTexture("pattern_right", "pattern_shader",
+                                 patternTableSize, patternTableSize);
 
     GL_ERROR_CHECK();
 
@@ -137,16 +144,16 @@ bool NES::init()
     GL_ERROR_CHECK();
 
     Input::registerKeyMap("joy1",
-        {
-            { GLFW_KEY_A, Controller::Button::B },
-            { GLFW_KEY_S, Controller::Button::A },
-            { GLFW_KEY_Q, Controller::Button::SELECT },
-            { GLFW_KEY_W, Controller::Button::START },
-            { GLFW_KEY_UP, Controller::Button::UP },
-            { GLFW_KEY_DOWN, Controller::Button::DOWN },
-            { GLFW_KEY_LEFT, Controller::Button::LEFT },
-            { GLFW_KEY_RIGHT, Controller::Button::RIGHT },
-        });
+                          {
+                              {GLFW_KEY_A, Controller::Button::B},
+                              {GLFW_KEY_S, Controller::Button::A},
+                              {GLFW_KEY_Q, Controller::Button::SELECT},
+                              {GLFW_KEY_W, Controller::Button::START},
+                              {GLFW_KEY_UP, Controller::Button::UP},
+                              {GLFW_KEY_DOWN, Controller::Button::DOWN},
+                              {GLFW_KEY_LEFT, Controller::Button::LEFT},
+                              {GLFW_KEY_RIGHT, Controller::Button::RIGHT},
+                          });
 
     return true;
 }
@@ -156,9 +163,11 @@ void NES::run()
     const double targetFps = 1.0 / 60.0;
     double lastUpdateTime = 0;  // number of seconds since the last loop
     double lastFrameTime = 0;   // number of seconds since the last frame
-    const double cyclesPerFrame = 1790000 / 60; // Amount of CPU cycles needed per UI frame
+    const double cyclesPerFrame =
+        1790000 / 60;  // Amount of CPU cycles needed per UI frame
 
-    printf("Running display at %.2lfHz, with %.2lf CPU cycles per frame\n", 1 / targetFps, cyclesPerFrame);
+    printf("Running display at %.2lfHz, with %.2lf CPU cycles per frame\n",
+           1 / targetFps, cyclesPerFrame);
 
     // TODO: Create a PPU callback for loading/updating pattern tables
     Texture *leftPatternTable = ResourceManager::getTexture("pattern_left");
@@ -242,8 +251,9 @@ void NES::step()
 {
     // 1 CPU cycle = 3 PPU cycles
     cpu.step();
-    
-    // TODO: Improve performance in the future. Fast-forward PPU when relevant registers update
+
+    // TODO: Improve performance in the future. Fast-forward PPU when relevant
+    // registers update
     ppu.step();
     ppu.step();
     ppu.step();
@@ -310,7 +320,7 @@ void NES::setEmulationSpeed(double speed)
     emulationSpeed = speed;
 }
 
-Cartridge & NES::getCartridge()
+Cartridge &NES::getCartridge()
 {
     return cartridge;
 }
@@ -324,10 +334,8 @@ glm::vec2 NES::getGraphicsOffset()
 {
     float tileSize = getTileSize();
 
-    return glm::vec2(
-        (viewportWidth - tileSize * PPU::NAMETABLE_COLS) / 2,
-        (viewportHeight - tileSize * PPU::NAMETABLE_ROWS) / 2
-    );
+    return glm::vec2((viewportWidth - tileSize * PPU::NAMETABLE_COLS) / 2,
+                     (viewportHeight - tileSize * PPU::NAMETABLE_ROWS) / 2);
 }
 
 void NES::drawBackground()
@@ -338,17 +346,23 @@ void NES::drawBackground()
 
     uint8_t nametable = ppu.getRegisters()->ctrl.baseNametable;
     Texture *patternTable = ResourceManager::getTexture(
-        ppu.getActiveBgPatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
+        ppu.getActiveBgPatternTableAddress() == 0x0000 ? "pattern_left"
+                                                       : "pattern_right");
     uint16_t bgColorAddress = 0x3F00;
-	uint16_t bgPaletteAddresses[] = { 0x3F01, 0x3F05, 0x3F09, 0x3F0D };
-    std::vector<PPU::Color> grayscalePalette = { { 0, 0, 0, 0 }, { 50, 50, 50, 255 }, { 100, 100, 100, 255 }, { 200, 200, 200, 255 } };
+    uint16_t bgPaletteAddresses[] = {0x3F01, 0x3F05, 0x3F09, 0x3F0D};
+    std::vector<PPU::Color> grayscalePalette = {{0, 0, 0, 0},
+                                                {50, 50, 50, 255},
+                                                {100, 100, 100, 255},
+                                                {200, 200, 200, 255}};
 
     // Solid background color
     {
         glm::vec3 pos(offset.x, offset.y, BACKGROUND_COLOR_DEPTH);
-        glm::vec2 size(PPU::NAMETABLE_COLS * tileSize, PPU::NAMETABLE_ROWS * tileSize);
+        glm::vec2 size(PPU::NAMETABLE_COLS * tileSize,
+                       PPU::NAMETABLE_ROWS * tileSize);
         glm::vec2 texPos(0.0f, 0.0f);
-        glm::vec2 texEndPos(patternTable->getWidth(), patternTable->getHeight());
+        glm::vec2 texEndPos(patternTable->getWidth(),
+                            patternTable->getHeight());
 
         // TODO: Draw this without needlessly using texture
         PPU::Color bgColor = ppu.getPalette(bgColorAddress)[0];
@@ -371,16 +385,21 @@ void NES::drawBackground()
             {
                 uint16_t nametableIndex = r * PPU::NAMETABLE_COLS + c;
                 uint8_t patternIndex = ppu.readMemory(start + nametableIndex);
-                float cTex = floor(patternIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
-                float rTex = floor(patternIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
+                float cTex = floor(patternIndex % PPU::PATTERN_TABLE_SIZE *
+                                   PPU::TILE_SIZE);
+                float rTex = floor(patternIndex / PPU::PATTERN_TABLE_SIZE *
+                                   PPU::TILE_SIZE);
 
-                glm::vec3 pos(offset.x + c * tileSize, offset.y + r * tileSize, BACKGROUND_TILE_DEPTH);
+                glm::vec3 pos(offset.x + c * tileSize, offset.y + r * tileSize,
+                              BACKGROUND_TILE_DEPTH);
                 glm::vec2 size(tileSize, tileSize);
                 glm::vec2 texPos(cTex, rTex);
-                glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);
+                glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE,
+                                    rTex + PPU::TILE_SIZE);
                 glm::vec4 color(1.0f);
 
-                uint8_t paletteTableIndex = ppu.getNametableEntryPalette(nametable, nametableIndex);
+                uint8_t paletteTableIndex =
+                    ppu.getNametableEntryPalette(nametable, nametableIndex);
                 uint16_t paletteAddress = bgPaletteAddresses[paletteTableIndex];
                 auto palette = ppu.getPalette(paletteAddress);
 
@@ -389,7 +408,8 @@ void NES::drawBackground()
                     palette = grayscalePalette;
                 }
 
-                patternTable->draw(pos, size, texPos, texPosEnd, palette, color);
+                patternTable->draw(pos, size, texPos, texPosEnd, palette,
+                                   color);
             }
         }
     }
@@ -405,12 +425,16 @@ void NES::drawSprites()
     float tileSize = getTileSize();
     glm::vec2 offset = getGraphicsOffset();
     Texture *patternTable = ResourceManager::getTexture(
-        ppu.getActiveSpritePatternTableAddress() == 0x0000 ? "pattern_left" : "pattern_right");
+        ppu.getActiveSpritePatternTableAddress() == 0x0000 ? "pattern_left"
+                                                           : "pattern_right");
 
-    uint16_t paletteAddresses[] = { 0x3F11, 0x3F15, 0x3F19, 0x3F1D };
+    uint16_t paletteAddresses[] = {0x3F11, 0x3F15, 0x3F19, 0x3F1D};
     uint16_t nesWidth = PPU::NAMETABLE_COLS * PPU::TILE_SIZE;
     uint16_t nesHeight = PPU::NAMETABLE_ROWS * PPU::TILE_SIZE;
-    std::vector<PPU::Color> grayscalePalette = { { 0, 0, 0, 0 }, { 50, 50, 50, 255 }, { 100, 100, 100, 255 }, { 200, 200, 200, 255 } };
+    std::vector<PPU::Color> grayscalePalette = {{0, 0, 0, 0},
+                                                {50, 50, 50, 255},
+                                                {100, 100, 100, 255},
+                                                {200, 200, 200, 255}};
 
     // 64 sprites in Oam to draw. Sprites with lower address are drawn on top
     for (int i = PPU::OAM_ENTRIES - 1; i >= 0; i--)
@@ -435,17 +459,19 @@ void NES::drawSprites()
         }
 
         // Screen coordinates
-        glm::vec3 pos(
-            offset.x + sprite->xPos * renderingScale,
-            offset.y + sprite->yPos * renderingScale,
-            sprite->attributes.priority == 0 ? FOREGROUND_SPRITE_DEPTH : BACKGROUND_SPRITE_DEPTH
-        );
+        glm::vec3 pos(offset.x + sprite->xPos * renderingScale,
+                      offset.y + sprite->yPos * renderingScale,
+                      sprite->attributes.priority == 0
+                          ? FOREGROUND_SPRITE_DEPTH
+                          : BACKGROUND_SPRITE_DEPTH);
         glm::vec2 size(tileSize, tileSize);
         glm::vec4 color(1.0f);
 
         // Texture coordinates
-        float cTex = floor(sprite->tileIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
-        float rTex = floor(sprite->tileIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
+        float cTex =
+            floor(sprite->tileIndex % PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
+        float rTex =
+            floor(sprite->tileIndex / PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE);
         glm::vec2 texPos(cTex, rTex);
         glm::vec2 texPosEnd(cTex + PPU::TILE_SIZE, rTex + PPU::TILE_SIZE);
 

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "IMapper.h"
 #include "Cartridge.h"
+#include "IMapper.h"
 
 class MapperFactory
 {
-public:
-	static IMapper *createMapper(Cartridge &cartridge);
+  public:
+    static IMapper *createMapper(Cartridge &cartridge);
 };

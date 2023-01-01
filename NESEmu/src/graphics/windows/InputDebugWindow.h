@@ -1,16 +1,16 @@
 #pragma once
 
-#include "../Window.h"
-#include "../../util/Input.h"
-#include "../../emulator/Controller.h"
+#include "emulator/Controller.h"
+#include "graphics/Window.h"
+#include "util/Input.h"
 
 class InputDebugWindow : public Window
 {
-public:
-	InputDebugWindow(Controller &controller);
+  public:
+    InputDebugWindow(Controller &controller);
 
-	void draw() override;
+    void draw() override;
 
-private:
-	Controller &controller;
+  private:
+    Controller &controller;
 };
