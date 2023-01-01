@@ -6,9 +6,9 @@
 
 using std::vector;
 
-static vector<float> normalizePalette(vector<PPU::Color> palette);
+static vector<float> NormalizePalette(vector<PPU::Color> palette);
 
-vector<float> normalizePalette(vector<PPU::Color> palette)
+vector<float> NormalizePalette(vector<PPU::Color> palette)
 {
     vector<float> normalized;
 
@@ -56,7 +56,7 @@ Texture::~Texture()
     }
 }
 
-void Texture::load(PPU &ppu, uint16_t baseAddress)
+void Texture::Load(PPU &ppu, uint16_t base_address)
 {
     // Create and bind buffers
     glGenBuffers(1, &vboId);
@@ -75,7 +75,7 @@ void Texture::load(PPU &ppu, uint16_t baseAddress)
 
     GL_ERROR_CHECK();
 
-    vector<uint8_t> pixels = getPixelData(ppu, baseAddress);
+    vector<uint8_t> pixels = getPixelData(ppu, base_address);
 
     // Create OpenGL texture identifier
     glGenTextures(1, &textureId);
@@ -98,9 +98,9 @@ void Texture::load(PPU &ppu, uint16_t baseAddress)
     GL_ERROR_CHECK();
 }
 
-void Texture::update(PPU &ppu, uint16_t baseAddress)
+void Texture::Update(PPU &ppu, uint16_t base_address)
 {
-    vector<uint8_t> pixels = getPixelData(ppu, baseAddress);
+    vector<uint8_t> pixels = getPixelData(ppu, base_address);
 
     glBindTexture(GL_TEXTURE_2D, textureId);
     // Upload pixels into texture
@@ -114,11 +114,11 @@ void Texture::update(PPU &ppu, uint16_t baseAddress)
     GL_ERROR_CHECK();
 }
 
-void Texture::draw(glm::vec2 pos, glm::vec2 size)
+void Texture::Draw(glm::vec2 pos, glm::vec2 size)
 {
     vector<PPU::Color> palette(4);
     // draw(pos, size, glm::vec2(0, 0), glm::vec2(width, height), palette);
-    draw(glm::vec3(pos, 0.0f), size, glm::vec2(0.0f), glm::vec2(width, height),
+    Draw(glm::vec3(pos, 0.0f), size, glm::vec2(0.0f), glm::vec2(width, height),
          palette, glm::vec4(1.0f));
 }
 
@@ -131,7 +131,7 @@ palette);
 }
 */
 
-void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft,
+void Texture::Draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft,
                    glm::vec2 uvBottomRight, vector<PPU::Color> palette,
                    glm::vec4 color)
 {
@@ -148,7 +148,7 @@ void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft,
         glm::ortho<float>(0.0f, 1280.0f, 720.0f, 0.0f, -10.0f, 10.0f);
 
     // TODO: Cache normalized float palette
-    vector<float> normalizedPalette = normalizePalette(palette);
+    vector<float> normalizedPalette = NormalizePalette(palette);
     assert(normalizedPalette.size() == palette.size() * 4);
 
     shader->setVector4f("colorModifier", color);
@@ -223,12 +223,12 @@ void Texture::draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft,
     GL_ERROR_CHECK();
 }
 
-void Texture::drawGui(ImVec2 size)
+void Texture::DrawGui(ImVec2 size)
 {
-    drawGui(size, ImVec2(0.0f, 0.0f), ImVec2(width, height));
+    DrawGui(size, ImVec2(0.0f, 0.0f), ImVec2(width, height));
 }
 
-void Texture::drawGui(ImVec2 size, ImVec2 texPosTopLeft,
+void Texture::DrawGui(ImVec2 size, ImVec2 texPosTopLeft,
                       ImVec2 texPosBottomRight)
 {
     // For ImGui: Top left = (0.0, 0.0), bottom right = (1.0, 1.0)
@@ -238,22 +238,22 @@ void Texture::drawGui(ImVec2 size, ImVec2 texPosTopLeft,
     ImGui::Image((void *)(intptr_t)textureId, size, uvStart, uvEnd);
 }
 
-GLuint Texture::getId()
+GLuint Texture::GetId()
 {
     return textureId;
 }
 
-int Texture::getWidth()
+int Texture::GetWidth()
 {
     return width;
 }
 
-int Texture::getHeight()
+int Texture::GetHeight()
 {
     return height;
 }
 
-vector<uint8_t> Texture::getPixelData(PPU &ppu, uint16_t baseAddress)
+vector<uint8_t> Texture::getPixelData(PPU &ppu, uint16_t base_address)
 {
     vector<uint8_t> pixels;
     pixels.reserve(128 * 128 * 3);
@@ -271,7 +271,7 @@ vector<uint8_t> Texture::getPixelData(PPU &ppu, uint16_t baseAddress)
             uint8_t bitIndex =
                 7 - c % 8;  // The bit (pixel) to use in the current byte
 
-            uint16_t address = baseAddress | (patternIndex << 4) | byteIndex;
+            uint16_t address = base_address | (patternIndex << 4) | byteIndex;
             uint8_t loByte = ppu.readMemory(address);
             uint8_t hiByte = ppu.readMemory(address + 8);
             uint8_t mask = 1 << bitIndex;

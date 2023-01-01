@@ -13,6 +13,6 @@ class DemoWindow : public Window
     // Show ImGui demo window
     void draw() override
     {
-        ImGui::ShowDemoWindow(&visible);
+        ImGui::ShowDemoWindow(&visible_);
     }
 };

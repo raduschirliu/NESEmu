@@ -15,7 +15,7 @@ MemoryViewWindow::MemoryViewWindow(Bus &bus)
 void MemoryViewWindow::draw()
 {
     // If collapsed, exit out early as optimization
-    if (!ImGui::Begin("Memory Viewer", &visible))
+    if (!ImGui::Begin("Memory Viewer", &visible_))
     {
         ImGui::End();
         return;

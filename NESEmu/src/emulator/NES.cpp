@@ -172,8 +172,8 @@ void NES::run()
     // TODO: Create a PPU callback for loading/updating pattern tables
     Texture *leftPatternTable = ResourceManager::getTexture("pattern_left");
     Texture *rightPatternTable = ResourceManager::getTexture("pattern_right");
-    leftPatternTable->load(ppu, 0x0000);
-    rightPatternTable->load(ppu, 0x1000);
+    leftPatternTable->Load(ppu, 0x0000);
+    rightPatternTable->Load(ppu, 0x1000);
 
     // Draw window and poll events
     while (!glfwWindowShouldClose(window) && !shouldShutdown)
@@ -206,14 +206,14 @@ void NES::run()
             // Draw all drawable components
             for (IDrawable *drawable : drawables)
             {
-                if (!drawable->isActive())
+                if (!drawable->IsActive())
                 {
                     continue;
                 }
 
-                drawable->update();
+                drawable->Update();
 
-                if (drawable->isVisible())
+                if (drawable->IsVisible())
                 {
                     drawable->draw();
                 }
@@ -361,14 +361,14 @@ void NES::drawBackground()
         glm::vec2 size(PPU::NAMETABLE_COLS * tileSize,
                        PPU::NAMETABLE_ROWS * tileSize);
         glm::vec2 texPos(0.0f, 0.0f);
-        glm::vec2 texEndPos(patternTable->getWidth(),
-                            patternTable->getHeight());
+        glm::vec2 texEndPos(patternTable->GetWidth(),
+                            patternTable->GetHeight());
 
         // TODO: Draw this without needlessly using texture
         PPU::Color bgColor = ppu.getPalette(bgColorAddress)[0];
         std::vector<PPU::Color> palette(4, bgColor);
 
-        patternTable->draw(pos, size, texPos, texEndPos, palette);
+        patternTable->Draw(pos, size, texPos, texEndPos, palette);
     }
 
     // Nametable background tiles
@@ -408,7 +408,7 @@ void NES::drawBackground()
                     palette = grayscalePalette;
                 }
 
-                patternTable->draw(pos, size, texPos, texPosEnd, palette,
+                patternTable->Draw(pos, size, texPos, texPosEnd, palette,
                                    color);
             }
         }
@@ -488,6 +488,6 @@ void NES::drawSprites()
             texPosEnd.y = rTex;
         }
 
-        patternTable->draw(pos, size, texPos, texPosEnd, palette, color);
+        patternTable->Draw(pos, size, texPos, texPosEnd, palette, color);
     }
 }

@@ -7,38 +7,38 @@ class Window : public IDrawable
 {
   public:
     // Allow windows to be toggled by keypress
-    virtual void update() override
+    virtual void Update() override
     {
-        if (ImGui::IsKeyPressed(static_cast<ImGuiKey>(key)))
+        if (ImGui::IsKeyPressed(static_cast<ImGuiKey>(key_)))
         {
-            visible = !visible;
+            visible_ = !visible_;
         }
     }
 
     // Control whether the window is enabled /visible
-    bool isVisible() override
+    bool IsVisible() override
     {
-        return visible;
+        return visible_;
     }
 
-    bool isActive() override
+    bool IsActive() override
     {
         return true;
     }
 
-    void setVisible(bool state)
+    void SetVisible(bool state)
     {
-        visible = state;
+        visible_ = state;
     }
 
   protected:
-    Window(int key) : key(key)
+    Window(int key) : key_(key)
     {
     }
 
     // Key to be pressed to toggle window
-    int key = -1;
+    int key_ = -1;
 
     // Whether the window is visible or not
-    bool visible = false;
+    bool visible_ = false;
 };

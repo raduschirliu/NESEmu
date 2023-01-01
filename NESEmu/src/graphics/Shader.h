@@ -16,7 +16,7 @@ class Shader
 
     void load(std::string fragmentPath, std::string vertexPath);
     void use();
-    GLuint getId();
+    GLuint GetId();
     GLint getUniformLocation(std::string name);
 
     void setVector3f(std::string name, const glm::vec3 &vec);

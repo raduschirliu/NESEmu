@@ -4,7 +4,7 @@ class IDrawable
 {
   public:
     // Update prior to drawing
-    virtual void update()
+    virtual void Update()
     {
     }
 
@@ -12,8 +12,8 @@ class IDrawable
     virtual void draw() = 0;
 
     // Whether the component should be updated at all
-    virtual bool isActive() = 0;
+    virtual bool IsActive() = 0;
 
-    // Whether the component should be drawn (only valid if isActive() == true)
-    virtual bool isVisible() = 0;
+    // Whether the component should be drawn (only valid if IsActive() == true)
+    virtual bool IsVisible() = 0;
 };

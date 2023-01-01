@@ -77,7 +77,7 @@ PPUDebugWindow::PPUDebugWindow(NES &nes, PPU &ppu, Cartridge &cartridge)
 void PPUDebugWindow::draw()
 {
     // If collapsed, exit out early as optimization
-    if (!ImGui::Begin("PPU Debugger", &visible))
+    if (!ImGui::Begin("PPU Debugger", &visible_))
     {
         ImGui::End();
         return;
@@ -122,9 +122,9 @@ void PPUDebugWindow::draw()
 
             ImGui::Spacing();
 
-            patternTableLeft->drawGui(ImVec2(256, 256));
+            patternTableLeft->DrawGui(ImVec2(256, 256));
             ImGui::SameLine();
-            patternTableRight->drawGui(ImVec2(256, 256));
+            patternTableRight->DrawGui(ImVec2(256, 256));
 
             ImGui::EndTabItem();
         }
@@ -285,7 +285,7 @@ void PPUDebugWindow::drawNametable(uint8_t nametable)
             ImVec2 posTopLeft(cTex * PPU::TILE_SIZE, rTex * PPU::TILE_SIZE);
             ImVec2 posBottomRight(posTopLeft.x + PPU::TILE_SIZE,
                                   posTopLeft.y + PPU::TILE_SIZE);
-            bgTable->drawGui(tileSize, posTopLeft, posBottomRight);
+            bgTable->DrawGui(tileSize, posTopLeft, posBottomRight);
 
             if (ImGui::IsItemHovered())
             {
@@ -327,7 +327,7 @@ void PPUDebugWindow::drawOam()
                                   PPU::TILE_SIZE));
         ImVec2 uvEnd(uvStart.x + PPU::TILE_SIZE, uvStart.y + PPU::TILE_SIZE);
 
-        spriteTable->drawGui(ImVec2(32, 32), uvStart, uvEnd);
+        spriteTable->DrawGui(ImVec2(32, 32), uvStart, uvEnd);
 
         if (ImGui::IsItemHovered())
         {

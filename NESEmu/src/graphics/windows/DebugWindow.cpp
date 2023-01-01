@@ -30,7 +30,7 @@ DebugWindow::DebugWindow(NES &nes, CPU &cpu)
       nes(nes),
       cpu(cpu)
 {
-    setVisible(true);
+    SetVisible(true);
 }
 
 void DebugWindow::draw()
@@ -47,7 +47,7 @@ void DebugWindow::draw()
     }
 
     // If collapsed, exit out early as optimization
-    if (!ImGui::Begin("Debugger", &visible))
+    if (!ImGui::Begin("Debugger", &visible_))
     {
         ImGui::End();
         return;
