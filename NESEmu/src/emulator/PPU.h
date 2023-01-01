@@ -16,6 +16,12 @@ public:
 	static constexpr uint16_t NAMETABLE_ROWS = 30;
 	static constexpr uint16_t NAMETABLE_COLS = 32;
 
+	// Width of the NES display in pixels
+	static constexpr uint16_t SCREEN_WIDTH = NAMETABLE_COLS * PatternTable::TILE_SIZE;
+	
+	// Height of the NES display in pixels
+	static constexpr uint16_t SCREEN_HEIGHT = NAMETABLE_ROWS * PatternTable::TILE_SIZE;
+
 	// Each attribute table is offset 960 ($3C0) bytes from the start of a nametable
 	static constexpr uint16_t ATTRIBUTE_TABLE_OFFSET = 0x3C0;
 
@@ -140,9 +146,11 @@ public:
 	};
 
 	// Represents a single sprite in the current frame
-	struct Sprite : OamSprite
+	struct Sprite
 	{
+		bool valid;
 		uint8_t index;
+		const OamSprite *oamSprite;
 	};
 
 	// Represents a frame the PPU should draw to the screen
@@ -151,11 +159,14 @@ public:
 		// TODO: Move init logic?
 		Frame() :
 			solidBgColor({ 0 }),
+			screenPixels(SCREEN_WIDTH * SCREEN_HEIGHT, { 0 }),
 			backgroundTiles(NAMETABLE_COLS * NAMETABLE_ROWS, { 0 }),
-			sprites(OAM_ENTRIES) {}
+			sprites(OAM_ENTRIES, { 0 }) {}
 
 		Color solidBgColor;
+
 		// TODO: Implement fixed-size vector util
+		std::vector<bool> screenPixels;
 		std::vector<PPU::Tile> backgroundTiles;
 		std::vector<PPU::Sprite> sprites;
 	};
@@ -250,6 +261,7 @@ private:
 	
 	// Secondary OAM memory (32 byte buffer)
 	uint8_t *secondaryOam;
+	uint8_t secondaryOamIndex;
 
 	// PPU registers
 	Registers *registers;

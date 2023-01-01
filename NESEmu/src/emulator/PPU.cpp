@@ -43,6 +43,7 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr), sys
 	cycles = 0;
 	scanlines = 0;
 	frames = 0;
+	secondaryOamIndex = 0;
 
 	// Set access info for PPUADDR/PPUDATA/OAMDMA
 	accessAddress = 0;
@@ -496,6 +497,8 @@ void PPU::resetFrame()
 	{
 		tile.valid = false;
 	}
+
+	// Set active sprites
 }
 
 void PPU::fetchBgTile()
@@ -505,7 +508,7 @@ void PPU::fetchBgTile()
 		static_cast<uint16_t>(internalRegisters.v.coarseXScroll);
 	Tile &tile = currentFrame.backgroundTiles[tileIndex];
 
-	// Takes 8 cycles to fetch a bg tile
+	// Takes 8 cycles to fetch a bg tile pixel
 	if (!tile.valid)
 	{
 		if (bgFetchCounter == 0)
@@ -535,6 +538,7 @@ void PPU::fetchBgTile()
 		}
 	}
 
+	// TODO: Use fine X scroll instead?
 	bgFetchCounter++;
 
 	if (bgFetchCounter > 7)
@@ -566,13 +570,23 @@ void PPU::evaluateSprites()
 	}
 	else if (cycles >= 257 && cycles <= 320)
 	{
-		// Sprite fetches
+		// Sprite fetches for next scanline (8 sprites x 8 cycles)
+		// TODO: Garbage nametable fetches
+
+
 	}
 	else if (cycles == 0 || (cycles >= 321 && cycles <= 340))
 	{
 		// Background render pipeline init
-
 	}
+
+	// Sprite 0 hit
+	// TODO:
+	//  - One pixel outputted each cycle -> pixel being drawn corresponds to current cycle #
+	//	- Check if the bg pixel being drawn this cycle is transparent or not
+	//  - Check if sprite 0 overlaps the pixel
+	//  - If so, set sprite 0 hit flag
+	// NOTE: May need to fix bg tiles not being fetched ahead of time?
 }
 
 uint16_t PPU::mirrorNametableAddress(uint16_t address)
@@ -643,15 +657,15 @@ void PPU::updateFramePalettes()
 {
 	uint16_t paletteOffsets[] = { 0x01, 0x05, 0x09, 0x0D, 0x11, 0x15, 0x19, 0x1D };
 	auto& systemColors = systemPalette.getColors();
-	Color bgColor = systemColors[paletteTables[0]];
-
-	currentFrame.solidBgColor = bgColor;
+	currentFrame.solidBgColor = systemColors[paletteTables[0]];
 
 	for (size_t i = 0; i < 8; i++)
 	{
 		std::vector<Color> colors;
 		colors.reserve(4);
-		colors.push_back(bgColor);
+
+		// First color is transparent (lets solid bg show)
+		colors.push_back({ 0, 0, 0, 255 });
 
 		for (size_t colorIdx = 0; colorIdx < 3; colorIdx++)
 		{

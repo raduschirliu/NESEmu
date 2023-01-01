@@ -7,6 +7,8 @@
 struct Color
 {
 	uint8_t r, g, b, a;
+
+	bool isTransparent() const { return a == 255; }
 };
 
 class Palette
