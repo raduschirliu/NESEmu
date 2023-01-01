@@ -17,7 +17,7 @@ void InputDebugWindow::draw()
 
     // Input map
     ImGui::Text("Input map: joy1");
-    ImGui::Text("Bitfield: %s", Input::getKeyMap("joy1").to_string().c_str());
+    ImGui::Text("Bitfield: %s", Input::GetKeyMap("joy1").to_string().c_str());
     ImGui::Spacing();
 
     // Controller

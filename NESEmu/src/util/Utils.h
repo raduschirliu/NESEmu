@@ -23,7 +23,7 @@ std::string ToBitString(T num)
 }
 
 void PrintMemory(std::stringstream &ss, uint16_t start, uint16_t end,
-                 std::function<uint8_t(uint16_t address)> readCallback);
+                 std::function<uint8_t(uint16_t address)> read_callback);
 std::string MirroringModeToString(MirroringMode mode);
 
 }  // namespace utils

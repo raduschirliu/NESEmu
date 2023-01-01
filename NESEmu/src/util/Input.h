@@ -11,16 +11,16 @@ class Input
 {
   public:
     // Since the NES input registers are 8 bits, keymaps are also 8 bits
-    static constexpr size_t KEYMAP_SIZE = 8;
+    static constexpr size_t kKeymapSize = 8;
     using KeyMap = std::unordered_map<int, Controller::Button>;
 
     // Start capturing input events
-    static void init(GLFWwindow *window);
-    static void registerKeyMap(std::string name, KeyMap keyMap);
-    static std::bitset<KEYMAP_SIZE> getKeyMap(std::string name);
-    static void onKeyEvent(int key, int scancode, int action, int mods);
+    static void Init(GLFWwindow *window);
+    static void RegisterKeyMap(std::string name, KeyMap keyMap);
+    static std::bitset<kKeymapSize> GetKeyMap(std::string name);
+    static void OnKeyEvent(int key, int scancode, int action, int mods);
 
   private:
-    static std::unordered_map<int, bool> keys;
-    static std::unordered_map<std::string, KeyMap> keyMaps;
+    static std::unordered_map<int, bool> keys_;
+    static std::unordered_map<std::string, KeyMap> key_maps_;
 };

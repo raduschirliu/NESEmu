@@ -96,7 +96,7 @@ bool NES::init()
 
     printf("Loaded OpenGL version %s\n", glGetString(GL_VERSION));
 
-    Input::init(window);
+    Input::Init(window);
 
     // TODO: Move to graphics.cpp / graphics.h
 #ifdef OPENGL_DEBUG
@@ -143,7 +143,7 @@ bool NES::init()
 
     GL_ERROR_CHECK();
 
-    Input::registerKeyMap("joy1",
+    Input::RegisterKeyMap("joy1",
                           {
                               {GLFW_KEY_A, Controller::Button::B},
                               {GLFW_KEY_S, Controller::Button::A},
@@ -260,7 +260,7 @@ void NES::step()
 
     if (controller.isPolling())
     {
-        Controller::ButtonStates keyMap = Input::getKeyMap("joy1");
+        Controller::ButtonStates keyMap = Input::GetKeyMap("joy1");
         controller.setButtonStates(keyMap);
     }
 }
