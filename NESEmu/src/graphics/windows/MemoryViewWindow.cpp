@@ -24,7 +24,7 @@ void MemoryViewWindow::draw()
 	// Initialize sub-window
 	{
 		ImGuiWindowFlags windowFlags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysAutoResize;
-		ImGui::BeginChild("Memory", ImVec2(ImGui::GetWindowContentRegionWidth(), 400), true, windowFlags);
+		ImGui::BeginChild("Memory", ImVec2(ImGui::GetWindowContentRegionMax().x, 400), true, windowFlags);
 
 		// Display current memory page
 		utils::printMemory(ss, pageSize * currentPage, pageSize * (currentPage + 1), [&](uint16_t address) { return bus.read(address); });

@@ -9,7 +9,7 @@ public:
 	// Allow windows to be toggled by keypress
 	virtual void update() override
 	{
-		if (ImGui::IsKeyPressed(key))
+		if (ImGui::IsKeyPressed(static_cast<ImGuiKey>(key)))
 		{
 			visible = !visible;
 		}

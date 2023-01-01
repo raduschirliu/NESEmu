@@ -1,0 +1,14 @@
+# Set the default behavior for all files.
+* text=auto
+
+# Treat PDFs as binary
+*.pdf binary
+
+# Treat images as binary
+*.jpg binary
+*.tif binary
+
+# Ignore thirdparty files except for cmake files (treat as binary)
+thirdparty/CMakeLists.txt text=auto
+thirdparty/imgui.cmake text=auto
+thirdparty/**/* binary

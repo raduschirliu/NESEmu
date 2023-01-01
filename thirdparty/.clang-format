@@ -1,0 +1,3 @@
+# Don't format any thirdparty files
+DisableFormat: true
+SortIncludes: Never

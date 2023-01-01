@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     }
 
     // nes.loadDebugMode();
-    nes.load("..\\roms\\donkey-kong.nes");
+    nes.load("roms/donkey-kong.nes");
     nes.run();
 
     return 0;

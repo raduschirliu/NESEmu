@@ -120,7 +120,7 @@ bool NES::init()
     GL_ERROR_CHECK();
 
     int patternTableSize = PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE;
-    ResourceManager::loadShader("pattern_shader", "shader.frag", "shader.vert");
+    ResourceManager::loadShader("pattern_shader", "shaders/shader.frag", "shaders/shader.vert");
     ResourceManager::loadTexture("pattern_left", "pattern_shader", patternTableSize, patternTableSize);
     ResourceManager::loadTexture("pattern_right", "pattern_shader", patternTableSize, patternTableSize);
 

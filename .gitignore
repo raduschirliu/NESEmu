@@ -1,8 +1,11 @@
 # Ignore ImGui config files
 imgui.ini
 
+# CMake build directories
+/build*
+
 # Ignore Roms directory
-Roms/
+/roms
 
 # Ignore top-level build results only, not those in source folders
 /*/[Dd]ebug/

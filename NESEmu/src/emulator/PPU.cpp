@@ -29,7 +29,7 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr)
 	registers->data = 0;
 
 	// Load system palette from .pal file
-	loadPalette("palette.pal");
+	loadPalette("resources/palette.pal");
 
 	// Set cycle related stats
 	cycles = 0;
