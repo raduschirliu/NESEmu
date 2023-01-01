@@ -165,7 +165,7 @@ void PPUDebugWindow::draw()
             ImGui::Text("Active nametable: %u ($%X)",
                         ppu.getRegisters()->ctrl.baseNametable,
                         ppu.getActiveNametableAddress());
-            ImGui::Text("Mirroring mode: %s", utils::mirroringModeToString(
+            ImGui::Text("Mirroring mode: %s", utils::MirroringModeToString(
                                                   mapper->getMirroringMode()));
 
             ImGui::Text("Display nametable: ");
@@ -206,7 +206,7 @@ void PPUDebugWindow::drawRegister(string name, uint16_t address,
     ImGui::SameLine();
 
     const uint8_t *val = reinterpret_cast<const uint8_t *>(reg);
-    ImGui::Text("  %s ($%X)", utils::toBitString(*val).c_str(), *val);
+    ImGui::Text("  %s ($%X)", utils::ToBitString(*val).c_str(), *val);
 
     if (helpText && ImGui::IsItemHovered())
     {
@@ -346,7 +346,7 @@ void PPUDebugWindow::drawOam()
             ImGui::Text("Screen Pos: %.2f, %.2f", screenPos.x, screenPos.y);
 
             ImGui::Text("Attributes: %s ($%X)",
-                        utils::toBitString(*attributeByte).c_str(),
+                        utils::ToBitString(*attributeByte).c_str(),
                         *attributeByte);
             ImGui::Indent();
             ImGui::Text("Palette:  %X", sprite->attributes.palette);

@@ -129,7 +129,7 @@ void Bus::dump(Logger &logger)
         ss << std::endl;
     }
 
-    logger.write(ss.str());
+    logger.Write(ss.str());
 }
 
 void Bus::registerMemoryAccessCallback(AccessCallback callback)

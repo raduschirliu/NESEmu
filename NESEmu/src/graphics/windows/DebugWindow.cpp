@@ -119,7 +119,7 @@ void DebugWindow::draw()
         ImGui::Text("SP:      $%X", cpuState.sp);
 
         ImGui::Text("P:       $%X (%s)", cpuState.p,
-                    utils::toBitString(cpuState.p).c_str());
+                    utils::ToBitString(cpuState.p).c_str());
 
         if (ImGui::IsItemHovered())
         {

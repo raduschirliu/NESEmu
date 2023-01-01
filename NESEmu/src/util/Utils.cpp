@@ -2,7 +2,8 @@
 
 namespace utils
 {
-void printMemory(std::stringstream &ss, uint16_t start, uint16_t end,
+
+void PrintMemory(std::stringstream &ss, uint16_t start, uint16_t end,
                  std::function<uint8_t(uint16_t address)> readCallback)
 {
     // Draw 8 bytes per line from start address to end address
@@ -20,7 +21,7 @@ void printMemory(std::stringstream &ss, uint16_t start, uint16_t end,
     }
 }
 
-std::string mirroringModeToString(MirroringMode mode)
+std::string MirroringModeToString(MirroringMode mode)
 {
     switch (mode)
     {
@@ -38,4 +39,5 @@ std::string mirroringModeToString(MirroringMode mode)
 
     return "Invalid";
 }
+
 }  // namespace utils

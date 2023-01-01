@@ -13,10 +13,10 @@ class Logger
     ~Logger();
 
     // Write to the file
-    void write(std::string text);
-    void write(const char *text);
+    void Write(std::string text);
+    void Write(const char *text);
 
   private:
-    std::string path;
-    std::ofstream file;
+    std::string path_;
+    std::ofstream file_;
 };

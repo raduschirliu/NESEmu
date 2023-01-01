@@ -285,7 +285,7 @@ void CPU::step()
                 "%04X  %s  %s\t\tA:%02X X:%02X Y:%02X P:%02X SP:%02X\tCYC:%d\n",
                 pc, opcodeBuf, ins.instruction.c_str(), a, x, y, p, sp,
                 totalCycles);
-            logger.write(debugBuf);
+            logger.Write(debugBuf);
         }
 
         int runExtra = (this->*ins.run)();

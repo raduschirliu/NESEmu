@@ -22,7 +22,7 @@ void CartridgeDebugWindow::draw()
 
     ImGui::Text("Mapper: %s (%u)", mapper->getName().c_str(), mapper->getId());
     ImGui::Text("Mirroring mode: %s",
-                utils::mirroringModeToString(mapper->getMirroringMode()));
+                utils::MirroringModeToString(mapper->getMirroringMode()));
     ImGui::Text("PRG ROM: %u banks (%u bytes)", header.prgBanks,
                 header.prgBanks * Cartridge::PRG_BANK_SIZE);
     ImGui::Text("CHR ROM: %u banks (%u bytes)", header.chrBanks,
@@ -58,9 +58,9 @@ void CartridgeDebugWindow::draw()
 
         ImGui::Text("PRG RAM Size: %u bytes", header.prgRamSize);
         ImGui::Text("TV Flags 1: %s",
-                    utils::toBitString(header.tvFlags1).c_str());
+                    utils::ToBitString(header.tvFlags1).c_str());
         ImGui::Text("TV Flags 2: %s",
-                    utils::toBitString(header.tvFlags2).c_str());
+                    utils::ToBitString(header.tvFlags2).c_str());
 
         ImGui::EndChild();
     }
