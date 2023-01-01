@@ -166,7 +166,7 @@ void PPUDebugWindow::draw()
                         ppu.getRegisters()->ctrl.baseNametable,
                         ppu.getActiveNametableAddress());
             ImGui::Text("Mirroring mode: %s", utils::MirroringModeToString(
-                                                  mapper->getMirroringMode()));
+                                                  mapper->GetMirroringMode()));
 
             ImGui::Text("Display nametable: ");
             ImGui::SameLine();

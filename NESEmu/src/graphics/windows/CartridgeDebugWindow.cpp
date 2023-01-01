@@ -20,9 +20,9 @@ void CartridgeDebugWindow::draw()
     Cartridge::Header header = cartridge.getHeader();
     IMapper *mapper = cartridge.getMapper();
 
-    ImGui::Text("Mapper: %s (%u)", mapper->getName().c_str(), mapper->getId());
+    ImGui::Text("Mapper: %s (%u)", mapper->GetName().c_str(), mapper->GetId());
     ImGui::Text("Mirroring mode: %s",
-                utils::MirroringModeToString(mapper->getMirroringMode()));
+                utils::MirroringModeToString(mapper->GetMirroringMode()));
     ImGui::Text("PRG ROM: %u banks (%u bytes)", header.prgBanks,
                 header.prgBanks * Cartridge::PRG_BANK_SIZE);
     ImGui::Text("CHR ROM: %u banks (%u bytes)", header.chrBanks,

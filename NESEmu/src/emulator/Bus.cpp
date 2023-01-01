@@ -62,7 +62,7 @@ uint8_t Bus::read(uint16_t address, bool skipCallback)
     // Get from cartridge Memory ($4020 - $FFFF)
     if (address >= 0x4020 && address <= 0xFFFF)
     {
-        return mapper->prgRead(address);
+        return mapper->PrgRead(address);
     }
 
     // Any other bus accesible memory (< $4020)
@@ -89,7 +89,7 @@ void Bus::write(uint16_t address, uint8_t value, bool skipCallback)
     // Get from cartridge Memory ($4020 - $FFFF)
     if (address >= 0x4020 && address <= 0xFFFF)
     {
-        mapper->prgWrite(address, value);
+        mapper->PrgWrite(address, value);
         return;
     }
 

@@ -164,7 +164,7 @@ uint8_t PPU::readMemory(uint16_t address)
         {
             uint8_t value;
 
-            if (mapper->nametableRead(address, value))
+            if (mapper->NametableRead(address, value))
             {
                 return value;
             }
@@ -180,7 +180,7 @@ uint8_t PPU::readMemory(uint16_t address)
             return ciram[ciramOffset];
         }
 
-        return mapper->chrRead(address);
+        return mapper->ChrRead(address);
     }
     else if (address >= 0x3F00 && address <= 0x3FFF)
     {
@@ -208,7 +208,7 @@ void PPU::writeMemory(uint16_t address, uint8_t value)
 
         if (address >= 0x2000 && address <= 0x2FFF)
         {
-            if (mapper->nametableWrite(address, value))
+            if (mapper->NametableWrite(address, value))
             {
                 return;
             }
@@ -224,7 +224,7 @@ void PPU::writeMemory(uint16_t address, uint8_t value)
             ciram[ciramOffset] = value;
         }
 
-        mapper->chrWrite(address, value);
+        mapper->ChrWrite(address, value);
     }
     else if (address >= 0x3F00 && address <= 0x3FFF)
     {
@@ -368,7 +368,7 @@ void PPU::setMapper(IMapper *mapper)
 
 uint16_t PPU::mirrorNametableAddress(uint16_t address)
 {
-    switch (mapper->getMirroringMode())
+    switch (mapper->GetMirroringMode())
     {
         case MirroringMode::HORIZONTAL:
         {
@@ -398,7 +398,7 @@ uint16_t PPU::mirrorNametableAddress(uint16_t address)
             // TODO: Add other mirroring options
     }
 
-    printf("Invalid mirroring mode: %u\n", mapper->getMirroringMode());
+    printf("Invalid mirroring mode: %u\n", mapper->GetMirroringMode());
     return 0;
 }
 

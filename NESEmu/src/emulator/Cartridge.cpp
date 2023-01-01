@@ -72,7 +72,7 @@ bool Cartridge::load(std::string path)
 
     printf("Loaded ROM: %s\n", path.c_str());
     printf("\tMapper: %u\n", getMapperID());
-    printf("\tMirroring: %u\n", mapper->getMirroringMode());
+    printf("\tMirroring: %u\n", mapper->GetMirroringMode());
     printf("\tPRG ROM size: %u banks -> %u bytes\n", header.prgBanks,
            prgRom.size());
     printf("\tCHR ROM size: %u banks -> %u bytes\n", header.chrBanks,
