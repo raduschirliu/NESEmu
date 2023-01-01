@@ -25,15 +25,15 @@ std::string MirroringModeToString(MirroringMode mode)
 {
     switch (mode)
     {
-        case MirroringMode::HORIZONTAL:
+        case MirroringMode::kHorizontal:
             return "Horizontal";
-        case MirroringMode::VERTICAL:
+        case MirroringMode::kVertical:
             return "Vertical";
-        case MirroringMode::SINGLE_SCREEN:
+        case MirroringMode::kSingleScreen:
             return "Single Screen";
-        case MirroringMode::FOUR_SCREEN:
+        case MirroringMode::kFourScreen:
             return "4 Screen";
-        case MirroringMode::CUSTOM:
+        case MirroringMode::kCustom:
             return "Custom";
     }
 

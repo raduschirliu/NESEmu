@@ -33,10 +33,10 @@ MirroringMode NROM::GetMirroringMode()
 
     if (mirroring)
     {
-        return MirroringMode::VERTICAL;
+        return MirroringMode::kVertical;
     }
 
-    return MirroringMode::HORIZONTAL;
+    return MirroringMode::kHorizontal;
 }
 
 // Nametable operations

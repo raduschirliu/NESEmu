@@ -6,5 +6,5 @@
 class MapperFactory
 {
   public:
-    static IMapper *createMapper(Cartridge &cartridge);
+    static IMapper *CreateMapper(Cartridge &cartridge);
 };

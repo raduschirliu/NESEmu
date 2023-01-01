@@ -370,7 +370,7 @@ uint16_t PPU::mirrorNametableAddress(uint16_t address)
 {
     switch (mapper->GetMirroringMode())
     {
-        case MirroringMode::HORIZONTAL:
+        case MirroringMode::kHorizontal:
         {
             if ((address >= 0x2400 && address < 0x2800) ||
                 (address >= 0x2C00 && address < 0x3000))
@@ -383,7 +383,7 @@ uint16_t PPU::mirrorNametableAddress(uint16_t address)
             break;
         }
 
-        case MirroringMode::VERTICAL:
+        case MirroringMode::kVertical:
         {
             if (address >= 0x2800)
             {

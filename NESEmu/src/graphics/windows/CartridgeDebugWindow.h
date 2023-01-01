@@ -13,6 +13,6 @@ class CartridgeDebugWindow : public Window
     void Draw() override;
 
   private:
-    Cartridge &cartridge;
-    std::stringstream ss;
+    Cartridge &cartridge_;
+    std::stringstream ss_;
 };

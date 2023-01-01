@@ -62,7 +62,7 @@ bool Cartridge::load(std::string path)
         delete mapper;
     }
 
-    mapper = MapperFactory::createMapper(*this);
+    mapper = MapperFactory::CreateMapper(*this);
 
     if (!mapper)
     {

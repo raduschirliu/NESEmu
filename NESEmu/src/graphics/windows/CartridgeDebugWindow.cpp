@@ -4,7 +4,7 @@
 
 CartridgeDebugWindow::CartridgeDebugWindow(Cartridge &cartridge)
     : Window(GLFW_KEY_F4),
-      cartridge(cartridge)
+      cartridge_(cartridge)
 {
 }
 
@@ -17,8 +17,8 @@ void CartridgeDebugWindow::Draw()
         return;
     }
 
-    Cartridge::Header header = cartridge.getHeader();
-    IMapper *mapper = cartridge.getMapper();
+    Cartridge::Header header = cartridge_.getHeader();
+    IMapper *mapper = cartridge_.getMapper();
 
     ImGui::Text("Mapper: %s (%u)", mapper->GetName().c_str(), mapper->GetId());
     ImGui::Text("Mirroring mode: %s",

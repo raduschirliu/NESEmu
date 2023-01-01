@@ -2,7 +2,7 @@
 
 #include "mappers/NROM.h"
 
-IMapper *MapperFactory::createMapper(Cartridge &cartridge)
+IMapper *MapperFactory::CreateMapper(Cartridge &cartridge)
 {
     switch (cartridge.getMapperID())
     {
