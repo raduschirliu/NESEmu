@@ -6,7 +6,7 @@ InputDebugWindow::InputDebugWindow(Controller &controller)
 {
 }
 
-void InputDebugWindow::draw()
+void InputDebugWindow::Draw()
 {
     // If collapsed, exit out early as optimization
     if (!ImGui::Begin("Input", &visible_))

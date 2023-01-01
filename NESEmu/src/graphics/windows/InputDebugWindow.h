@@ -9,7 +9,7 @@ class InputDebugWindow : public Window
   public:
     InputDebugWindow(Controller &controller);
 
-    void draw() override;
+    void Draw() override;
 
   private:
     Controller &controller;

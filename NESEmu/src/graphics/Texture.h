@@ -18,7 +18,7 @@ class Texture
     void Load(PPU &ppu, uint16_t base_address);
     void Update(PPU &ppu, uint16_t base_address);
     void Draw(glm::vec2 pos, glm::vec2 size);
-    // void draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
+    // void Draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
     // uv_bottom_right, std::vector<PPU::Color> palette);
     void Draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uv_top_left,
               glm::vec2 uv_bottom_right, std::vector<PPU::Color> palette,
@@ -33,9 +33,9 @@ class Texture
     int GetHeight();
 
   private:
-    Shader *shader;
-    GLuint textureId;
-    GLuint vaoId, vboId, eboId;
+    Shader *shader_;
+    GLuint texture_id_;
+    GLuint vao_id_, vbo_id_, ebo_id_;
     int width, height;
 
     std::vector<uint8_t> getPixelData(PPU &ppu, uint16_t base_address);

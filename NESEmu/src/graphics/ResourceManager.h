@@ -9,15 +9,15 @@
 class ResourceManager
 {
   public:
-    static bool loadShader(std::string name, std::string fragmentPath,
+    static bool LoadShader(std::string name, std::string fragmentPath,
                            std::string vertexPath);
-    static bool loadTexture(std::string name, std::string shaderName, int width,
+    static bool LoadTexture(std::string name, std::string shaderName, int width,
                             int height);
 
-    static Shader *getShader(std::string name);
-    static Texture *getTexture(std::string name);
+    static Shader *GetShader(std::string name);
+    static Texture *GetTexture(std::string name);
 
   private:
-    static std::unordered_map<std::string, Shader *> shaders;
-    static std::unordered_map<std::string, Texture *> textures;
+    static std::unordered_map<std::string, Shader *> shaders_;
+    static std::unordered_map<std::string, Texture *> textures_;
 };

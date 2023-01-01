@@ -8,7 +8,7 @@ CartridgeDebugWindow::CartridgeDebugWindow(Cartridge &cartridge)
 {
 }
 
-void CartridgeDebugWindow::draw()
+void CartridgeDebugWindow::Draw()
 {
     // If collapsed, exit out early as optimization
     if (!ImGui::Begin("Cartridge debugger", &visible_))

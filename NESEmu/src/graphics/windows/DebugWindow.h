@@ -8,7 +8,7 @@ class DebugWindow : public Window
 {
   public:
     DebugWindow(NES &nes, CPU &cpu);
-    void draw() override;
+    void Draw() override;
 
   private:
     double prevTime, emulationSpeed;

@@ -10,7 +10,7 @@ class MemoryViewWindow : public Window
   public:
     MemoryViewWindow(Bus &bus);
 
-    void draw() override;
+    void Draw() override;
 
   private:
     const int pageSize = 0x00FF;

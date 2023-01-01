@@ -124,11 +124,11 @@ bool NES::init()
     GL_ERROR_CHECK();
 
     int patternTableSize = PPU::PATTERN_TABLE_SIZE * PPU::TILE_SIZE;
-    ResourceManager::loadShader("pattern_shader", "shaders/shader.frag",
+    ResourceManager::LoadShader("pattern_shader", "shaders/shader.frag",
                                 "shaders/shader.vert");
-    ResourceManager::loadTexture("pattern_left", "pattern_shader",
+    ResourceManager::LoadTexture("pattern_left", "pattern_shader",
                                  patternTableSize, patternTableSize);
-    ResourceManager::loadTexture("pattern_right", "pattern_shader",
+    ResourceManager::LoadTexture("pattern_right", "pattern_shader",
                                  patternTableSize, patternTableSize);
 
     GL_ERROR_CHECK();
@@ -170,8 +170,8 @@ void NES::run()
            1 / targetFps, cyclesPerFrame);
 
     // TODO: Create a PPU callback for loading/updating pattern tables
-    Texture *leftPatternTable = ResourceManager::getTexture("pattern_left");
-    Texture *rightPatternTable = ResourceManager::getTexture("pattern_right");
+    Texture *leftPatternTable = ResourceManager::GetTexture("pattern_left");
+    Texture *rightPatternTable = ResourceManager::GetTexture("pattern_right");
     leftPatternTable->Load(ppu, 0x0000);
     rightPatternTable->Load(ppu, 0x1000);
 
@@ -215,7 +215,7 @@ void NES::run()
 
                 if (drawable->IsVisible())
                 {
-                    drawable->draw();
+                    drawable->Draw();
                 }
             }
 
@@ -345,7 +345,7 @@ void NES::drawBackground()
     glm::vec2 offset = getGraphicsOffset();
 
     uint8_t nametable = ppu.getRegisters()->ctrl.baseNametable;
-    Texture *patternTable = ResourceManager::getTexture(
+    Texture *patternTable = ResourceManager::GetTexture(
         ppu.getActiveBgPatternTableAddress() == 0x0000 ? "pattern_left"
                                                        : "pattern_right");
     uint16_t bgColorAddress = 0x3F00;
@@ -424,7 +424,7 @@ void NES::drawSprites()
 
     float tileSize = getTileSize();
     glm::vec2 offset = getGraphicsOffset();
-    Texture *patternTable = ResourceManager::getTexture(
+    Texture *patternTable = ResourceManager::GetTexture(
         ppu.getActiveSpritePatternTableAddress() == 0x0000 ? "pattern_left"
                                                            : "pattern_right");
 

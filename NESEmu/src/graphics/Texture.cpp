@@ -24,22 +24,22 @@ vector<float> NormalizePalette(vector<PPU::Color> palette)
 }
 
 Texture::Texture(Shader *shader, int width, int height)
-    : shader(shader),
-      textureId(0),
-      vaoId(0),
-      vboId(0),
-      eboId(0),
+    : shader_(shader),
+      texture_id_(0),
+      vao_id_(0),
+      vbo_id_(0),
+      ebo_id_(0),
       width(width),
       height(height)
 {
 }
 
 Texture::Texture(const Texture &other)
-    : shader(other.shader),
-      textureId(other.textureId),
-      vaoId(other.vaoId),
-      vboId(other.vboId),
-      eboId(other.eboId),
+    : shader_(other.shader_),
+      texture_id_(other.texture_id_),
+      vao_id_(other.vao_id_),
+      vbo_id_(other.vbo_id_),
+      ebo_id_(other.ebo_id_),
       width(other.width),
       height(other.height)
 {
@@ -47,30 +47,30 @@ Texture::Texture(const Texture &other)
 
 Texture::~Texture()
 {
-    if (textureId != 0)
+    if (texture_id_ != 0)
     {
-        glDeleteBuffers(1, &eboId);
-        glDeleteBuffers(1, &vboId);
-        glDeleteVertexArrays(1, &vaoId);
-        glDeleteTextures(1, &textureId);
+        glDeleteBuffers(1, &ebo_id_);
+        glDeleteBuffers(1, &vbo_id_);
+        glDeleteVertexArrays(1, &vao_id_);
+        glDeleteTextures(1, &texture_id_);
     }
 }
 
 void Texture::Load(PPU &ppu, uint16_t base_address)
 {
     // Create and bind buffers
-    glGenBuffers(1, &vboId);
-    glGenBuffers(1, &eboId);
-    glGenVertexArrays(1, &vaoId);
+    glGenBuffers(1, &vbo_id_);
+    glGenBuffers(1, &ebo_id_);
+    glGenVertexArrays(1, &vao_id_);
 
-    assert(vboId != 0);
-    assert(eboId != 0);
-    assert(vaoId != 0);
+    assert(vbo_id_ != 0);
+    assert(ebo_id_ != 0);
+    assert(vao_id_ != 0);
     GL_ERROR_CHECK();
 
-    glBindVertexArray(vaoId);
-    glBindBuffer(GL_ARRAY_BUFFER, vboId);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
+    glBindVertexArray(vao_id_);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_id_);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_id_);
     glBindVertexArray(0);
 
     GL_ERROR_CHECK();
@@ -78,8 +78,8 @@ void Texture::Load(PPU &ppu, uint16_t base_address)
     vector<uint8_t> pixels = getPixelData(ppu, base_address);
 
     // Create OpenGL texture identifier
-    glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_2D, textureId);
+    glGenTextures(1, &texture_id_);
+    glBindTexture(GL_TEXTURE_2D, texture_id_);
 
     // Setup filtering parameters for display (using nearest for pixelated
     // textures)
@@ -102,7 +102,7 @@ void Texture::Update(PPU &ppu, uint16_t base_address)
 {
     vector<uint8_t> pixels = getPixelData(ppu, base_address);
 
-    glBindTexture(GL_TEXTURE_2D, textureId);
+    glBindTexture(GL_TEXTURE_2D, texture_id_);
     // Upload pixels into texture
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
@@ -117,16 +117,16 @@ void Texture::Update(PPU &ppu, uint16_t base_address)
 void Texture::Draw(glm::vec2 pos, glm::vec2 size)
 {
     vector<PPU::Color> palette(4);
-    // draw(pos, size, glm::vec2(0, 0), glm::vec2(width, height), palette);
+    // Draw(pos, size, glm::vec2(0, 0), glm::vec2(width, height), palette);
     Draw(glm::vec3(pos, 0.0f), size, glm::vec2(0.0f), glm::vec2(width, height),
          palette, glm::vec4(1.0f));
 }
 
 /*
-void Texture::draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
+void Texture::Draw(glm::vec2 pos, glm::vec2 size, glm::vec2 uvTopLeft, glm::vec2
 uvBottomRight, std::vector<PPU::Color> palette)
 {
-        draw(glm::vec3(pos.x, pos.y, 0.0f), size, uvTopLeft, uvBottomRight,
+        Draw(glm::vec3(pos.x, pos.y, 0.0f), size, uvTopLeft, uvBottomRight,
 palette);
 }
 */
@@ -138,7 +138,7 @@ void Texture::Draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft,
     assert(palette.size() == 4);
 
     // Enable shader and set uniforms
-    shader->use();
+    shader_->use();
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, pos);
@@ -151,10 +151,10 @@ void Texture::Draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft,
     vector<float> normalizedPalette = NormalizePalette(palette);
     assert(normalizedPalette.size() == palette.size() * 4);
 
-    shader->setVector4f("colorModifier", color);
-    shader->setVector4f("palette", normalizedPalette);
-    shader->setMatrix4f("model", model);
-    shader->setMatrix4f("projection", projection);
+    shader_->setVector4f("colorModifier", color);
+    shader_->setVector4f("palette", normalizedPalette);
+    shader_->setMatrix4f("model", model);
+    shader_->setMatrix4f("projection", projection);
 
     // Enable texture alpha, depth test
     glEnable(GL_DEPTH_TEST);
@@ -163,8 +163,8 @@ void Texture::Draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft,
 
     // Bind texture
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glBindVertexArray(vaoId);
+    glBindTexture(GL_TEXTURE_2D, texture_id_);
+    glBindVertexArray(vao_id_);
 
     // Update VAO
     // For UVs: bottom left = (0, 0), top right = (1.0, 1.0)
@@ -218,7 +218,7 @@ void Texture::Draw(glm::vec3 pos, glm::vec2 size, glm::vec2 uvTopLeft,
     glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
 
-    shader->abandon();
+    shader_->abandon();
 
     GL_ERROR_CHECK();
 }
@@ -235,12 +235,12 @@ void Texture::DrawGui(ImVec2 size, ImVec2 texPosTopLeft,
     ImVec2 uvStart(texPosTopLeft.x / width, texPosTopLeft.y / height);
     ImVec2 uvEnd(texPosBottomRight.x / width, texPosBottomRight.y / height);
 
-    ImGui::Image((void *)(intptr_t)textureId, size, uvStart, uvEnd);
+    ImGui::Image((void *)(intptr_t)texture_id_, size, uvStart, uvEnd);
 }
 
 GLuint Texture::GetId()
 {
-    return textureId;
+    return texture_id_;
 }
 
 int Texture::GetWidth()

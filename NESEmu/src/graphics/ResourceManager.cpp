@@ -3,13 +3,13 @@
 using std::string;
 using std::unordered_map;
 
-unordered_map<string, Shader *> ResourceManager::shaders;
-unordered_map<string, Texture *> ResourceManager::textures;
+unordered_map<string, Shader *> ResourceManager::shaders_;
+unordered_map<string, Texture *> ResourceManager::textures_;
 
-bool ResourceManager::loadShader(string name, string fragmentPath,
+bool ResourceManager::LoadShader(string name, string fragmentPath,
                                  string vertexPath)
 {
-    if (getShader(name))
+    if (GetShader(name))
     {
         printf("[Error] Failed to load shader '%s' - Already exists\n",
                name.c_str());
@@ -18,7 +18,7 @@ bool ResourceManager::loadShader(string name, string fragmentPath,
 
     Shader *shader = new Shader();
     shader->load(fragmentPath, vertexPath);
-    shaders.insert({name, shader});
+    shaders_.insert({name, shader});
 
     GL_ERROR_CHECK();
 
@@ -27,17 +27,17 @@ bool ResourceManager::loadShader(string name, string fragmentPath,
     return true;
 }
 
-bool ResourceManager::loadTexture(string name, string shaderName, int width,
+bool ResourceManager::LoadTexture(string name, string shaderName, int width,
                                   int height)
 {
-    if (getTexture(name))
+    if (GetTexture(name))
     {
         printf("[Error] Failed to load texture '%s' - Already exists\n",
                name.c_str());
         return false;
     }
 
-    if (!getShader(shaderName))
+    if (!GetShader(shaderName))
     {
         printf(
             "[Error] Failed to load texture '%s' - shader '%s' doesn't exist\n",
@@ -45,17 +45,17 @@ bool ResourceManager::loadTexture(string name, string shaderName, int width,
         return false;
     }
 
-    textures.insert({name, new Texture(shaders[shaderName], width, height)});
+    textures_.insert({name, new Texture(shaders_[shaderName], width, height)});
     printf("Loaded texture '%s' with shader '%s'\n", name.c_str(),
            shaderName.c_str());
     return true;
 }
 
-Shader *ResourceManager::getShader(string name)
+Shader *ResourceManager::GetShader(string name)
 {
-    auto it = shaders.find(name);
+    auto it = shaders_.find(name);
 
-    if (it == shaders.end())
+    if (it == shaders_.end())
     {
         return nullptr;
     }
@@ -63,11 +63,11 @@ Shader *ResourceManager::getShader(string name)
     return it->second;
 }
 
-Texture *ResourceManager::getTexture(string name)
+Texture *ResourceManager::GetTexture(string name)
 {
-    auto it = textures.find(name);
+    auto it = textures_.find(name);
 
-    if (it == textures.end())
+    if (it == textures_.end())
     {
         return nullptr;
     }

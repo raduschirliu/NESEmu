@@ -12,7 +12,7 @@ class PPUDebugWindow : public Window
   public:
     PPUDebugWindow(NES &nes, PPU &ppu, Cartridge &cartridge);
 
-    void draw() override;
+    void Draw() override;
 
   private:
     void drawRegister(std::string name, uint16_t address, const void *reg,

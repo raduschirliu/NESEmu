@@ -33,7 +33,7 @@ DebugWindow::DebugWindow(NES &nes, CPU &cpu)
     SetVisible(true);
 }
 
-void DebugWindow::draw()
+void DebugWindow::Draw()
 {
     // Measure FPS
     double currentTime = glfwGetTime();

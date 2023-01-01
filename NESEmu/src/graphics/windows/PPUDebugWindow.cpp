@@ -70,11 +70,11 @@ PPUDebugWindow::PPUDebugWindow(NES &nes, PPU &ppu, Cartridge &cartridge)
       cartridge(cartridge),
       debugViewNametable(0)
 {
-    patternTableLeft = ResourceManager::getTexture("pattern_left");
-    patternTableRight = ResourceManager::getTexture("pattern_right");
+    patternTableLeft = ResourceManager::GetTexture("pattern_left");
+    patternTableRight = ResourceManager::GetTexture("pattern_right");
 }
 
-void PPUDebugWindow::draw()
+void PPUDebugWindow::Draw()
 {
     // If collapsed, exit out early as optimization
     if (!ImGui::Begin("PPU Debugger", &visible_))

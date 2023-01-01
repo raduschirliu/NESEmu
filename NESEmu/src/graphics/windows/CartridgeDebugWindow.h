@@ -10,7 +10,7 @@ class CartridgeDebugWindow : public Window
   public:
     CartridgeDebugWindow(Cartridge &cartridge);
 
-    void draw() override;
+    void Draw() override;
 
   private:
     Cartridge &cartridge;
