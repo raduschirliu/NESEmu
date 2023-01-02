@@ -22,7 +22,7 @@ class Bus
 
     // Callback types
     using AccessCallback =
-        std::function<void(uint16_t address, uint8_t newValue, bool write)>;
+        std::function<void(uint16_t address, uint8_t new_value, bool write)>;
     using OamTransferCallback = std::function<void(uint8_t *data)>;
 
     // Initialize all empty memory blocks
@@ -32,68 +32,68 @@ class Bus
     ~Bus();
 
     // Return pointer to a place in memory, or nullptr if out of bounds
-    uint8_t *get(uint16_t address);
+    uint8_t *Get(uint16_t address);
 
     // Return value of a place in memory, or -1 if not found
-    uint8_t read(uint16_t address, bool skipCallback = false);
+    uint8_t Read(uint16_t address, bool skip_callback = false);
 
     // Write value in memory at address, or does nothing if out of bounds
-    void write(uint16_t address, uint8_t value, bool skipCallback = false);
+    void Write(uint16_t address, uint8_t value, bool skip_callback = false);
 
     // Dump entire contents of memory ($0000 - $FFFF) to given logger
-    void dump(Logger &logger);
+    void Dump(Logger &logger);
 
     // Register a new memory access callback
-    void registerMemoryAccessCallback(AccessCallback callback);
+    void RegisterMemoryAccessCallback(AccessCallback callback);
 
     // Set the PPU Oam transfer callback
-    void setPpuOamTransferCallback(OamTransferCallback callback);
+    void PetPpuOamTransferCallback(OamTransferCallback callback);
 
     // Signal that the NMI should be dispatched to the CPU
-    void dispatchNmi();
+    void DispatchNmi();
 
     // Signal to the PPU that the OAM data transfer should begin
-    void dispatchOamTransfer();
+    void DispatchOamTransfer();
 
     // Poll for whether the NMI should be dispatched
-    bool pollNmi();
+    bool PollNmi();
 
     // Poll for whether an OAM data transfer is requested
-    bool pollOamTransfer();
+    bool PollOamTransfer();
 
     // Sets the active mapper
-    void setMapper(IMapper *mapper);
+    void SetMapper(IMapper *mapper);
 
   private:
     // Internal 2 KiB of CPU Memory (from $0000 - $07FFF)
     // Mirrored 3 times from $0800 - $1FFF
-    uint8_t *cpuMem;
+    uint8_t *cpu_mem_;
 
     // PPU Memory mapped registers (from $2000 - $2007)
     // Mirrored every 8 bytes from $2008 - $3FFF
-    uint8_t *ppuRegisterMem;
+    uint8_t *ppu_register_mem_;
 
     // APU & I/O Memory (from $4000 - $4017)
-    uint8_t *apuMem;
+    uint8_t *apu_mem_;
 
     // APU & I/O Memory - usually disabled (from $4018 - $401F)
-    uint8_t *testMem;
+    uint8_t *test_mem_;
 
     // Cartridge Memory: used for PRG ROM, PRG RAM, and mapper registers (from
     // $4020 - $FFFF)
-    IMapper *mapper;
+    IMapper *mapper_;
 
     // Callbacks
-    std::vector<AccessCallback> memoryAccessCallbacks;
-    OamTransferCallback ppuOamTransferCallback;
+    std::vector<AccessCallback> memory_access_callbacks_;
+    OamTransferCallback ppu_oam_transfer_callback_;
 
     // Whether the NMI has already been dispatched to the CPU
-    bool shouldDispatchNmi;
+    bool should_dispatch_nmi_;
 
     // Whether an OAM transfer is needed
-    bool shouldDispatchOamTransfer;
+    bool should_dispatch_oam_transfer_;
 
     // Dispatch any memory access callbacks if needed
-    void dispatchMemoryAccessCallbacks(uint16_t address, uint8_t value,
+    void DispatchMemoryAccessCallbacks(uint16_t address, uint8_t value,
                                        bool write);
 };

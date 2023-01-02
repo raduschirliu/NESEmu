@@ -22,9 +22,9 @@ void InputDebugWindow::Draw()
 
     // Controller
     ImGui::Text("Controller: joy1");
-    ImGui::Text("Polling: %u", controller.isPolling());
+    ImGui::Text("Polling: %u", controller.IsPolling());
     ImGui::Text("State:   %s",
-                controller.getButtonStates().to_string().c_str());
+                controller.GetButtonStates().to_string().c_str());
 
     ImGui::End();
 }

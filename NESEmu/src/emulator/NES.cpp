@@ -47,8 +47,8 @@ NES::NES() : cpu(bus), ppu(bus), controller(bus, Bus::JOY1)
 void NES::load(std::string path)
 {
     cartridge.load(path);
-    bus.setMapper(cartridge.getMapper());
-    ppu.setMapper(cartridge.getMapper());
+    bus.SetMapper(cartridge.getMapper());
+    ppu.SetMapper(cartridge.getMapper());
 
     cpu.reset();
     ppu.reset();
@@ -145,14 +145,14 @@ bool NES::init()
 
     Input::RegisterKeyMap("joy1",
                           {
-                              {GLFW_KEY_A, Controller::Button::B},
-                              {GLFW_KEY_S, Controller::Button::A},
-                              {GLFW_KEY_Q, Controller::Button::SELECT},
-                              {GLFW_KEY_W, Controller::Button::START},
-                              {GLFW_KEY_UP, Controller::Button::UP},
-                              {GLFW_KEY_DOWN, Controller::Button::DOWN},
-                              {GLFW_KEY_LEFT, Controller::Button::LEFT},
-                              {GLFW_KEY_RIGHT, Controller::Button::RIGHT},
+                              {GLFW_KEY_A, Controller::Button::kB},
+                              {GLFW_KEY_S, Controller::Button::kA},
+                              {GLFW_KEY_Q, Controller::Button::kSelect},
+                              {GLFW_KEY_W, Controller::Button::kStart},
+                              {GLFW_KEY_UP, Controller::Button::kUp},
+                              {GLFW_KEY_DOWN, Controller::Button::kDown},
+                              {GLFW_KEY_LEFT, Controller::Button::kLeft},
+                              {GLFW_KEY_RIGHT, Controller::Button::kRight},
                           });
 
     return true;
@@ -258,10 +258,10 @@ void NES::step()
     ppu.step();
     ppu.step();
 
-    if (controller.isPolling())
+    if (controller.IsPolling())
     {
         Controller::ButtonStates keyMap = Input::GetKeyMap("joy1");
-        controller.setButtonStates(keyMap);
+        controller.SetButtonStates(keyMap);
     }
 }
 
@@ -296,12 +296,12 @@ void NES::loadDebugMode()
 
     // Read NESTest test result codes
     printf("Test results:\n");
-    printf("\t0x02: %02X\n", bus.read(0x02));
-    printf("\t0x03: %02X\n", bus.read(0x03));
+    printf("\t0x02: %02X\n", bus.Read(0x02));
+    printf("\t0x03: %02X\n", bus.Read(0x03));
 
     // Dump memory post-run
     Logger memlog("..\\logs\\post-run-memory.log");
-    bus.dump(memlog);
+    bus.Dump(memlog);
     printf("Memory dumped post-run");
 }
 

@@ -108,9 +108,9 @@ void CPU::step()
     else
     {
         // Poll for OAM data transfer request
-        if (bus.pollOamTransfer())
+        if (bus.PollOamTransfer())
         {
-            bus.dispatchOamTransfer();
+            bus.DispatchOamTransfer();
 
             // OAM data transfer takes 513 (+1) cycles
             cycles = 513;
@@ -125,15 +125,15 @@ void CPU::step()
         }
 
         // Poll for NMI interrupts
-        if (bus.pollNmi())
+        if (bus.PollNmi())
         {
             // TODO: Make interrupt func
             uint16_t returnAddress = pc;
-            bus.write(SP_ADDRESS,
+            bus.Write(SP_ADDRESS,
                       returnAddress >> 8);  // Return address high byte
-            bus.write(SP_ADDRESS - 1,
+            bus.Write(SP_ADDRESS - 1,
                       returnAddress & 0x00FF);  // Return address low byte
-            bus.write(SP_ADDRESS - 2, p);       // Status
+            bus.Write(SP_ADDRESS - 2, p);       // Status
 
             setFlag(Flag::Interrupt);
 
@@ -144,7 +144,7 @@ void CPU::step()
         }
 
         // Process opcode
-        opcode = bus.read(pc);
+        opcode = bus.Read(pc);
         Instruction ins = instructions[opcode];
         instructionLength = 1;
         int modeExtra = (this->*ins.addressingMode)();
@@ -161,11 +161,11 @@ void CPU::step()
                     break;
                 case 2:
                     snprintf(opcodeBuf, 9, "%02X %02X    ", opcode,
-                             bus.read(pc + 1, true));
+                             bus.Read(pc + 1, true));
                     break;
                 case 3:
                     snprintf(opcodeBuf, 9, "%02X %02X %02X", opcode,
-                             bus.read(pc + 1, true), bus.read(pc + 2, true));
+                             bus.Read(pc + 1, true), bus.Read(pc + 2, true));
                     break;
             }
 
@@ -242,7 +242,7 @@ CPU::State CPU::getState() const
     return state;
 }
 
-void CPU::writeOperand(uint8_t value, bool skipCallback)
+void CPU::writeOperand(uint8_t value, bool skip_callback)
 {
     switch (operand.type)
     {
@@ -250,7 +250,7 @@ void CPU::writeOperand(uint8_t value, bool skipCallback)
             printf("Tried writing to an invalid operand\n");
             break;
         case OperandType::Address:
-            bus.write(operand.address, value);
+            bus.Write(operand.address, value);
             break;
         case OperandType::Accumulator:
             a = value;
@@ -258,7 +258,7 @@ void CPU::writeOperand(uint8_t value, bool skipCallback)
     }
 }
 
-uint8_t CPU::readOperand(bool skipCallback)
+uint8_t CPU::readOperand(bool skip_callback)
 {
     switch (operand.type)
     {
@@ -266,7 +266,7 @@ uint8_t CPU::readOperand(bool skipCallback)
             printf("Tried reading from an invalid operand\n");
             return 0;
         case OperandType::Address:
-            return bus.read(operand.address);
+            return bus.Read(operand.address);
         case OperandType::Accumulator:
             return a;
     }
@@ -342,7 +342,7 @@ int CPU::performBranch()
 void CPU::jumpVector(uint16_t address)
 {
     // Move PC to address from memory (little endian)
-    pc = (bus.read(address + 1) << 8) | bus.read(address);
+    pc = (bus.Read(address + 1) << 8) | bus.Read(address);
 }
 
 /* Addressing Modes */
@@ -382,7 +382,7 @@ int CPU::ZPG()
 {
     // Operand is a memory address in range $0000-$00FF, in 1 byte after
     // instruction
-    uint16_t address = bus.read(pc + 1);
+    uint16_t address = bus.Read(pc + 1);
     operand = {OperandType::Address, address};
     instructionLength = 2;
 
@@ -393,7 +393,7 @@ int CPU::ZPG()
 int CPU::ZPX()
 {
     // Operand is a memory address in range $0000-$00FF added to X register
-    uint16_t address = bus.read(pc + 1) + x;
+    uint16_t address = bus.Read(pc + 1) + x;
 
     // Take zero page wrap-around into account (wrap if past $00FF)
     address %= 0x0100;
@@ -408,7 +408,7 @@ int CPU::ZPX()
 int CPU::ZPY()
 {
     // Operand is a memory address in range $0000-$00FF added to Y register
-    uint16_t address = bus.read(pc + 1) + y;
+    uint16_t address = bus.Read(pc + 1) + y;
 
     // Take zero page wrap-around into account (wrap if past $00FF)
     address %= 0x0100;
@@ -433,8 +433,8 @@ int CPU::REL()
 int CPU::ABS()
 {
     // Operand is an address after the instruction, stored in little-endian
-    uint16_t address = bus.read(pc + 2) << 8;
-    address |= bus.read(pc + 1);
+    uint16_t address = bus.Read(pc + 2) << 8;
+    address |= bus.Read(pc + 1);
     operand = {OperandType::Address, address};
 
     // Jump target is the 16-bit address after the instruction
@@ -449,8 +449,8 @@ int CPU::ABX()
 {
     // Operand is an address after the instruction, stored in little-endian,
     // added to X
-    uint16_t address = bus.read(pc + 2) << 8;
-    address |= bus.read(pc + 1);
+    uint16_t address = bus.Read(pc + 2) << 8;
+    address |= bus.Read(pc + 1);
     operand = {OperandType::Address, (uint16_t)(address + x)};
     instructionLength = 3;
 
@@ -464,8 +464,8 @@ int CPU::ABY()
 {
     // Operand is an address after the instruction, stored in little-endian,
     // added to Y
-    uint16_t address = bus.read(pc + 2) << 8;
-    address |= bus.read(pc + 1);
+    uint16_t address = bus.Read(pc + 2) << 8;
+    address |= bus.Read(pc + 1);
     operand = {OperandType::Address, (uint16_t)(address + y)};
     instructionLength = 3;
 
@@ -479,22 +479,22 @@ int CPU::IND()
 {
     // Jump target is a 16-bit value at address specified after the instruction,
     // stored in little-endian
-    uint16_t address = bus.read(pc + 2) << 8;
-    address |= bus.read(pc + 1);
+    uint16_t address = bus.Read(pc + 2) << 8;
+    address |= bus.Read(pc + 1);
 
     // Check if LSB falls on page boundary
     if ((address & 0x00FF) == 0x00FF)
     {
         // If fetching LSB from page boundary, then wrap around and fetch MSB
         // from page start
-        jumpTarget = bus.read(address & 0xFF00) << 8;
-        jumpTarget |= bus.read(address);
+        jumpTarget = bus.Read(address & 0xFF00) << 8;
+        jumpTarget |= bus.Read(address);
     }
     else
     {
         // If LSB is not on page boundary, fetch as normal
-        jumpTarget = bus.read(address + 1) << 8;
-        jumpTarget |= bus.read(address);
+        jumpTarget = bus.Read(address + 1) << 8;
+        jumpTarget |= bus.Read(address);
     }
 
     // Operand unused
@@ -508,14 +508,14 @@ int CPU::IND()
 int CPU::IDX()
 {
     // Read the pointer address after the instruction and add X register to it
-    uint8_t pointer = bus.read(pc + 1);
+    uint8_t pointer = bus.Read(pc + 1);
     pointer += x;
 
     // Read the address located at the pointer (high-byte first)
     // Also ensuring that (pointer + 1) for fetching high byte follows zero-page
     // wrap-around
-    uint16_t address = bus.read((pointer + 1) & 0xFF) << 8;
-    address |= bus.read(pointer);
+    uint16_t address = bus.Read((pointer + 1) & 0xFF) << 8;
+    address |= bus.Read(pointer);
 
     operand = {OperandType::Address, address};
     instructionLength = 2;
@@ -527,13 +527,13 @@ int CPU::IDX()
 int CPU::IDY()
 {
     // Read the pointer address after the instruction
-    uint8_t pointer = bus.read(pc + 1);
+    uint8_t pointer = bus.Read(pc + 1);
 
     // Read the address located at the pointer (high-byte first), and add
     // register Y to it Also ensuring that (pointer + 1) for fetching high byte
     // follows zero-page wrap-around
-    uint16_t address = bus.read((pointer + 1) & 0xFF) << 8;
-    address |= bus.read(pointer);
+    uint16_t address = bus.Read((pointer + 1) & 0xFF) << 8;
+    address |= bus.Read(pointer);
     address += y;
 
     operand = {OperandType::Address, address};
@@ -708,10 +708,10 @@ int CPU::BPL()
 int CPU::BRK()
 {
     uint16_t returnAddress = pc + 2;
-    bus.write(SP_ADDRESS, returnAddress >> 8);  // Return address high byte
-    bus.write(SP_ADDRESS - 1,
+    bus.Write(SP_ADDRESS, returnAddress >> 8);  // Return address high byte
+    bus.Write(SP_ADDRESS - 1,
               returnAddress & 0x00FF);  // Return address low byte
-    bus.write(SP_ADDRESS - 2, p);       // Status
+    bus.Write(SP_ADDRESS - 2, p);       // Status
 
     // TODO: Not sure if I flag needs to be set here?
     setFlag(Flag::Break);
@@ -937,8 +937,8 @@ int CPU::JMP()
 int CPU::JSR()
 {
     uint16_t returnAddress = pc + 2;
-    bus.write(SP_ADDRESS, (returnAddress & 0xFF00) >> 8);
-    bus.write(SP_ADDRESS - 1, returnAddress & 0x00FF);
+    bus.Write(SP_ADDRESS, (returnAddress & 0xFF00) >> 8);
+    bus.Write(SP_ADDRESS - 1, returnAddress & 0x00FF);
 
     sp -= 2;
     pc = jumpTarget - instructionLength;
@@ -1031,7 +1031,7 @@ int CPU::ORA()
 // Push A; (); Push accumulator on stack
 int CPU::PHA()
 {
-    bus.write(SP_ADDRESS, a);
+    bus.Write(SP_ADDRESS, a);
     sp--;
 
     return 0;
@@ -1045,7 +1045,7 @@ int CPU::PHP()
     setFlag(Flag::Break);
     setFlag(Flag::Unused);
 
-    bus.write(SP_ADDRESS, p);
+    bus.Write(SP_ADDRESS, p);
     sp--;
 
     p = originalP;
@@ -1057,7 +1057,7 @@ int CPU::PHP()
 int CPU::PLA()
 {
     sp++;
-    a = bus.read(SP_ADDRESS);
+    a = bus.Read(SP_ADDRESS);
 
     checkZero(a);
     checkNegative(a);
@@ -1074,7 +1074,7 @@ int CPU::PLP()
 
     // Read new status from stack
     sp++;
-    p = bus.read(SP_ADDRESS);
+    p = bus.Read(SP_ADDRESS);
 
     // Apply old bits to 4 and 5
     setStatusBit(4, bit4);
@@ -1154,15 +1154,15 @@ int CPU::RTI()
 
     // Read new status from stack
     sp++;
-    p = bus.read(SP_ADDRESS);
+    p = bus.Read(SP_ADDRESS);
 
     // Apply old bits to 4 and 5
     setStatusBit(4, bit4);
     setStatusBit(5, bit5);
 
     // Read PC from stack (in high, low order)
-    uint16_t returnAddress = bus.read(SP_ADDRESS + 2) << 8;
-    returnAddress |= bus.read(SP_ADDRESS + 1);
+    uint16_t returnAddress = bus.Read(SP_ADDRESS + 2) << 8;
+    returnAddress |= bus.Read(SP_ADDRESS + 1);
 
     // PC should be set to return address pulled from stack
     // But PC will be automatically incremented later, so decrement now to
@@ -1177,8 +1177,8 @@ int CPU::RTI()
 int CPU::RTS()
 {
     // Read PC from stack (in high, low order)
-    uint16_t returnAddress = bus.read(SP_ADDRESS + 2) << 8;
-    returnAddress |= bus.read(SP_ADDRESS + 1);
+    uint16_t returnAddress = bus.Read(SP_ADDRESS + 2) << 8;
+    returnAddress |= bus.Read(SP_ADDRESS + 1);
 
     // PC should be set to returnAddress + 1, but is automatically incremented
     // later Set PC to just return address to negate

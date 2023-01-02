@@ -35,7 +35,7 @@ void MemoryViewWindow::Draw()
         // Display current memory page
         utils::PrintMemory(ss, pageSize * currentPage,
                            pageSize * (currentPage + 1),
-                           [&](uint16_t address) { return bus.read(address); });
+                           [&](uint16_t address) { return bus.Read(address); });
         ImGui::Text(ss.str().c_str());
         ss.str("");
 
@@ -111,7 +111,7 @@ void MemoryViewWindow::Draw()
         dump.Write("Memory dump\n\n");
 
         utils::PrintMemory(ss, 0, 0xFFFF,
-                           [&](uint16_t address) { return bus.read(address); });
+                           [&](uint16_t address) { return bus.Read(address); });
         dump.Write(ss.str().c_str());
 
         printf("Dumped memory to logs/memdump.log");

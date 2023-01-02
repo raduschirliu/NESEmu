@@ -121,8 +121,8 @@ class CPU
     std::vector<Instruction> instructions;
 
     // Accesors for operand (read and write)
-    void writeOperand(uint8_t value, bool skipCallback = false);
-    uint8_t readOperand(bool skipCallback = false);
+    void writeOperand(uint8_t value, bool skip_callback = false);
+    uint8_t readOperand(bool skip_callback = false);
 
     // Sets overflow flag if result is an overflow
     void checkOverflow(int8_t target, int8_t result);

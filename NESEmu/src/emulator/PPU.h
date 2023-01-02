@@ -170,7 +170,7 @@ class PPU
     bool isOamTransferRequested();
 
     // Sets the active mapper
-    void setMapper(IMapper *mapper);
+    void SetMapper(IMapper *mapper);
 
   private:
     // Cycle related stats
@@ -219,5 +219,5 @@ class PPU
     void loadPalette(std::string path);
 
     // Called when one of the PPU's memory mapped registers is accessed
-    void onRegisterAccess(uint16_t address, uint8_t newValue, bool write);
+    void onRegisterAccess(uint16_t address, uint8_t new_value, bool write);
 };

@@ -17,7 +17,7 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr)
     oam = new uint8_t[OAM_SIZE]();
 
     // Initialize registers
-    registers = reinterpret_cast<Registers *>(bus.get(REGISTER_START_ADDRESS));
+    registers = reinterpret_cast<Registers *>(bus.Get(REGISTER_START_ADDRESS));
     registers->ctrl = {0};
     registers->mask = {0};
     registers->status = {0};
@@ -42,9 +42,9 @@ PPU::PPU(Bus &bus) : logger("..\\logs\\ppu.log"), bus(bus), mapper(nullptr)
     oamTransferRequested = false;
 
     // Callbacks
-    bus.registerMemoryAccessCallback(
+    bus.RegisterMemoryAccessCallback(
         bind(&PPU::onRegisterAccess, this, _1, _2, _3));
-    bus.setPpuOamTransferCallback(bind(&PPU::writeOamData, this, _1));
+    bus.PetPpuOamTransferCallback(bind(&PPU::writeOamData, this, _1));
 
     reset();
 }
@@ -115,7 +115,7 @@ void PPU::step()
 
             if (registers->ctrl.nmiEnable)
             {
-                bus.dispatchNmi();
+                bus.DispatchNmi();
             }
         }
     }
@@ -361,7 +361,7 @@ bool PPU::isOamTransferRequested()
     return oamTransferRequested;
 }
 
-void PPU::setMapper(IMapper *mapper)
+void PPU::SetMapper(IMapper *mapper)
 {
     this->mapper = mapper;
 }
@@ -427,7 +427,7 @@ void PPU::loadPalette(std::string path)
     printf("Loaded %zu system palette colors\n", systemPalette.size());
 }
 
-void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
+void PPU::onRegisterAccess(uint16_t address, uint8_t new_value, bool write)
 {
     switch (address)
     {
@@ -462,7 +462,7 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
         {
             if (write)
             {
-                oam[registers->oamAddr] = newValue;
+                oam[registers->oamAddr] = new_value;
                 registers->oamAddr++;
                 registers->oamData = oam[registers->oamAddr];
             }
@@ -476,7 +476,7 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
             if (write)
             {
                 uint16_t mask = 0x00FF;
-                uint16_t val = newValue;
+                uint16_t val = new_value;
 
                 if (accessAddressHighByte)
                 {
@@ -505,7 +505,7 @@ void PPU::onRegisterAccess(uint16_t address, uint8_t newValue, bool write)
         {
             if (write)
             {
-                writeMemory(accessAddress, newValue);
+                writeMemory(accessAddress, new_value);
             }
 
             // Update value post-read if from memory before the palette data

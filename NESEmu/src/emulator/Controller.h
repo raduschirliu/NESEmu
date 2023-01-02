@@ -10,34 +10,35 @@ class Controller
   public:
     enum class Button : uint8_t
     {
-        A = 0,
-        B,
-        SELECT,
-        START,
-        UP,
-        DOWN,
-        LEFT,
-        RIGHT,
+        kA = 0,
+        kB,
+        kSelect,
+        kStart,
+        kUp,
+        kDown,
+        kLeft,
+        kRight,
 
-        COUNT
+        kCount
     };
 
-    using ButtonStates = std::bitset<static_cast<size_t>(Button::COUNT)>;
+    using ButtonStates = std::bitset<static_cast<size_t>(Button::kCount)>;
 
     Controller(Bus &bus, uint16_t port);
-    ButtonStates getButtonStates();
-    void setButtonStates(ButtonStates states);
-    bool isPolling();
+
+    ButtonStates GetButtonStates();
+    void SetButtonStates(ButtonStates states);
+    bool IsPolling();
 
   private:
-    Bus &bus;
-    uint16_t outputRegister;
-    uint8_t currentIndex;
+    Bus &bus_;
+    uint16_t output_register_;
+    uint8_t current_index_;
 
     // Poll (strobe) current button states
-    bool strobe;
-    ButtonStates buttonStates;
+    bool strobe_;
+    ButtonStates button_states_;
 
-    void onBusMemoryAccess(uint16_t address, uint8_t newValue, bool write);
-    void updateOutput();
+    void OnBusMemoryAccess(uint16_t address, uint8_t new_value, bool write);
+    void UpdateOutput();
 };

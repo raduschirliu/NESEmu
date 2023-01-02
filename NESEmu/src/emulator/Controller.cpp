@@ -6,64 +6,64 @@ using std::placeholders::_2;
 using std::placeholders::_3;
 
 Controller::Controller(Bus &bus, uint16_t port)
-    : bus(bus),
-      outputRegister(port),
-      currentIndex(0),
-      strobe(false)
+    : bus_(bus),
+      output_register_(port),
+      current_index_(0),
+      strobe_(false)
 {
-    buttonStates.reset();
-    bus.registerMemoryAccessCallback(
-        bind(&Controller::onBusMemoryAccess, this, _1, _2, _3));
+    button_states_.reset();
+    bus.RegisterMemoryAccessCallback(
+        bind(&Controller::OnBusMemoryAccess, this, _1, _2, _3));
 }
 
-Controller::ButtonStates Controller::getButtonStates()
+Controller::ButtonStates Controller::GetButtonStates()
 {
-    return buttonStates;
+    return button_states_;
 }
 
-void Controller::setButtonStates(ButtonStates states)
+void Controller::SetButtonStates(ButtonStates states)
 {
-    buttonStates = states;
+    button_states_ = states;
 }
 
-bool Controller::isPolling()
+bool Controller::IsPolling()
 {
-    return strobe;
+    return strobe_;
 }
 
-void Controller::onBusMemoryAccess(uint16_t address, uint8_t newValue,
+void Controller::OnBusMemoryAccess(uint16_t address, uint8_t new_value,
                                    bool write)
 {
     if (address == Bus::JOY1 && write)
     {
         // We only care about bit 0
-        strobe = (newValue & 0b1) == 1;
+        strobe_ = (new_value & 0b1) == 1;
 
         // Start reading inputs in serial mode when strobe is disabled
-        if (!strobe)
+        if (!strobe_)
         {
-            currentIndex = 0;
-            updateOutput();
+            current_index_ = 0;
+            UpdateOutput();
             return;
         }
     }
 
-    if (address == outputRegister && !write && !strobe)
+    if (address == output_register_ && !write && !strobe_)
     {
-        updateOutput();
+        UpdateOutput();
     }
 }
 
-void Controller::updateOutput()
+void Controller::UpdateOutput()
 {
-    if (currentIndex >= static_cast<uint8_t>(Button::COUNT))
+    if (current_index_ >= static_cast<uint8_t>(Button::kCount))
     {
-        bus.write(outputRegister, 0xFF, true);
+        bus_.Write(output_register_, 0xFF, true);
         return;
     }
 
-    uint8_t value = static_cast<uint8_t>(buttonStates.test(currentIndex));
-    bus.write(outputRegister, value, true);
+    uint8_t value = static_cast<uint8_t>(button_states_.test(current_index_));
+    bus_.Write(output_register_, value, true);
 
-    currentIndex++;
+    current_index_++;
 }
