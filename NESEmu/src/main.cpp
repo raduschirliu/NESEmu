@@ -17,7 +17,14 @@ int main(int argc, char **argv)
     }
 
     // nes.loadDebugMode();
-    nes.load("roms/donkey-kong.nes");
+
+    if (argc != 2)
+    {
+        printf("Usage: nesemu <ROM path>");
+        return 1;
+    }
+
+    nes.load(argv[1]);
     nes.run();
 
     return 0;

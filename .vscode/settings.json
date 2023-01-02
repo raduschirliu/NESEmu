@@ -1,4 +1,5 @@
 {
+    "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "files.associations": {
         "sstream": "cpp",
@@ -74,6 +75,12 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp",
-        "*.rh": "cpp"
+        "*.rh": "cpp",
+        "cassert": "cpp",
+        "cerrno": "cpp",
+        "cfloat": "cpp",
+        "ciso646": "cpp",
+        "climits": "cpp",
+        "string_view": "cpp"
     }
 }

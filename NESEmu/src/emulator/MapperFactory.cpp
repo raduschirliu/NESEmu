@@ -4,7 +4,7 @@
 
 IMapper *MapperFactory::CreateMapper(Cartridge &cartridge)
 {
-    switch (cartridge.getMapperID())
+    switch (cartridge.GetMapperId())
     {
         case 0:
             return new mappers::NROM(cartridge);

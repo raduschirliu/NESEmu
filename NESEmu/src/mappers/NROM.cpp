@@ -29,7 +29,7 @@ std::string NROM::GetName()
 MirroringMode NROM::GetMirroringMode()
 {
     // Mirroring pads are soldered based on the cartridge
-    uint8_t mirroring = cartridge_.getHeader().flags6.mirroring;
+    uint8_t mirroring = cartridge_.GetHeader().flags6.mirroring;
 
     if (mirroring)
     {
@@ -64,8 +64,8 @@ uint8_t NROM::PrgRead(uint16_t address)
     else if (address >= 0x8000 && address <= 0xFFFF)
     {
         // RPG ROM, either 16 KiB ($4000) mirrored or 32 KiB ($8000)
-        uint16_t offset = (address - 0x8000) % cartridge_.getPrgRom().size();
-        return cartridge_.getPrgRom()[offset];
+        uint16_t offset = (address - 0x8000) % cartridge_.GetPrgRom().size();
+        return cartridge_.GetPrgRom()[offset];
     }
 
     return 0;
@@ -83,8 +83,8 @@ void NROM::PrgWrite(uint16_t address, uint8_t value)
     {
         // RPG ROM, either 16 KiB ($4000) mirrored or 32 KiB ($8000)
         // TODO: Determine why it needs to write to the ROM?
-        uint16_t offset = (address - 0x8000) % cartridge_.getPrgRom().size();
-        cartridge_.getPrgRom()[offset] = value;
+        uint16_t offset = (address - 0x8000) % cartridge_.GetPrgRom().size();
+        cartridge_.GetPrgRom()[offset] = value;
     }
 }
 
@@ -94,7 +94,7 @@ uint8_t NROM::ChrRead(uint16_t address)
     // NROM allows for max 8 KiB ($2000) of CHR ROM
     if (address < 0x2000)
     {
-        return cartridge_.getChrRom()[address];
+        return cartridge_.GetChrRom()[address];
     }
 
     return 0;

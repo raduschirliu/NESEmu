@@ -161,7 +161,7 @@ void PPUDebugWindow::Draw()
         // Nametables
         if (ImGui::BeginTabItem("Nametables"))
         {
-            IMapper *mapper = cartridge.getMapper();
+            IMapper *mapper = cartridge.GetMapper();
             ImGui::Text("Active nametable: %u ($%X)",
                         ppu.getRegisters()->ctrl.baseNametable,
                         ppu.getActiveNametableAddress());

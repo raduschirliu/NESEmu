@@ -30,29 +30,30 @@ class Cartridge
     struct Header
     {
         char name[4];      // Must be == HEADER_NAME
-        uint8_t prgBanks;  // PRG ROM banks in 16 KiB units
-        uint8_t chrBanks;  // CHR ROM banks in 8 KiB units
+        uint8_t prg_banks;  // PRG ROM banks in 16 KiB units
+        uint8_t chr_banks;  // CHR ROM banks in 8 KiB units
 
         struct Flags6
         {
             uint8_t mirroring : 1;
-            uint8_t hasPrgRam : 1;
-            uint8_t hasTrainer : 1;
-            uint8_t ignoreMirroring : 1;
-            uint8_t mapperLowerNibble : 4;
+            uint8_t has_prg_ram : 1;
+            uint8_t has_trainer : 1;
+            uint8_t ignore_mirroring : 1;
+            uint8_t mapper_lower_nibble : 4;
         } flags6;  // Top - LSB, Bottom - MSB
 
         struct Flags7
         {
-            uint8_t vsUnisystem : 1;
-            uint8_t hasPlaychoiceData : 1;
+            uint8_t vs_unisystem : 1;
+            uint8_t has_playchoice_data : 1;
             uint8_t format : 2;
-            uint8_t mapperUpperNibble : 4;
+            uint8_t mapper_upper_nibble : 4;
         } flags7;  // Top - LSB, Bottom - MSB
 
-        uint8_t prgRamSize;  // Size of PRG RAM in 8 KiB units
-        uint8_t tvFlags1;
-        uint8_t tvFlags2;
+        uint8_t prg_ram_size;  // Size of PRG RAM in 8 KiB units
+        uint8_t tv_flags_1;
+        uint8_t tv_flags_2;
+
         uint8_t _padding[5];
     };
 
@@ -63,28 +64,28 @@ class Cartridge
     bool load(std::string path);
 
     // iNES ROM data getters
-    Header getHeader() const;
-    std::vector<uint8_t> &getPrgRom();
-    std::vector<uint8_t> &getChrRom();
+    Header GetHeader() const;
+    std::vector<uint8_t> &GetPrgRom();
+    std::vector<uint8_t> &GetChrRom();
 
     // Returns the path of the ROM file on the disk
-    std::string getPath() const;
+    std::string GetPath() const;
 
     // Returns the mapper ID associated with the ROM
-    uint8_t getMapperID() const;
+    uint8_t GetMapperId() const;
 
     // Returns the active mapper
-    IMapper *getMapper();
+    IMapper *GetMapper();
 
   private:
     // iNES ROM data
-    Header header;
-    std::vector<uint8_t> prgRom;
-    std::vector<uint8_t> chrRom;
+    Header header_;
+    std::vector<uint8_t> prg_rom_;
+    std::vector<uint8_t> chr_rom_;
 
     // ROM path on disk
-    std::string path;
+    std::string path_;
 
     // Mapper used for this ROM
-    IMapper *mapper;
+    IMapper *mapper_;
 };

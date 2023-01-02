@@ -47,8 +47,8 @@ NES::NES() : cpu(bus), ppu(bus), controller(bus, Bus::JOY1)
 void NES::load(std::string path)
 {
     cartridge.load(path);
-    bus.SetMapper(cartridge.getMapper());
-    ppu.SetMapper(cartridge.getMapper());
+    bus.SetMapper(cartridge.GetMapper());
+    ppu.SetMapper(cartridge.GetMapper());
 
     cpu.reset();
     ppu.reset();
