@@ -1,4 +1,4 @@
-#include "NROM.h"
+#include "emulator/mappers/NROM.h"
 
 #include "emulator/Bus.h"
 #include "emulator/Cartridge.h"
@@ -9,6 +9,7 @@ static constexpr uint16_t kPrgRamSize = 0x2000;
 
 namespace mappers
 {
+
 NROM::NROM(Cartridge &cartridge)
     : IMapper(cartridge),
       cartridge_(cartridge),
@@ -104,4 +105,5 @@ void NROM::ChrWrite(uint16_t address, uint8_t value)
 {
     // CHR ROM is read only
 }
+
 }  // namespace mappers
